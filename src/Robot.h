@@ -16,6 +16,8 @@ class Robot{
 		static void move_to(int x, int y);
 		static void brake(std::string mode);
 		static void drive(void* x);
+		static void display(void* x);
+		static void strafe(int power, int strafe, int turn);
 		static int x;
 		static void start_tasks();
 		static void start_task(std::string name, void (*func)(void*));

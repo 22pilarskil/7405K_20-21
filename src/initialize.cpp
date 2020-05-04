@@ -1,4 +1,5 @@
 #include "main.h"
+#include "Robot.h"
 using namespace pros;
 
 LV_IMG_DECLARE(logo1);

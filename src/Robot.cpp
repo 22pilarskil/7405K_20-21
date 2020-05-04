@@ -12,12 +12,32 @@ std::map<std::string, std::unique_ptr<pros::Task>> Robot::tasks;
 
 void Robot::drive(void* x){
 	while (true){
-		int lefty = master.get_analog(ANALOG_LEFT_Y);
 		int leftx = master.get_analog(ANALOG_LEFT_X);
+		int lefty = master.get_analog(ANALOG_LEFT_Y);
 		int right = master.get_analog(ANALOG_RIGHT_X);
-		lcd::print(1, "%d", lefty);
-		lcd::print(2, "%d", leftx);
-		lcd::print(3, "%d", right);
+		strafe(lefty, leftx, right);
+		delay(10);
+	}
+}
+
+void Robot::strafe(int power, int strafe, int turn) {
+	FL = power + strafe + turn;
+	FR = power - strafe - turn;
+	BL = power - strafe + turn;
+	BR = power + strafe - turn;
+}
+
+void Robot::display(void* x){
+	while (true){
+		master.print(0, 0, "Joystick %d", master.get_analog(ANALOG_LEFT_X));
+		int leftx = master.get_analog(ANALOG_LEFT_X);
+		int lefty = master.get_analog(ANALOG_LEFT_Y);
+		int right = master.get_analog(ANALOG_RIGHT_X);
+		lcd::print(1, "Left X: %d", leftx);
+		lcd::print(2, "Left Y: %d", lefty);
+		lcd::print(3, "Right: %d", right);
+
+		delay(10);
 	}
 }
 
@@ -47,12 +67,14 @@ void Robot::brake(std::string mode){
 }
 
 void Robot::start_tasks(){
+	//lcd::print(4, "started");
 	start_task("DRIVE", drive);
+	start_task("DISPLAY", display);
 }
 
 void Robot::start_task(std::string name, void (*func)(void*)) {
 	if (!task_exists(name)) {
-		tasks.insert(std::pair<std::string, std::unique_ptr<pros::Task>>(name, std::move(std::make_unique<pros::Task>(func, &x, name.c_str()))));
+		tasks.insert(std::pair<std::string,std::unique_ptr<pros::Task>>(name, std::move(std::make_unique<pros::Task>(func, &x, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, ""))));	
 	}
 }
 
