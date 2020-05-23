@@ -6,7 +6,7 @@ void opcontrol() {
 	lcd::initialize();
 	delay(100);
 	Robot::start_tasks();
-	lcd::print(5, "YEET");
+	//Robot::move_to(1000, 0, 0);
 }
 
 

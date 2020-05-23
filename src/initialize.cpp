@@ -356,7 +356,7 @@ static lv_res_t btn_click_action4(lv_obj_t * btn) //Blue Front
 }
 
 void initialize() {
-    //autonSelected = 1;
+    Robot::reset_IMU();
     delay(20);
 
     lv_style_copy(&myButtonStyleREL, &lv_style_plain);
