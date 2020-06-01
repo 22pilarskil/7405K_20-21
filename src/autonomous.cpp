@@ -3,5 +3,9 @@
 using namespace pros;
 
 void autonomous() {
-	Robot::move_to(1000, 1000, 0);
+	lcd::initialize();
+	delay(100);
+	Robot::start_task("FPS", Robot::fps);
+	Robot::start_task("DISPLAY", Robot::display);
+	//Robot::move_to(1000, 1000, 45);
 }

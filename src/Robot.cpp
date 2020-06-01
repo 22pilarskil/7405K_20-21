@@ -1,5 +1,9 @@
 #include "Robot.h"
+#include <cmath>
+#include <atomic>
 using namespace pros;
+
+#define TO_RAD(n) n * M_PI / 180;
 
 Controller Robot::master(E_CONTROLLER_MASTER);
 Motor Robot::FL(4);
@@ -15,27 +19,57 @@ Acceleration Robot::strafe_acc(1, 1);
 Acceleration Robot::turn_acc(2.6, 20);
 PID Robot::power_PID(.14, 0, 0);
 PID Robot::strafe_PID(.16, 0, 0);
-PID Robot::turn_PID(1.2, 0, 0);
+PID Robot::turn_PID(.7, 0, 0);
 
 
-int Robot::y = 0; 
-int Robot::x = 0;
+std::atomic<double> Robot::y = 0; 
+std::atomic<double> Robot::x = 0;
+double Robot::offset_back = 6;
+double Robot::offset_middle = 10;
+double Robot::wheel_circumference = 2.75 * M_PI;
 
-float direct_constant = .1;
 std::map<std::string, std::unique_ptr<pros::Task>> Robot::tasks;
 
-float imu_last_pos = 0;
-bool auto_correct = false;
-
-void Robot::drive(void* x){
+void Robot::drive(void* ptr){
 	while (true){
 		int power = power_acc.get_curve(master.get_analog(ANALOG_LEFT_Y));
 		int strafe = strafe_acc.get_curve(master.get_analog(ANALOG_LEFT_X));
 		int turn = turn_acc.get_curve(master.get_analog(ANALOG_RIGHT_X));
-		lcd::print(1, "Power: %d", power);
-		lcd::print(2, "Strafe: %d", strafe);
-		lcd::print(3, "Turn: %d", turn);
 		mecanum(power, strafe, turn);
+		delay(10);
+	}
+}
+
+void Robot::fps(void* ptr){
+	double last_x = 0;
+	double last_y = 0;
+	double last_phi = 0;
+	while (true){
+
+		double cur_phi = TO_RAD(IMU.get_rotation());
+		double dphi = cur_phi - last_phi;
+		double turn_offset_x = 360 * (offset_back * dphi) / wheel_circumference;
+
+		double cur_y = ((LE.get_value() - offset_middle * dphi) + (RE.get_value() + offset_middle * dphi)) / 2;
+		double cur_x = BE.get_value() - turn_offset_x;
+
+		double dy = cur_y - last_y;
+		double dx = cur_x - last_x;
+
+		last_y = cur_y;
+		last_x = cur_x;
+		last_phi = cur_phi;
+
+		double global_dy = dy * std::cos(dphi) + dx * std::sin(dphi);
+		double global_dx = dx * std::sin(dphi) - dx * std::cos(dphi);
+
+		y = (float)y + global_dy;
+		x = (float)x + global_dx;
+
+		lcd::print(5, "X: %f", (float)x);
+		lcd::print(6, "Y: %f", (float)y);
+		lcd::print(7, "turn_offset: %f", turn_offset_x);
+
 		delay(10);
 	}
 }
@@ -48,7 +82,7 @@ void Robot::mecanum(int power, int strafe, int turn) {
 	delay(10);
 }
 
-void Robot::display(void* x){
+void Robot::display(void* ptr){
 	while (true){
 		master.print(0, 0, "Joystick %d", master.get_analog(ANALOG_LEFT_X));
 		lcd::print(1, "Left Encoder: %d", LE.get_value());
@@ -59,31 +93,23 @@ void Robot::display(void* x){
 	}
 }
 
-bool Robot::get_error(bool y_fwd, bool x_fwd, int new_y, int new_x){
-	if (x_fwd && y_fwd) return x >= new_x && y >= new_y;
-	else if (x_fwd && !y_fwd) return x >= new_x && y <= new_y;
-	else if (!x_fwd && y_fwd) return x <= new_x && y >= new_y;
-	else return x <= new_x && y <= new_y;
-}
-
-void Robot::move_to(int new_y, int new_x, int heading){
+void Robot::move_to(double new_y, double new_x, double heading){
 	bool x_fwd = x < new_x;
 	bool y_fwd = y < new_y;
-	while (!get_error(x_fwd, y_fwd, new_x, new_y)){ //while both goals are not reached
+	while (!(abs(new_x - float(x)) < 5 && abs(new_y - float(y)) < 5 && abs(heading - IMU.get_rotation()) < 5)){ //while both goals are not reached
 
-		double y_error = (new_y - y); //distance between goal_y and current y
-		double x_error = - (new_x - x); //distance between goal_x and current x
+		double y_error = new_y - y; //distance between goal_y and current y
+		double x_error = new_x - x; //distance between goal_x and current x
 		double imu_error = - (IMU.get_rotation() - heading); //difference between goal heading and current IMU reading
 		double right_left_error = (RE.get_value() - LE.get_value()) / 10; // difference between right and left encoders, scaled down 10x
 
 		double power = power_PID.get_value(y_error); 
 		double strafe = strafe_PID.get_value(x_error);
-		double turn = turn_PID.get_value(right_left_error + imu_error);
+		double turn = turn_PID.get_value(imu_error);
 
 		mecanum(power, strafe, turn);
-		y = (RE.get_value() + LE.get_value()) / 2;
-		x = BE.get_value();
 	}
+	Robot::brake("hold");
 }
 
 void Robot::brake(std::string mode){
@@ -99,11 +125,6 @@ void Robot::brake(std::string mode){
 		BL.set_brake_mode(E_MOTOR_BRAKE_HOLD);
 		BR.set_brake_mode(E_MOTOR_BRAKE_HOLD);
 	}
-}
-
-void Robot::start_tasks(){
-	start_task("DRIVE", drive);
-	start_task("DISPLAY", display);
 }
 
 void Robot::start_task(std::string name, void (*func)(void*)) {
