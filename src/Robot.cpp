@@ -24,6 +24,8 @@ PID Robot::turn_PID(.7, 0, 0);
 
 std::atomic<double> Robot::y = 0; 
 std::atomic<double> Robot::x = 0;
+std::atomic<double> Robot::turn_offset_x = 0;
+std::atomic<double> Robot::turn_offset_y = 0;
 double Robot::offset_back = 6;
 double Robot::offset_middle = 10;
 double Robot::wheel_circumference = 2.75 * M_PI;
@@ -48,9 +50,12 @@ void Robot::fps(void* ptr){
 
 		double cur_phi = TO_RAD(IMU.get_rotation());
 		double dphi = cur_phi - last_phi;
-		double turn_offset_x = 360 * (offset_back * dphi) / wheel_circumference;
+		double cur_turn_offset_x = 360 * (offset_back * dphi) / wheel_circumference;
+		double cur_turn_offset_y = 360 * (offset_middle * dphi) / wheel_circumference;
+		turn_offset_x = (float)turn_offset_x + cur_turn_offset_x;
+		turn_offset_y = (float)turn_offset_y + cur_turn_offset_y;
 
-		double cur_y = ((LE.get_value() - offset_middle * dphi) + (RE.get_value() + offset_middle * dphi)) / 2;
+		double cur_y = (LE.get_value() + turn_offset_y)  + (RE.get_value() - turn_offset_y) / 2;
 		double cur_x = BE.get_value() - turn_offset_x;
 
 		double dy = cur_y - last_y;
@@ -68,7 +73,7 @@ void Robot::fps(void* ptr){
 
 		lcd::print(5, "X: %f", (float)x);
 		lcd::print(6, "Y: %f", (float)y);
-		lcd::print(7, "turn_offset: %f", turn_offset_x);
+		lcd::print(7, "turn_offset: %f", (float)turn_offset_x);
 
 		delay(10);
 	}

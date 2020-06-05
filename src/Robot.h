@@ -25,6 +25,8 @@ class Robot{
 		static PID turn_PID;
 		static std::atomic<double> x;
 		static std::atomic<double> y;
+		static std::atomic<double> turn_offset_x;
+		static std::atomic<double> turn_offset_y;
 		static double offset_back;
 		static double offset_middle;
 		static double wheel_circumference;
