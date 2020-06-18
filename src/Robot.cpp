@@ -6,10 +6,12 @@ using namespace pros;
 #define TO_RAD(n) n * M_PI / 180;
 
 Controller Robot::master(E_CONTROLLER_MASTER);
-Motor Robot::FL(4);
-Motor Robot::FR(8, E_MOTOR_GEARSET_18, true);
+Motor Robot::FL(4, true);
+Motor Robot::FR(8);
 Motor Robot::BL(3);
-Motor Robot::BR(9, E_MOTOR_GEARSET_18, true);
+Motor Robot::BR(9, true);
+Motor Robot::IL(6);
+Motor Robot::IR(7, true);
 ADIEncoder Robot::LE(3, 4);
 ADIEncoder Robot::RE(1, 2, true);
 ADIEncoder Robot::BE(5, 6); 
@@ -17,7 +19,7 @@ Imu Robot::IMU(10);
 Acceleration Robot::power_acc(1, 1);
 Acceleration Robot::strafe_acc(1, 1);
 Acceleration Robot::turn_acc(2.6, 20);
-PID Robot::power_PID(.14, 0, 0);
+PID Robot::power_PID(.10, 0, 0);
 PID Robot::strafe_PID(.16, 0, 0);
 PID Robot::turn_PID(.7, 0, 0);
 
@@ -26,19 +28,29 @@ std::atomic<double> Robot::y = 0;
 std::atomic<double> Robot::x = 0;
 std::atomic<double> Robot::turn_offset_x = 0;
 std::atomic<double> Robot::turn_offset_y = 0;
-double Robot::offset_back = 6;
-double Robot::offset_middle = 10;
+double Robot::offset_back = 4.25;
+double Robot::offset_middle = 5.375;
 double Robot::wheel_circumference = 2.75 * M_PI;
 
 std::map<std::string, std::unique_ptr<pros::Task>> Robot::tasks;
 
 void Robot::drive(void* ptr){
 	while (true){
+
 		int power = power_acc.get_curve(master.get_analog(ANALOG_LEFT_Y));
 		int strafe = strafe_acc.get_curve(master.get_analog(ANALOG_LEFT_X));
 		int turn = turn_acc.get_curve(master.get_analog(ANALOG_RIGHT_X));
 		mecanum(power, strafe, turn);
-		delay(10);
+
+		bool intake = master.get_digital(DIGITAL_L1);
+		bool outtake = master.get_digital(DIGITAL_L2);
+		double motorpwr = 0;
+		if (intake || outtake){
+			motorpwr = (intake) ? 127 : -127;
+		}
+		IL = motorpwr;
+		IR = motorpwr;
+
 	}
 }
 
@@ -55,8 +67,8 @@ void Robot::fps(void* ptr){
 		turn_offset_x = (float)turn_offset_x + cur_turn_offset_x;
 		turn_offset_y = (float)turn_offset_y + cur_turn_offset_y;
 
-		double cur_y = (LE.get_value() + turn_offset_y)  + (RE.get_value() - turn_offset_y) / 2;
-		double cur_x = BE.get_value() - turn_offset_x;
+		double cur_y = (LE.get_value() - turn_offset_y)  + (RE.get_value() + turn_offset_y) / 2;
+		double cur_x = BE.get_value() + turn_offset_x;
 
 		double dy = cur_y - last_y;
 		double dx = cur_x - last_x;
@@ -71,8 +83,8 @@ void Robot::fps(void* ptr){
 		y = (float)y + global_dy;
 		x = (float)x + global_dx;
 
-		lcd::print(5, "X: %f", (float)x);
-		lcd::print(6, "Y: %f", (float)y);
+		lcd::print(5, "Y: %f", (float)y);
+		lcd::print(6, "X: %f", (float)x);
 		lcd::print(7, "turn_offset: %f", (float)turn_offset_x);
 
 		delay(10);
@@ -80,8 +92,8 @@ void Robot::fps(void* ptr){
 }
 
 void Robot::mecanum(int power, int strafe, int turn) {
-	FL = power - strafe - turn;
-	FR = power + strafe + turn;
+	FL = power + strafe + turn;
+	FR = power - strafe - turn;
 	BL = power - strafe + turn;
 	BR = power + strafe - turn;
 	delay(10);
@@ -104,9 +116,8 @@ void Robot::move_to(double new_y, double new_x, double heading){
 	while (!(abs(new_x - float(x)) < 5 && abs(new_y - float(y)) < 5 && abs(heading - IMU.get_rotation()) < 5)){ //while both goals are not reached
 
 		double y_error = new_y - y; //distance between goal_y and current y
-		double x_error = new_x - x; //distance between goal_x and current x
+		double x_error = - new_x + x; //distance between goal_x and current x
 		double imu_error = - (IMU.get_rotation() - heading); //difference between goal heading and current IMU reading
-		double right_left_error = (RE.get_value() - LE.get_value()) / 10; // difference between right and left encoders, scaled down 10x
 
 		double power = power_PID.get_value(y_error); 
 		double strafe = strafe_PID.get_value(x_error);
