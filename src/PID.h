@@ -8,7 +8,8 @@ class PID{
 		double prev_error;
 		double I;
 		double D;
-		PID(double p, double i, double d);
+		double minspeed;
+		PID(double p, double i, double d, double min = 0);
 		double get_value(double error);
 		void reset();
 };

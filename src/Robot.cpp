@@ -19,17 +19,17 @@ Imu Robot::IMU(10);
 Acceleration Robot::power_acc(1, 1);
 Acceleration Robot::strafe_acc(1, 1);
 Acceleration Robot::turn_acc(2.6, 20);
-PID Robot::power_PID(.10, 0, 0);
-PID Robot::strafe_PID(.16, 0, 0);
-PID Robot::turn_PID(.7, 0, 0);
+PID Robot::power_PID(.19, 0, 1.5, 10);
+PID Robot::strafe_PID(.25, 0, 0, 8);
+PID Robot::turn_PID(.4, 0, 0);
 
 
 std::atomic<double> Robot::y = 0; 
 std::atomic<double> Robot::x = 0;
 std::atomic<double> Robot::turn_offset_x = 0;
 std::atomic<double> Robot::turn_offset_y = 0;
-double Robot::offset_back = 4.25;
-double Robot::offset_middle = 5.375;
+double Robot::offset_back = 4 + 5/16 - 2/16;
+double Robot::offset_middle = 5 + 13/32;
 double Robot::wheel_circumference = 2.75 * M_PI;
 
 std::map<std::string, std::unique_ptr<pros::Task>> Robot::tasks;
@@ -67,8 +67,8 @@ void Robot::fps(void* ptr){
 		turn_offset_x = (float)turn_offset_x + cur_turn_offset_x;
 		turn_offset_y = (float)turn_offset_y + cur_turn_offset_y;
 
-		double cur_y = (LE.get_value() - turn_offset_y)  + (RE.get_value() + turn_offset_y) / 2;
-		double cur_x = BE.get_value() + turn_offset_x;
+		double cur_y = ((LE.get_value() - turn_offset_y)  + (RE.get_value() + turn_offset_y)) / 2;
+		double cur_x = BE.get_value() - turn_offset_x;
 
 		double dy = cur_y - last_y;
 		double dx = cur_x - last_x;
@@ -83,11 +83,13 @@ void Robot::fps(void* ptr){
 		y = (float)y + global_dy;
 		x = (float)x + global_dx;
 
-		lcd::print(5, "Y: %f", (float)y);
-		lcd::print(6, "X: %f", (float)x);
-		lcd::print(7, "turn_offset: %f", (float)turn_offset_x);
+		lcd::print(4, "Y: %f - Offset: %f", (float)y, float(turn_offset_y));
+		lcd::print(5, "X: %f - Offset: %f", (float)x, float(turn_offset_x));
 
-		delay(10);
+		double total_x = (BE.get_value() * wheel_circumference) / (360 * cur_phi);
+		double total_y = (RE.get_value() + LE.get_value()) / 2 * wheel_circumference / (360 * cur_phi);
+
+		delay(5);
 	}
 }
 
@@ -102,30 +104,34 @@ void Robot::mecanum(int power, int strafe, int turn) {
 void Robot::display(void* ptr){
 	while (true){
 		master.print(0, 0, "Joystick %d", master.get_analog(ANALOG_LEFT_X));
-		lcd::print(1, "Left Encoder: %d", LE.get_value());
-		lcd::print(2, "Right Encoder: %d", RE.get_value());
-		lcd::print(3, "Back Encoder: %d", BE.get_value());
-		lcd::print(4, "IMU value: %f", IMU.get_rotation());
+		lcd::print(1, "LE: %d - RE: %d", LE.get_value(), RE.get_value());
+		lcd::print(2, "Back Encoder: %d", BE.get_value());
+		lcd::print(3, "IMU value: %f", IMU.get_rotation());
 		delay(10);
 	}
 }
 
 void Robot::move_to(double new_y, double new_x, double heading){
-	bool x_fwd = x < new_x;
-	bool y_fwd = y < new_y;
-	while (!(abs(new_x - float(x)) < 5 && abs(new_y - float(y)) < 5 && abs(heading - IMU.get_rotation()) < 5)){ //while both goals are not reached
+	double y_error = new_y - y;
+	double x_error = - new_x - x;
+	double imu_error = - (IMU.get_rotation() - heading);
+	while (abs(y_error) > 5 || abs(x_error) > 5 || abs(imu_error) > 2){ //while both goals are not reached
 
-		double y_error = new_y - y; //distance between goal_y and current y
-		double x_error = - new_x + x; //distance between goal_x and current x
-		double imu_error = - (IMU.get_rotation() - heading); //difference between goal heading and current IMU reading
 
 		double power = power_PID.get_value(y_error); 
 		double strafe = strafe_PID.get_value(x_error);
 		double turn = turn_PID.get_value(imu_error);
+		lcd::print(7, "%f", y_error);
+
+		y_error = new_y - y; //distance between goal_y and current y
+		x_error = new_x - x; //distance between goal_x and current x
+		lcd::print(6, "Power (%d) Strafe (%d) Turn(%d)", int(power), int(strafe), int (turn));
+		lcd::print(7, "YE: %f - XE: %f", y_error, x_error);
+		imu_error = - (IMU.get_rotation() - heading); //difference between goal heading and current IMU reading
 
 		mecanum(power, strafe, turn);
 	}
-	Robot::brake("hold");
+	Robot::brake("stop");
 }
 
 void Robot::brake(std::string mode){
@@ -135,11 +141,17 @@ void Robot::brake(std::string mode){
 		BL.set_brake_mode(E_MOTOR_BRAKE_COAST);
 		BR.set_brake_mode(E_MOTOR_BRAKE_COAST);
 	}
-	else{
+	else if (mode.compare("hold") == 0){
 		FL.set_brake_mode(E_MOTOR_BRAKE_HOLD);
 		FR.set_brake_mode(E_MOTOR_BRAKE_HOLD);
 		BL.set_brake_mode(E_MOTOR_BRAKE_HOLD);
 		BR.set_brake_mode(E_MOTOR_BRAKE_HOLD);
+	}
+	else {
+		FL = 0;
+		FR = 0;
+		BL = 0;
+		BR = 0;
 	}
 }
 
