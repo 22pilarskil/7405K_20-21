@@ -14,17 +14,17 @@ Motor Robot::IL(6);
 Motor Robot::IR(7, true);
 ADIEncoder Robot::LE(3, 4);
 ADIEncoder Robot::RE(1, 2, true);
-ADIEncoder Robot::BE(5, 6); 
+ADIEncoder Robot::BE(5, 6);
 Imu Robot::IMU(10);
 Acceleration Robot::power_acc(1, 1);
 Acceleration Robot::strafe_acc(1, 1);
 Acceleration Robot::turn_acc(2.6, 20);
-PID Robot::power_PID(.19, 0, 1.5, 10);
-PID Robot::strafe_PID(.25, 0, 0, 8);
-PID Robot::turn_PID(.4, 0, 0);
+PID Robot::power_PID(.19, 0, 1.2, 10);
+PID Robot::strafe_PID(.20, 0, 0, 4);
+PID Robot::turn_PID(.1, 0, 0);
 
 
-std::atomic<double> Robot::y = 0; 
+std::atomic<double> Robot::y = 0;
 std::atomic<double> Robot::x = 0;
 std::atomic<double> Robot::turn_offset_x = 0;
 std::atomic<double> Robot::turn_offset_y = 0;
@@ -118,7 +118,7 @@ void Robot::move_to(double new_y, double new_x, double heading){
 	while (abs(y_error) > 5 || abs(x_error) > 5 || abs(imu_error) > 2){ //while both goals are not reached
 
 
-		double power = power_PID.get_value(y_error); 
+		double power = power_PID.get_value(y_error);
 		double strafe = strafe_PID.get_value(x_error);
 		double turn = turn_PID.get_value(imu_error);
 		lcd::print(7, "%f", y_error);
@@ -132,7 +132,14 @@ void Robot::move_to(double new_y, double new_x, double heading){
 		mecanum(power, strafe, turn);
 	}
 	Robot::brake("stop");
+	imu_error = - (IMU.get_rotation() - heading);
+	while(abs(imu_error) > 2){ //This while loop is to check on the error again, if their is any.
+		imu_error = - (IMU.get_rotation() - heading); //difference between goal heading and current IMU reading
+		mecanum(0,0,imu_error);
+	}
+	Robot::brake("stop");
 }
+
 
 void Robot::brake(std::string mode){
 	if (mode.compare("coast") == 0){
@@ -158,7 +165,7 @@ void Robot::brake(std::string mode){
 void Robot::start_task(std::string name, void (*func)(void*)) {
 	if (!task_exists(name)) {
 		tasks.insert(std::pair<std::string,std::unique_ptr<pros::Task>>
-			(name, std::move(std::make_unique<pros::Task>(func, &x, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, ""))));	
+			(name, std::move(std::make_unique<pros::Task>(func, &x, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, ""))));
 	}
 }
 
