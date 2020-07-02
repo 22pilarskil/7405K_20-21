@@ -28,7 +28,7 @@ std::atomic<double> Robot::y = 0;
 std::atomic<double> Robot::x = 0;
 std::atomic<double> Robot::turn_offset_x = 0;
 std::atomic<double> Robot::turn_offset_y = 0;
-double Robot::offset_back = 4 + 5/16 - 2/16;
+double Robot::offset_back = 4 + 7/16;
 double Robot::offset_middle = 5 + 13/32;
 double Robot::wheel_circumference = 2.75 * M_PI;
 
@@ -58,7 +58,9 @@ void Robot::fps(void* ptr){
 	double last_x = 0;
 	double last_y = 0;
 	double last_phi = 0;
+	int z = 0;
 	while (true){
+
 
 		double cur_phi = TO_RAD(IMU.get_rotation());
 		double dphi = cur_phi - last_phi;
@@ -73,23 +75,27 @@ void Robot::fps(void* ptr){
 		double dy = cur_y - last_y;
 		double dx = cur_x - last_x;
 
-		last_y = cur_y;
-		last_x = cur_x;
-		last_phi = cur_phi;
-
-		double global_dy = dy * std::cos(dphi) + dx * std::sin(dphi);
-		double global_dx = dx * std::sin(dphi) - dx * std::cos(dphi);
+		double global_dy = dy * std::cos(cur_phi) + dx * std::sin(cur_phi);
+		double global_dx = dx * std::cos(cur_phi) - dy * std::sin(cur_phi);
 
 		y = (float)y + global_dy;
 		x = (float)x + global_dx;
 
 		lcd::print(4, "Y: %f - Offset: %f", (float)y, float(turn_offset_y));
 		lcd::print(5, "X: %f - Offset: %f", (float)x, float(turn_offset_x));
+		if (z % 1000 == 0) {
+			/*lcd::print(6, "last_y: %f - last_x: %f", last_y, last_x);
+			lcd::print(7, "cur_y: %f - cur_x: %f", cur_y, cur_x);*/
+			lcd::print(6, "global_dy: %f - dy: %f", global_dy, dy);
+			lcd::print(7, "global_dx: %f - dx: %f", global_dx, dx);
 
-		double total_x = (BE.get_value() * wheel_circumference) / (360 * cur_phi);
-		double total_y = (RE.get_value() + LE.get_value()) / 2 * wheel_circumference / (360 * cur_phi);
+		}
 
-		delay(5);
+		last_y = cur_y;
+		last_x = cur_x;
+		last_phi = cur_phi;
+		z+=10;
+		delay(10);
 	}
 }
 
