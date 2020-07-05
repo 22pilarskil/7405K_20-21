@@ -19,9 +19,9 @@ Imu Robot::IMU(10);
 Acceleration Robot::power_acc(1, 1);
 Acceleration Robot::strafe_acc(1, 1);
 Acceleration Robot::turn_acc(2.6, 20);
-PID Robot::power_PID(.19, 0, 1.2, 10);
-PID Robot::strafe_PID(.20, 0, 0, 4);
-PID Robot::turn_PID(.1, 0, 0);
+PID Robot::power_PID(.2, 0, 1.3, 8);
+PID Robot::strafe_PID(.23, 0, 1.3, 17);
+PID Robot::turn_PID(.6, 0, 0, 17);
 
 
 std::atomic<double> Robot::y = 0;
@@ -40,6 +40,7 @@ void Robot::drive(void* ptr){
 		int power = power_acc.get_curve(master.get_analog(ANALOG_LEFT_Y));
 		int strafe = strafe_acc.get_curve(master.get_analog(ANALOG_LEFT_X));
 		int turn = turn_acc.get_curve(master.get_analog(ANALOG_RIGHT_X));
+
 		mecanum(power, strafe, turn);
 
 		bool intake = master.get_digital(DIGITAL_L1);
@@ -50,7 +51,6 @@ void Robot::drive(void* ptr){
 		}
 		IL = motorpwr;
 		IR = motorpwr;
-
 	}
 }
 
@@ -58,7 +58,6 @@ void Robot::fps(void* ptr){
 	double last_x = 0;
 	double last_y = 0;
 	double last_phi = 0;
-	int z = 0;
 	while (true){
 
 
@@ -81,20 +80,12 @@ void Robot::fps(void* ptr){
 		y = (float)y + global_dy;
 		x = (float)x + global_dx;
 
-		lcd::print(4, "Y: %f - Offset: %f", (float)y, float(turn_offset_y));
-		lcd::print(5, "X: %f - Offset: %f", (float)x, float(turn_offset_x));
-		if (z % 1000 == 0) {
-			/*lcd::print(6, "last_y: %f - last_x: %f", last_y, last_x);
-			lcd::print(7, "cur_y: %f - cur_x: %f", cur_y, cur_x);*/
-			lcd::print(6, "global_dy: %f - dy: %f", global_dy, dy);
-			lcd::print(7, "global_dx: %f - dx: %f", global_dx, dx);
-
-		}
+		lcd::print(4, "Offset: %d - Y: %f", int(turn_offset_y), (float)y);
+		lcd::print(5, "Offset: %d - X: %f", int(turn_offset_x), (float)x);
 
 		last_y = cur_y;
 		last_x = cur_x;
 		last_phi = cur_phi;
-		z+=10;
 		delay(10);
 	}
 }
@@ -119,31 +110,26 @@ void Robot::display(void* ptr){
 
 void Robot::move_to(double new_y, double new_x, double heading){
 	double y_error = new_y - y;
-	double x_error = - new_x - x;
+	double x_error = - (new_x - x);
 	double imu_error = - (IMU.get_rotation() - heading);
-	while (abs(y_error) > 5 || abs(x_error) > 5 || abs(imu_error) > 2){ //while both goals are not reached
+	while (abs(y_error) > 5 || abs(x_error) > 5 || abs(imu_error) > 1){ //while both goals are not reached
 
-
-		double power = power_PID.get_value(y_error);
-		double strafe = strafe_PID.get_value(x_error);
+		double phi = TO_RAD(IMU.get_rotation());
+		double power = power_PID.get_value(y_error * std::cos(phi) + x_error * std::sin(phi));
+		double strafe = strafe_PID.get_value(x_error * std::cos(phi) - y_error * std::sin(phi));
 		double turn = turn_PID.get_value(imu_error);
-		lcd::print(7, "%f", y_error);
 
 		y_error = new_y - y; //distance between goal_y and current y
-		x_error = new_x - x; //distance between goal_x and current x
-		lcd::print(6, "Power (%d) Strafe (%d) Turn(%d)", int(power), int(strafe), int (turn));
+		x_error = - (new_x - x); //distance between goal_x and current x
+		lcd::print(6, "X: %f", (float)x);
 		lcd::print(7, "YE: %f - XE: %f", y_error, x_error);
 		imu_error = - (IMU.get_rotation() - heading); //difference between goal heading and current IMU reading
 
 		mecanum(power, strafe, turn);
 	}
 	Robot::brake("stop");
-	imu_error = - (IMU.get_rotation() - heading);
-	while(abs(imu_error) > 2){ //This while loop is to check on the error again, if their is any.
-		imu_error = - (IMU.get_rotation() - heading); //difference between goal heading and current IMU reading
-		mecanum(0,0,imu_error);
-	}
-	Robot::brake("stop");
+	lcd::print(6, "DONE");
+	lcd::print(7, "YE: %d - XE: %d - IE: %d", int(y_error), int(x_error), int(imu_error));
 }
 
 
