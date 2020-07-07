@@ -20,7 +20,7 @@ Acceleration Robot::power_acc(1, 1);
 Acceleration Robot::strafe_acc(1, 1);
 Acceleration Robot::turn_acc(2.6, 20);
 PID Robot::power_PID(.2, 0, 1.3, 8);
-PID Robot::strafe_PID(.23, 0, 1.3, 17);
+PID Robot::strafe_PID(.26, 0, 1.3, 17);
 PID Robot::turn_PID(.6, 0, 0, 17);
 
 
@@ -28,8 +28,8 @@ std::atomic<double> Robot::y = 0;
 std::atomic<double> Robot::x = 0;
 std::atomic<double> Robot::turn_offset_x = 0;
 std::atomic<double> Robot::turn_offset_y = 0;
-double Robot::offset_back = 4 + 7/16;
-double Robot::offset_middle = 5 + 13/32;
+double Robot::offset_back = 4 + 5/16;
+double Robot::offset_middle = 5 + 7/16;
 double Robot::wheel_circumference = 2.75 * M_PI;
 
 std::map<std::string, std::unique_ptr<pros::Task>> Robot::tasks;
@@ -45,6 +45,11 @@ void Robot::drive(void* ptr){
 
 		bool intake = master.get_digital(DIGITAL_L1);
 		bool outtake = master.get_digital(DIGITAL_L2);
+
+		bool fps = master.get_digital(DIGITAL_R1);
+		if (fps){
+			move_to(0, 0, IMU.get_rotation() - (int(IMU.get_rotation()) % 360));
+		}
 		double motorpwr = 0;
 		if (intake || outtake){
 			motorpwr = (intake) ? 127 : -127;
@@ -52,6 +57,11 @@ void Robot::drive(void* ptr){
 		IL = motorpwr;
 		IR = motorpwr;
 	}
+}
+
+void Robot::intake(int coefficient){
+	IL = coefficient * 127;
+	IR = coefficient * 127;
 }
 
 void Robot::fps(void* ptr){
@@ -86,7 +96,7 @@ void Robot::fps(void* ptr){
 		last_y = cur_y;
 		last_x = cur_x;
 		last_phi = cur_phi;
-		delay(10);
+		delay(5);
 	}
 }
 
@@ -108,7 +118,7 @@ void Robot::display(void* ptr){
 	}
 }
 
-void Robot::move_to(double new_y, double new_x, double heading){
+void Robot::move_to(double new_y, double new_x, double heading, double maxspeed){
 	double y_error = new_y - y;
 	double x_error = - (new_x - x);
 	double imu_error = - (IMU.get_rotation() - heading);
@@ -125,7 +135,7 @@ void Robot::move_to(double new_y, double new_x, double heading){
 		lcd::print(7, "YE: %f - XE: %f", y_error, x_error);
 		imu_error = - (IMU.get_rotation() - heading); //difference between goal heading and current IMU reading
 
-		mecanum(power, strafe, turn);
+		mecanum((power > maxspeed) ? maxspeed : power, strafe, turn);
 	}
 	Robot::brake("stop");
 	lcd::print(6, "DONE");
