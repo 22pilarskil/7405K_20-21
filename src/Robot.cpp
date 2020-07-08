@@ -12,6 +12,7 @@ Motor Robot::BL(3);
 Motor Robot::BR(9, true);
 Motor Robot::IL(6);
 Motor Robot::IR(7, true);
+Motor Robot::Indexer(11);
 ADIEncoder Robot::LE(3, 4);
 ADIEncoder Robot::RE(1, 2, true);
 ADIEncoder Robot::BE(5, 6);
@@ -56,6 +57,7 @@ void Robot::drive(void* ptr){
 		}
 		IL = motorpwr;
 		IR = motorpwr;
+		Indexer = motorpwr;
 	}
 }
 
