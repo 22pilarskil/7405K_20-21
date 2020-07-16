@@ -12,7 +12,7 @@ Motor Robot::BL(3);
 Motor Robot::BR(9, true);
 Motor Robot::IL(6);
 Motor Robot::IR(7, true);
-Motor Robot::Indexer(11);
+Motor Robot::Indexer(11, true);
 ADIEncoder Robot::LE(3, 4);
 ADIEncoder Robot::RE(1, 2, true);
 ADIEncoder Robot::BE(5, 6);
@@ -32,6 +32,7 @@ std::atomic<double> Robot::turn_offset_y = 0;
 double Robot::offset_back = 4 + 5/16;
 double Robot::offset_middle = 5 + 7/16;
 double Robot::wheel_circumference = 2.75 * M_PI;
+bool f = true;
 
 std::map<std::string, std::unique_ptr<pros::Task>> Robot::tasks;
 
@@ -47,15 +48,21 @@ void Robot::drive(void* ptr){
 		bool intake = master.get_digital(DIGITAL_L1);
 		bool outtake = master.get_digital(DIGITAL_L2);
 
+		bool switchh = master.get_digital(DIGITAL_R1);
+
 		bool fps = master.get_digital(DIGITAL_R1);
 		if (fps){
 			move_to(0, 0, IMU.get_rotation() - (int(IMU.get_rotation()) % 360));
 		}
 		double motorpwr = 0;
+		if (switchh) {
+			f = !f;
+		}
+
 		if (intake || outtake){
 			motorpwr = (intake) ? 127 : -127;
 		}
-		IL = motorpwr;
+		IL = (f) ? motorpwr : -motorpwr;
 		IR = motorpwr;
 		Indexer = motorpwr;
 	}
