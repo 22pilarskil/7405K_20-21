@@ -4,8 +4,21 @@ import numpy as np
 
 path = []
 
+def point_line_distance (p1, p2, p3):
+	dy = p1[1]-p2[1]
+	dx = p1[0]-p2[0]
+	if (dy == 0):
+		return abs(p1[1] - p3[1])
+	if (dx == 0):
+		return abs(p1[0] - p3[0])
+	slope = dy/dx
+	a = - slope
+	b = 1
+	c = slope * p2[0] - p2[1]
+	return abs((a * p3[0] + b * p3[1] + c) / Math.sqrt(a ** 2 + b ** 2))
+
 def distance (x1, y1, x2, y2):
-        return Math.sqrt((x1-x2)**2+(y1-y2)**2)
+        return Math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
 def get_degrees(point1, point2):
     slope=(point2[1]-point1[1])/(point2[0]-point1[0])
     return -Math.degrees(Math.atan(slope))
@@ -23,10 +36,10 @@ def get_intersection(start, end, cur, radius):
         discriminant = abs(radius ** 2 * d ** 2 - D ** 2)
         
 
-        x1 = (D * dy + np.sign(dy) * dx * Math.sqrt(discriminant)) / (d * d);
-        y1 = (-D * dx + abs(dy) * Math.sqrt(discriminant)) / (d * d);
-        x2 = (D * dy - np.sign(dy) * dx * Math.sqrt(discriminant)) / (d * d);
-        y2 = (-D * dx - abs(dy) * Math.sqrt(discriminant)) / (d * d);
+        x1 = (D * dy + np.sign(dy) * dx * Math.sqrt(discriminant)) / (d ** 2);
+        y1 = (-D * dx + abs(dy) * Math.sqrt(discriminant)) / (d ** 2);
+        x2 = (D * dy - np.sign(dy) * dx * Math.sqrt(discriminant)) / (d ** 2);
+        y2 = (-D * dx - abs(dy) * Math.sqrt(discriminant)) / (d ** 2);
 
         distance1 = distance(p2[0], p2[1], x1, y1)
         distance2 = distance(p2[0], p2[1], x2, y2)
