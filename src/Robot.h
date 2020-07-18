@@ -15,7 +15,8 @@ class Robot{
 		static Motor BR;
 		static Motor IR;
 		static Motor IL;
-		static Motor Indexer;
+		static Motor R1;
+		static Motor R2;
 		static ADIEncoder LE;
 		static ADIEncoder RE;
 		static ADIEncoder BE;

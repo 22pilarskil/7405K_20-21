@@ -12,7 +12,8 @@ Motor Robot::BL(3);
 Motor Robot::BR(9, true);
 Motor Robot::IL(6);
 Motor Robot::IR(7, true);
-Motor Robot::Indexer(11, true);
+Motor Robot::R1(5, true);
+Motor Robot::R2(1);
 ADIEncoder Robot::LE(3, 4);
 ADIEncoder Robot::RE(1, 2, true);
 ADIEncoder Robot::BE(5, 6);
@@ -20,7 +21,7 @@ Imu Robot::IMU(10);
 Acceleration Robot::power_acc(1, 1);
 Acceleration Robot::strafe_acc(1, 1);
 Acceleration Robot::turn_acc(2.6, 20);
-PID Robot::power_PID(.2, 0, 0.9, 8);
+PID Robot::power_PID(.2, 0, 1.3, 8);
 PID Robot::strafe_PID(.26, 0, 1.3, 17);
 PID Robot::turn_PID(.6, 0, 0, 17);
 
@@ -50,21 +51,28 @@ void Robot::drive(void* ptr){
 
 		bool switchh = master.get_digital(DIGITAL_R1);
 
-		bool fps = master.get_digital(DIGITAL_R1);
+		bool fps = master.get_digital(DIGITAL_R2);
 		if (fps){
 			move_to(0, 0, IMU.get_rotation() - (int(IMU.get_rotation()) % 360));
 		}
 		double motorpwr = 0;
 		if (switchh) {
-			f = !f;
+			f = false;
+		}
+		else {
+			f = true;
 		}
 
 		if (intake || outtake){
 			motorpwr = (intake) ? 127 : -127;
 		}
-		IL = (f) ? motorpwr : -motorpwr;
+		IL = motorpwr;
 		IR = motorpwr;
-		Indexer = motorpwr;
+		R1 = motorpwr;
+		R2 = (f) ? motorpwr : -motorpwr;
+		if (motorpwr < 0){
+			R2 = 0;
+		}
 	}
 }
 
@@ -78,6 +86,8 @@ void Robot::fps(void* ptr){
 	double last_y = 0;
 	double last_phi = 0;
 	while (true){
+
+
 		double cur_phi = TO_RAD(IMU.get_rotation());
 		double dphi = cur_phi - last_phi;
 		double cur_turn_offset_x = 360 * (offset_back * dphi) / wheel_circumference;
