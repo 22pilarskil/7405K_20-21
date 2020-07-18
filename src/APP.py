@@ -17,6 +17,30 @@ def point_line_distance (p1, p2, p3):
 	c = slope * p2[0] - p2[1]
 	return abs((a * p3[0] + b * p3[1] + c) / Math.sqrt(a ** 2 + b ** 2))
 
+def get_deviation(headings, numb):
+    headingsLength = len(headings)
+    prev_heading = 0
+    all_headings = []
+    for index in range(numb, headingsLength, numb):
+        delta_numb = headingsLength-index
+        if delta_numb < numb:
+            index+=delta_numb
+        
+        heading_range = headings[prev_heading:index]
+        heading_range_length = len(heading_range) 
+        prev_heading=index
+        
+        mean = sum(heading_range)/heading_range_length
+        varianceList = [abs(heading-mean)**2 for heading in heading_range]
+        variance = Math.sqrt(sum(varianceList)/heading_range_length)
+        #   True = Turning | False = Straight
+        all_headings.extend([True if abs(head) > variance else False for head in headings])
+        
+    return all_headings
+
+
+
+
 def distance (x1, y1, x2, y2):
         return Math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
 def get_degrees(point1, point2):
@@ -50,6 +74,10 @@ def get_intersection(start, end, cur, radius):
 cur = (.2, .2)
 radius = 1
 step = .1
+# 25 seems good, but u can play around with it if u want to :)
+batch_size = 25
+all_degrees = []
+
 
 points = [(1, 1), (1, 4), (3, 5), (4, 3), (4, 1), (6, 1.1)] #for some reason y values cannot be the same
 plt.plot(*zip(*points), '-o')
@@ -64,9 +92,12 @@ for i in range(len(points) - 1):
                 new_end = get_intersection(start, end, cur, radius)
                 cur = get_intersection(cur, new_end, cur, step)
                 degrees = get_degrees(new_end, cur)
-                print(degrees)
+                all_degrees.append(degrees)
                 path.append(cur)
                 #print("\n")
+deviation = get_deviation(all_degrees, batch_size)
+print(deviation)
+
 
 plt.plot(*zip(*path), '-o')
 plt.show()
