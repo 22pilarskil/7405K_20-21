@@ -80,6 +80,8 @@ all_degrees = []
 
 
 points = [(1, 1), (1, 4), (3, 5), (4, 3), (4, 1), (6, 1.1)] #for some reason y values cannot be the same
+end_point = points[-1]
+
 plt.plot(*zip(*points), '-o')
 
 plt.plot(cur[0], cur[1], '-o')
@@ -89,11 +91,15 @@ for i in range(len(points) - 1):
         end = points[i+1]
 
         while (distance(cur[0], cur[1], end[0], end[1]) > radius):
-                new_end = get_intersection(start, end, cur, radius)
-                cur = get_intersection(cur, new_end, cur, step)
-                degrees = get_degrees(new_end, cur)
-                all_degrees.append(degrees)
-                path.append(cur)
+            if end_point != end:
+                print("NO PID")
+            else:
+                print("PID")
+            new_end = get_intersection(start, end, cur, radius)
+            cur = get_intersection(cur, new_end, cur, step)
+            degrees = get_degrees(new_end, cur)
+            all_degrees.append(degrees)
+            path.append(cur)
                 #print("\n")
 deviation = get_deviation(all_degrees, batch_size)
 print(deviation)
