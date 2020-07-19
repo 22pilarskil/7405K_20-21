@@ -2,8 +2,6 @@ import matplotlib.pyplot as plt
 import math as Math
 import numpy as np
 
-path = []
-
 def point_line_distance (p1, p2, p3):
 	dy = p1[1]-p2[1]
 	dx = p1[0]-p2[0]
@@ -79,6 +77,11 @@ batch_size = 25
 all_degrees = []
 
 
+path = []
+PID = []
+no_PID = []
+
+
 points = [(1, 1), (1, 4), (3, 5), (4, 3), (4, 1), (6, 1.1)] #for some reason y values cannot be the same
 end_point = points[-1]
 
@@ -91,20 +94,19 @@ for i in range(len(points) - 1):
         end = points[i+1]
 
         while (distance(cur[0], cur[1], end[0], end[1]) > radius):
-            if end_point != end:
-                print("NO PID")
-            else:
-                print("PID")
             new_end = get_intersection(start, end, cur, radius)
             cur = get_intersection(cur, new_end, cur, step)
             degrees = get_degrees(new_end, cur)
             all_degrees.append(degrees)
-            path.append(cur)
-                #print("\n")
+            if end_point != end:
+                no_PID.append(cur)
+            else:
+                PID.append(cur)
+                
 deviation = get_deviation(all_degrees, batch_size)
 print(deviation)
 
-
-plt.plot(*zip(*path), '-o')
+plt.plot(*zip(*no_PID), '-o')
+plt.plot(*zip(*PID), '-o')
 plt.show()
 
