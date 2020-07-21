@@ -105,6 +105,33 @@ for i in range(len(points) - 1):
                 PID.append(cur)
                 
 deviation = get_deviation(all_degrees, batch_size)
+
+def show_PID(no_PID, PID):
+    plt.plot(zip(no_PID), '-o')
+    plt.plot(zip(PID), '-o')
+    plt.show()
+
+def show_std(deviation, path):
+    segment_length = int(len(path)/len(deviation))
+    leftover = len(path)%len(deviation)
+    split = [segment_length] * (len(deviation) - 1) + [segment_length + leftover]
+    Inputt = iter(path) 
+    Output = [list(islice(Inputt, elem)) for elem in split]
+    for x in Output:
+        plt.plot(zip(x), '-o')
+
+    plt.show()
+
+show_std(deviation, path)
+
+
+
+
+
+
+
+
+
 print(deviation)
 
 

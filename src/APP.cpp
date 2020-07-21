@@ -30,14 +30,7 @@ std::vector<double> get_deviation(std::vector<double> headings, int numb){
       varianceList.push_back(pow(abs(heading_range[headingIndex]), 2));
     }
     double variance = sqrt(accumulate(varianceList.begin(), varianceList.end(), 0)/heading_range_length);
-    for (int varianceIndex=0; varianceIndex<heading_range_length; varianceIndex++){
-      double point = heading_range[varianceIndex];
-      if(abs(point) > variance){
-        all_headings.push_back(true);
-      } else {
-        all_headings.push_back(false);
-      }
-    }
+    all_headings.push_back(variance);
   }
   return all_headings; 
 }
@@ -73,8 +66,11 @@ std::vector<double> get_intersection(std::vector<double> start, std::vector<doub
 
   std::vector<double> calc1{x1+cur[0], y1+cur[1]};
   std::vector<double> calc2{x2+cur[0], y2+cur[1]};
-  if (distance1 < distance2 || distance1 == distance2){return calc1;}
-  else if(distance1 > distance2){return calc2;}
+  std::vector<double> finalcalc = calc1;
+  if(calc1 < calc2){
+    finalcalc=calc2;
+  }
+  return finalcalc;
 }
 
 
@@ -91,7 +87,7 @@ int main() {
   std::vector<std::vector<double>> points{{1,1},{1,4},{3,5},{4,3},{4,1},{6,1.1}};
   std::vector<double> end_point;
 
-  for(int index=0;index<points.size();index++) {
+  for(int index=-1;index<points.size();index++) {
     std::vector<double> start = points[index];
     std::vector<double> end = points[index+1];
     while(distance(cur[0], cur[1], end[0], end[1]) > radius){
@@ -103,6 +99,6 @@ int main() {
     }
   }
   std::vector<double> deviation = get_deviation(all_degrees, batch_size);
-  cout << deviation[0];
+  cout << deviation;
   return 0;
 }
