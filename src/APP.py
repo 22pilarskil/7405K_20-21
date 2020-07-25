@@ -55,9 +55,7 @@ def get_intersection(start, end, cur, radius):
         d = Math.sqrt(dx * dx + dy * dy)
         D = p1[0] * p2[1] - p2[0] * p1[1]
 
-
         discriminant = abs(radius ** 2 * d ** 2 - D ** 2)
-        
 
         x1 = (D * dy + np.sign(dy) * dx * Math.sqrt(discriminant)) / (d ** 2);
         y1 = (-D * dx + abs(dy) * Math.sqrt(discriminant)) / (d ** 2);
@@ -93,18 +91,27 @@ plt.plot(cur[0], cur[1], '-o')
 for i in range(len(points) - 1):
         start = points[i]
         end = points[i+1]
-
+        
         while (distance(cur[0], cur[1], end[0], end[1]) > radius):
             new_end = get_intersection(start, end, cur, radius)
             cur = get_intersection(cur, new_end, cur, step)
+            print(cur)
             degrees = get_degrees(new_end, cur)
             all_degrees.append(degrees)
             if end_point != end:
                 no_PID.append(cur)
             else:
                 PID.append(cur)
-                
+            
+        
+
+
 deviation = get_deviation(all_degrees, batch_size)
+print(deviation)
+
+
+
+
 
 def show_PID(no_PID, PID):
     plt.plot(zip(no_PID), '-o')
@@ -123,16 +130,6 @@ def show_std(deviation, path):
     plt.show()
 
 show_std(deviation, path)
-
-
-
-
-
-
-
-
-
-print(deviation)
 
 
 plt.plot(*zip(*no_PID), '-o')
