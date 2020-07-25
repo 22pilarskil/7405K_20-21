@@ -11,6 +11,18 @@ int sign(double x) {
   return 0;
 }
 
+float point_line_distance(std::vector<double> p1, std::vector<double> p2, std::vector<double> p3){
+  double dy = p1[1]-p2[1];
+  double dx = p1[0]-p2[0];
+  if(dy == 0){return abs(p1[1]-p3[1]);}
+  if(dx == 0){return abs(p1[0]-p3[0]);}
+  float slope = dy/dx;
+  float a = -slope;
+  int b = 1;
+  float c = slope * p2[0] - p2[1];
+  return abs((a*p3[0]+b*p3[1]+c)/sqrt(pow(a, 2)+pow(b, 2)));
+}
+
 std::vector<double> get_deviation(std::vector<double> headings, int numb){
   int headingsLength = headings.size();
   int prev_heading = 0;
