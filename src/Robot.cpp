@@ -18,6 +18,7 @@ ADIEncoder Robot::LE(3, 4);
 ADIEncoder Robot::RE(1, 2, true);
 ADIEncoder Robot::BE(5, 6);
 Imu Robot::IMU(10);
+Vision Robot::vision(16);
 Acceleration Robot::power_acc(1, 1);
 Acceleration Robot::strafe_acc(1, 1);
 Acceleration Robot::turn_acc(2.6, 20);
@@ -36,6 +37,23 @@ double Robot::wheel_circumference = 2.75 * M_PI;
 bool f = true;
 
 std::map<std::string, std::unique_ptr<pros::Task>> Robot::tasks;
+
+void Robot::vis_sense(void* ptr){
+	vision_signature_s_t red_signature = Vision::signature_from_utility(1, -97, 6815, 3358, -2429, 1, -1214, 0.700, 0);
+	vision_signature_s_t blue_signature = Vision::signature_from_utility(2, -3277, -2313, -2796, 9039, 13285, 11162, 3.000, 0);
+	vision.set_signature(1, &red_signature);
+	vision.set_signature(2, &blue_signature);
+	while (true){
+		vision_object_s_t red_ball = vision.get_by_sig(0, 1);
+		vision_object_s_t blue_ball = vision.get_by_sig(0, 2);
+		int red_x_coord = red_ball.x_middle_coord;
+		int blue_x_coord = blue_ball.x_middle_coord;
+		lcd::print(6, "Relative: %d - Absolute: %d", (red_x_coord > 0 && red_x_coord < 316) ? 316/2 - red_x_coord : 0, red_ball.signature);
+		lcd::print(7, "Relative: %d - Absolute: %d", (blue_x_coord > 0 && blue_x_coord < 316) ? 316/2 - blue_x_coord : 0, blue_ball.signature);
+		delay(20);
+	}
+ }
+
 
 void Robot::drive(void* ptr){
 	while (true){

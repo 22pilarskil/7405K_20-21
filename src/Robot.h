@@ -21,6 +21,7 @@ class Robot{
 		static ADIEncoder RE;
 		static ADIEncoder BE;
 		static Imu IMU;
+		static Vision vision;
 		static Acceleration power_acc;
 		static Acceleration strafe_acc;
 		static Acceleration turn_acc;
@@ -40,6 +41,7 @@ class Robot{
 		static void drive(void* ptr);
 		static void intake(int coefficient);
 		static void fps(void* ptr);
+		static void vis_sense(void* ptr);
 		static void display(void* ptr);
 		static void mecanum(int power, int strafe, int turn);
 		static void reset_IMU();
