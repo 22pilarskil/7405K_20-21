@@ -42,7 +42,7 @@ std::vector<double> get_deviation(std::vector<double> headings, int numb){
     for (int headingIndex=0; headingIndex<heading_range_length; headingIndex++){
       varianceList.push_back(pow(abs(heading_range[headingIndex]-mean),2));
     }
-    double variance = sqrt(accumulate(varianceList.begin(), varianceList.end(), 0)/heading_range_length);
+    double variance = sqrt(accumulate(varianceList.begin(), varianceList.end(), 0)/double(heading_range_length));
     all_headings.push_back(variance);
   }
   return all_headings; 

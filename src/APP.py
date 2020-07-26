@@ -103,7 +103,7 @@ for i in range(len(points) - 1):
             all_degrees.append(degrees)
             path.append(cur)
 
-            if end_point != end:
+            if points[-1] != end:
                 no_PID.append(cur)
             else:
                 PID.append(cur)
@@ -134,7 +134,6 @@ def show_std(deviation, path):
     Inputt = iter(path) 
     Output = [list(islice(Inputt, elem)) for elem in split]
     for x in Output:
-        print(x)
         plt.plot(*zip(*x), '-o')
 
     plt.show()
