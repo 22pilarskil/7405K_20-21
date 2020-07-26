@@ -1,24 +1,31 @@
 import matplotlib.pyplot as plt
 import math as Math
 import numpy as np
+from itertools import islice
 
 def point_line_distance (p1, p2, p3):
+
   dy = p1[1]-p2[1]
   dx = p1[0]-p2[0]
+
   if (dy == 0):
     return abs(p1[1] - p3[1])
   if (dx == 0):
     return abs(p1[0] - p3[0])
+
   slope = dy/dx
   a = - slope
   b = 1
   c = slope * p2[0] - p2[1]
+
   return abs((a * p3[0] + b * p3[1] + c) / Math.sqrt(a ** 2 + b ** 2))
 
 def get_deviation(headings, numb):
+
     headingsLength = len(headings)
     prev_heading = 0
     all_headings = []
+
     for index in range(numb, headingsLength, numb):
         delta_numb = headingsLength-index
         if delta_numb < numb:
@@ -38,13 +45,16 @@ def get_deviation(headings, numb):
     return all_headings
 
 
-
-
 def distance (x1, y1, x2, y2):
-        return Math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
+
+    return Math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
+
+
 def get_degrees(point1, point2):
+
     slope=(point2[1]-point1[1])/(point2[0]-point1[0])
     return -Math.degrees(Math.atan(slope))
+
 
 def get_intersection(start, end, cur, radius):
 
@@ -73,32 +83,26 @@ def get_intersection(start, end, cur, radius):
 cur = (.2, .2)
 radius = 1
 step = .1
-# 25 seems good, but u can play around with it if u want to :)
 batch_size = 10
 all_degrees = []
-
+points = [(1, 1), (1, 4), (3, 5), (4, 3), (4, 1), (6, 1.1)]
 
 path = []
 PID = []
 no_PID = []
-
-
-points = [(1, 1), (1, 4), (3, 5), (4, 3), (4, 1), (6, 1.1)] #for some reason y values cannot be the same
-end_point = points[-1]
-
-plt.plot(*zip(*points), '-o')
-
-plt.plot(cur[0], cur[1], '-o')
 
 for i in range(len(points) - 1):
         start = points[i]
         end = points[i+1]
 
         while (distance(cur[0], cur[1], end[0], end[1]) > radius):
+
             new_end = get_intersection(start, end, cur, radius)
             cur = get_intersection(cur, new_end, cur, step)
             degrees = get_degrees(new_end, cur)
             all_degrees.append(degrees)
+            path.append(cur)
+
             if end_point != end:
                 no_PID.append(cur)
             else:
@@ -106,27 +110,35 @@ for i in range(len(points) - 1):
                 
 deviation = get_deviation(all_degrees, batch_size)
 
+def show_points(points):
+  
+    end_point = points[-1]
+    plt.plot(*zip(*points), '-o')
+    plt.plot(cur[0], cur[1], '-o')
+
+
 def show_PID(no_PID, PID):
-    plt.plot(zip(no_PID), '-o')
-    plt.plot(zip(PID), '-o')
+
+    show_points(points)
+    plt.plot(*zip(*no_PID), '-o')
+    plt.plot(*zip(*PID), '-o')
     plt.show()
 
+
 def show_std(deviation, path):
+
+    show_points(points)
     segment_length = int(len(path)/len(deviation))
     leftover = len(path)%len(deviation)
     split = [segment_length] * (len(deviation) - 1) + [segment_length + leftover]
     Inputt = iter(path) 
     Output = [list(islice(Inputt, elem)) for elem in split]
     for x in Output:
-        plt.plot(zip(x), '-o')
+        print(x)
+        plt.plot(*zip(*x), '-o')
 
     plt.show()
 
 show_std(deviation, path)
 
 print(deviation)
-
-
-plt.plot(*zip(*no_PID), '-o')
-plt.plot(*zip(*PID), '-o')
-plt.show()
