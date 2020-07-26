@@ -115,5 +115,6 @@ int main() {
     }
   }
   std::vector<double> deviation = get_deviation(all_degrees, batch_size);
+  std::cout << deviation[0];
   return 0;
 }
