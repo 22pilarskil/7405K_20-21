@@ -35,12 +35,10 @@ std::atomic<double> Robot::turn_offset_y = 0;
 double Robot::offset_back = 4 + 5/16;
 double Robot::offset_middle = 5 + 7/16;
 double Robot::wheel_circumference = 2.75 * M_PI;
-bool f = true;
-int radius = 1;
-double step = .1;
-int batch_size = 10;
-  
+bool flip = true;
+int radius = 100;
 std::map<std::string, std::unique_ptr<pros::Task>> Robot::tasks;
+
 
 void Robot::vis_sense(void* ptr){
 	vision_signature_s_t red_signature = Vision::signature_from_utility(1, -669, 5305, 2318, -971, 571, -200, 0.700, 0);
@@ -61,7 +59,6 @@ void Robot::vis_sense(void* ptr){
  }
 
 
-
 void Robot::drive(void* ptr){
 	while (true){
 
@@ -74,19 +71,13 @@ void Robot::drive(void* ptr){
 		bool intake = master.get_digital(DIGITAL_L1);
 		bool outtake = master.get_digital(DIGITAL_L2);
 
-		bool switchh = master.get_digital(DIGITAL_R1);
+		bool flip = master.get_digital(DIGITAL_R1);
 
 		bool fps = master.get_digital(DIGITAL_R2);
 		if (fps){
 			move_to(0, 0, IMU.get_rotation() - (int(IMU.get_rotation()) % 360));
 		}
 		double motorpwr = 0;
-		if (switchh) {
-			f = false;
-		}
-		else {
-			f = true;
-		}
 
 		if (intake || outtake){
 			motorpwr = (intake) ? 127 : -127;
@@ -94,24 +85,25 @@ void Robot::drive(void* ptr){
 		IL = motorpwr;
 		IR = motorpwr;
 		R1 = motorpwr;
-		R2 = (f) ? motorpwr : -motorpwr;
+		R2 = (!flip) ? motorpwr : -motorpwr;
 		if (motorpwr < 0){
 			R2 = 0;
 		}
 	}
 }
 
+
 void Robot::intake(int coefficient){
 	IL = coefficient * 127;
 	IR = coefficient * 127;
 }
+
 
 void Robot::fps(void* ptr){
 	double last_x = 0;
 	double last_y = 0;
 	double last_phi = 0;
 	while (true){
-
 
 		double cur_phi = TO_RAD(IMU.get_rotation());
 		double dphi = cur_phi - last_phi;
@@ -142,6 +134,7 @@ void Robot::fps(void* ptr){
 	}
 }
 
+
 void Robot::mecanum(int power, int strafe, int turn) {
 	FL = power + strafe + turn;
 	FR = power - strafe - turn;
@@ -149,6 +142,7 @@ void Robot::mecanum(int power, int strafe, int turn) {
 	BR = power + strafe - turn;
 	delay(10);
 }
+
 
 void Robot::display(void* ptr){
 	while (true){
@@ -160,7 +154,8 @@ void Robot::display(void* ptr){
 	}
 }
 
-void Robot::move_to(double new_y, double new_x, double heading, double maxspeed){
+
+void Robot::move_to(double new_y, double new_x, double heading, bool pure_pursuit, double maxspeed){
 	double y_error = new_y - y;
 	double x_error = - (new_x - x);
 	double imu_error = - (IMU.get_rotation() - heading);
@@ -178,6 +173,8 @@ void Robot::move_to(double new_y, double new_x, double heading, double maxspeed)
 		imu_error = - (IMU.get_rotation() - heading); //difference between goal heading and current IMU reading
 
 		mecanum((power > maxspeed) ? maxspeed : power, strafe, turn);
+
+		if (pure_pursuit) return;
 	}
 	Robot::brake("stop");
 	lcd::print(6, "DONE");
@@ -185,34 +182,34 @@ void Robot::move_to(double new_y, double new_x, double heading, double maxspeed)
 }
 
 
-void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, std::vector<double> cur){
-  std::vector<double> all_degrees;
-  std::vector<double> end_point;
-  for(int index=0;index<points.size();index++) {
-    if(index!=0){
-      int adder = -1;
-      if (points.size()-index == points.size()){adder = 0;}
-      std::vector<double> end = points[index];
-      std::vector<double> start = points[index+adder];
-      
-      while(distance(cur[0], cur[1], end[0], end[1]) > radius){
-        std::vector<double> new_end = get_intersection(start, end, cur, radius);  
-        cur = get_intersection(cur, new_end, cur, step);  
-        
-        double heading = get_degrees(new_end, start);
-				double dx = (new_end[0]-cur[0])*977;
-				double dy = (new_end[1]-cur[1])*977;
+void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, double scale){
 
-        Robot::move_to(dy, dx, heading);
-      }
+	std::vector<double> end;
+	std::vector<double> start;
+	std::vector<double> target;
+	std::vector<double> cur {x, y};
+	double heading;
+
+  	for (int index = 0; index < points.size() - 1; index++) {
+      	start = points[index];
+      	end = points[index + 1];
+      	while(distance(cur, end) > radius){
+        	target = get_intersection(start, end, cur, radius); 
+        	target = {target[0] * scale, target[1] * scale};
+        	heading = get_degrees(target, cur);
+        	Robot::move_to(target[0], target[1], heading, true);
+        	cur = {x, y};
+      	}
     }
-  }
-  std::vector<double> deviation = get_deviation(all_degrees, batch_size);	
-  Robot::brake("stop");
-	lcd::print(6, "DONE");
-	lcd::print(7, "YE: %d - XE: %d - IE: %d", int(y_error), int(x_error), int(imu_error));
-}
 
+    double x_error = end[0] - x;
+	double y_error = end[1] - y;
+	double imu_error = IMU.get_rotation() - heading;
+
+  	Robot::brake("stop");
+	lcd::print(6, "DONE");
+	lcd::print(7, "YE: %d - XE: %d - IE: %d", int(x_error), int(y_error), int(imu_error));
+}
 
 
 void Robot::brake(std::string mode){
@@ -236,6 +233,7 @@ void Robot::brake(std::string mode){
 	}
 }
 
+
 void Robot::start_task(std::string name, void (*func)(void*)) {
 	if (!task_exists(name)) {
 		tasks.insert(std::pair<std::string,std::unique_ptr<pros::Task>>
@@ -243,9 +241,11 @@ void Robot::start_task(std::string name, void (*func)(void*)) {
 	}
 }
 
+
 bool Robot::task_exists(std::string name) {
 	return tasks.find(name) != tasks.end();
 }
+
 
 void Robot::reset_IMU(){
 	IMU.reset();
