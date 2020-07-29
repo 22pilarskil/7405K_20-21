@@ -53,7 +53,7 @@ std::vector<double> get_deviation(std::vector<double> headings, int numb){
 
 double get_degrees(std::vector<double> p1, std::vector<double> p2) {
   double slope = (p2[1] - p1[1]) / (p2[0] - p1[0]);
-  double degrees = -atan(slope) * 180 / M_PI;
+  double degrees = -atan(slope) * 360 / M_PI;
   return degrees;
 }
 
