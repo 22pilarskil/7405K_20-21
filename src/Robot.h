@@ -4,6 +4,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <vector>
 using namespace pros;
 
 class Robot{
@@ -35,8 +36,9 @@ class Robot{
 		static double offset_back;
 		static double offset_middle;
 		static double wheel_circumference;
-		static void move_to(double new_y, double new_x, double heading, double maxspeed = 100000);
-		static bool get_error(bool y_fwd, bool x_fwd, double new_y, double new_x);
+    static void move_to(double new_y, double new_x, double heading, double maxspeed = 100000);
+		static void move_to_pure_pursuit(std::vector<std::vector<double>> points, std::vector<double> cur);
+    static bool get_error(bool y_fwd, bool x_fwd, double new_y, double new_x);
 		static void brake(std::string mode);
 		static void drive(void* ptr);
 		static void intake(int coefficient);

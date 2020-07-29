@@ -1,4 +1,5 @@
 #include "Robot.h"
+#include "PurePursuit.h"
 #include <cmath>
 #include <atomic>
 using namespace pros;
@@ -35,7 +36,10 @@ double Robot::offset_back = 4 + 5/16;
 double Robot::offset_middle = 5 + 7/16;
 double Robot::wheel_circumference = 2.75 * M_PI;
 bool f = true;
-
+int radius = 1;
+double step = .1;
+int batch_size = 10;
+  
 std::map<std::string, std::unique_ptr<pros::Task>> Robot::tasks;
 
 void Robot::vis_sense(void* ptr){
@@ -55,6 +59,7 @@ void Robot::vis_sense(void* ptr){
 		delay(500);
 	}
  }
+
 
 
 void Robot::drive(void* ptr){
@@ -178,6 +183,36 @@ void Robot::move_to(double new_y, double new_x, double heading, double maxspeed)
 	lcd::print(6, "DONE");
 	lcd::print(7, "YE: %d - XE: %d - IE: %d", int(y_error), int(x_error), int(imu_error));
 }
+
+
+void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, std::vector<double> cur){
+  std::vector<double> all_degrees;
+  std::vector<double> end_point;
+  for(int index=0;index<points.size();index++) {
+    if(index!=0){
+      int adder = -1;
+      if (points.size()-index == points.size()){adder = 0;}
+      std::vector<double> end = points[index];
+      std::vector<double> start = points[index+adder];
+      
+      while(distance(cur[0], cur[1], end[0], end[1]) > radius){
+        std::vector<double> new_end = get_intersection(start, end, cur, radius);  
+        cur = get_intersection(cur, new_end, cur, step);  
+        
+        double heading = get_degrees(new_end, start);
+				double dx = (new_end[0]-cur[0])*977;
+				double dy = (new_end[1]-cur[1])*977;
+
+        Robot::move_to(dy, dx, heading);
+      }
+    }
+  }
+  std::vector<double> deviation = get_deviation(all_degrees, batch_size);	
+  Robot::brake("stop");
+	lcd::print(6, "DONE");
+	lcd::print(7, "YE: %d - XE: %d - IE: %d", int(y_error), int(x_error), int(imu_error));
+}
+
 
 
 void Robot::brake(std::string mode){
