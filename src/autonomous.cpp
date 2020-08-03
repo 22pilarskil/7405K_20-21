@@ -7,13 +7,7 @@ void autonomous() {
 	delay(100);
 	Robot::start_task("FPS", Robot::fps);
 	Robot::start_task("DISPLAY", Robot::display);
-	delay(300);
-	Robot::move_to(2000, 1000, 90);
-	delay(300);
-	Robot::intake(1);
-	Robot::move_to(2000, -1000, 90, 80);
-	delay(300);
-	Robot::intake(0);
-	Robot::move_to(0, 0, 0);
-
+  double scale = 0.8;
+  std::vector<std::vector<double>> path{{0, 4000}, {1000, 4000}}; 
+  Robot::move_to_pure_pursuit(path, scale);	
 }

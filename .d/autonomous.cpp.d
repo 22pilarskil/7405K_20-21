@@ -1,4 +1,4 @@
-bin/Robot.cpp.o: src/Robot.cpp src/Robot.h include/main.h include/api.h \
+bin/autonomous.cpp.o: src/autonomous.cpp include/main.h include/api.h \
  include/pros/adi.h include/pros/colors.h include/pros/imu.h \
  include/pros/llemu.h include/display/lvgl.h include/display/lv_version.h \
  include/display/lv_misc/lv_log.h include/display/lv_conf.h \
@@ -67,9 +67,7 @@ bin/Robot.cpp.o: src/Robot.cpp src/Robot.h include/main.h include/api.h \
  include/pros/llemu.h include/pros/misc.hpp include/pros/misc.h \
  include/pros/motors.hpp include/pros/motors.h include/pros/rtos.hpp \
  include/pros/rtos.h include/pros/vision.hpp include/pros/vision.h \
- src/Acceleration.h src/PID.h src/PurePursuit.h
-
-src/Robot.h:
+ src/Robot.h src/Acceleration.h src/PID.h
 
 include/main.h:
 
@@ -329,8 +327,8 @@ include/pros/vision.hpp:
 
 include/pros/vision.h:
 
+src/Robot.h:
+
 src/Acceleration.h:
 
 src/PID.h:
-
-src/PurePursuit.h:

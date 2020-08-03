@@ -2,15 +2,16 @@
 #include "PurePursuit.h"
 #include <cmath>
 #include <atomic>
+#include <vector>
 using namespace pros;
 
 #define TO_RAD(n) n * M_PI / 180;
 
 Controller Robot::master(E_CONTROLLER_MASTER);
-Motor Robot::FL(11, true);
-Motor Robot::FR(19);
+Motor Robot::FL(20, true);
+Motor Robot::FR(18);
 Motor Robot::BL(13);
-Motor Robot::BR(20, true);
+Motor Robot::BR(16, true);
 Motor Robot::IL(2);
 Motor Robot::IR(15, true);
 Motor Robot::R1(8, true);
@@ -26,7 +27,6 @@ Acceleration Robot::turn_acc(2.6, 20);
 PID Robot::power_PID(.2, 0, 1.3, 8);
 PID Robot::strafe_PID(.26, 0, 1.3, 17);
 PID Robot::turn_PID(.6, 0, 0, 17);
-
 
 std::atomic<double> Robot::y = 0;
 std::atomic<double> Robot::x = 0;
@@ -60,13 +60,27 @@ void Robot::vis_sense(void* ptr){
 
 
 void Robot::drive(void* ptr){
-	while (true){
+	int power_dz = 110;
+  int power_dz1 = 30;
+  int power_dz2 = 100;
 
+  int strafe_dz = 20;
+  int strafe_dz1 = 70;
+  
+  while (true){
 		int power = power_acc.get_curve(master.get_analog(ANALOG_LEFT_Y));
 		int strafe = strafe_acc.get_curve(master.get_analog(ANALOG_LEFT_X));
 		int turn = turn_acc.get_curve(master.get_analog(ANALOG_RIGHT_X));
+    
+    if(abs(strafe)>strafe_dz1 && abs(power)>power_dz2){power=0;}
+    if(abs(power)>power_dz && abs(strafe)>strafe_dz){strafe=0;}
+    if(abs(power)<power_dz1){power=0;}
 
-		mecanum(power, strafe, turn);
+   	lcd::print(1, "Turn: %d", turn);
+    lcd::print(2, "Power: %d", power);
+    lcd::print(3, "Strafe: %d", strafe);
+
+    mecanum(power, strafe, turn);
 
 		bool intake = master.get_digital(DIGITAL_L1);
 		bool outtake = master.get_digital(DIGITAL_L2);
