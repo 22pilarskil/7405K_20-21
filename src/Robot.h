@@ -36,11 +36,11 @@ class Robot{
 		static double offset_back;
 		static double offset_middle;
 		static double wheel_circumference;
-    	static void move_to(double new_y, double new_x, double heading, bool pure_pursuit = false, double maxspeed = 127);
+    	static void move_to(double new_y, double new_x, double heading, bool pure_pursuit = false, double scale = 1);
 		static void move_to_pure_pursuit(std::vector<std::vector<double>> points, double scale = 1);
 		static void brake(std::string mode);
 		static void drive(void* ptr);
-		static void intake(int coefficient);
+		static void intake(int coefficient, bool flip);
 		static void fps(void* ptr);
 		static void vis_sense(void* ptr);
 		static void display(void* ptr);

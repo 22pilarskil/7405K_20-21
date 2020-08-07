@@ -52,9 +52,9 @@ std::vector<double> get_deviation(std::vector<double> headings, int numb){
 
 
 double get_degrees(std::vector<double> p1, std::vector<double> p2) {
-  double slope = (p2[1] - p1[1]) / (p2[0] - p1[0]);
-  double degrees = -atan(slope) * 360 / M_PI;
-  return degrees;
+  double y = p1[0] - p2[0];
+  double x = p1[1] - p2[1];
+  return atan2(-x, y) * 180 / M_PI;
 }
 
 double distance(std::vector<double> cur, std::vector<double> end){
@@ -67,10 +67,12 @@ double distance(std::vector<double> cur, std::vector<double> end){
   return sqrt(SQD(x1 - x2) + SQD(y1 - y2));
 }
 
-std::vector<double> get_intersection(std::vector<double> start, std::vector<double> end, std::vector<double> cur, double radius){
+std::vector<double> get_intersection(std::vector<double> start, std::vector<double> end, std::vector<double> cur, double radius, double scale){
+  
   std::vector<double> p1 {start[0] - cur[0], start[1] - cur[1]};
   std::vector<double> p2 {end[0] - cur[0], end[1] - cur[1]};
 
+  //lcd::print(6, "{%f, %f}", (float)cur[0], (float)cur[1]);
 
   double dx = p2[0] - p1[0];
   double dy = p2[1] - p1[1];
@@ -89,8 +91,10 @@ std::vector<double> get_intersection(std::vector<double> start, std::vector<doub
   float distance1 = distance(p2, intersection1);
   float distance2 = distance(p2, intersection2);
 
-  std::vector<double> calc1 {x1 + cur[0], y1 + cur[1]};
-  std::vector<double> calc2 {x2 + cur[0], y2 + cur[1]};
+  std::vector<double> calc1 {(x1 + cur[0]) * scale, (y1 + cur[1]) * scale};
+  std::vector<double> calc2 {(x2 + cur[0]) * scale, (y2 + cur[1]) * scale};
+
   if (distance1 < distance2) return calc1;
   if (distance1 > distance2) return calc2;
+
 }
