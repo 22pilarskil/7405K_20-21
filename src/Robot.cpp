@@ -60,22 +60,30 @@ void Robot::vis_sense(void* ptr){
 
 
 void Robot::drive(void* ptr){
-	while (true){
+	int fcd_toggle;
+  while (true){
 		
 		int power_dz = 110;
-	    int power_dz1 = 30;
-	    int power_dz2 = 100;
+	  int power_dz1 = 30;
+	  int power_dz2 = 100;
 
-	    int strafe_dz = 20;
-	    int strafe_dz1 = 70;
+	  int strafe_dz = 20;
+	  int strafe_dz1 = 70;
 
 		int power = power_acc.get_curve(master.get_analog(ANALOG_LEFT_Y));
 		int strafe = strafe_acc.get_curve(master.get_analog(ANALOG_LEFT_X));
 		int turn = turn_acc.get_curve(master.get_analog(ANALOG_RIGHT_X));
 
 		if (abs(strafe) > strafe_dz1 && abs(power) > power_dz2) power=0;
-	    if (abs(power) > power_dz && abs(strafe) > strafe_dz) strafe=0;
-	    if (abs(power) < power_dz1) power=0;
+	  if (abs(power) > power_dz && abs(strafe) > strafe_dz) strafe=0;
+	  if (abs(power) < power_dz1) power=0;
+
+    if (fcd_toggle%2 == 1){
+      double theta = TO_RAD(IMU.get_rotation());
+      power = power*cos(theta) - strafe*sin(theta);
+      strafe = power*sin(theta) + strafe*cos(theta); 
+    }
+    if (master.get_digital(DIGITAL_DOWN)) fcd_toggle++;
 
 		mecanum(power, strafe, turn);
 
