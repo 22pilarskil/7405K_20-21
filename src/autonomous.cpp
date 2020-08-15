@@ -8,7 +8,7 @@ void autonomous() {
 	Robot::start_task("FPS", Robot::fps);
 	Robot::start_task("DISPLAY", Robot::display);
 
-	std::vector<std::vector<double>> path {{.1,.1}, {1000, 0}, {1000, 1000}, {2000, 1000.01}};
+	std::vector<std::vector<double>> path {{.1,.1}, {0, 3000}, {-1000, 3000}, {1000, 3000}, {0, 3000}, {0, 0}};
 	Robot::move_to_pure_pursuit(path, 1);
 
 	/* test 1

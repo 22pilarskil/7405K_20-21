@@ -30,11 +30,11 @@
             "-funwind-tables",
             "--std=gnu++17",
             "-o",
-            "bin/initialize.cpp.o",
-            "src\\initialize.cpp"
+            "bin/PurePursuit.cpp.o",
+            "src\\PurePursuit.cpp"
         ],
         "directory": "C:\\Users\\zayn_\\Desktop\\Programming\\robot\\More\\more\\7405K_20-21",
-        "file": "src\\initialize.cpp"
+        "file": "src\\PurePursuit.cpp"
     },
     {
         "arguments": [
@@ -67,11 +67,11 @@
             "-funwind-tables",
             "--std=gnu++17",
             "-o",
-            "bin/Acceleration.cpp.o",
-            "src\\Acceleration.cpp"
+            "bin/initialize.cpp.o",
+            "src\\initialize.cpp"
         ],
         "directory": "C:\\Users\\zayn_\\Desktop\\Programming\\robot\\More\\more\\7405K_20-21",
-        "file": "src\\Acceleration.cpp"
+        "file": "src\\initialize.cpp"
     },
     {
         "arguments": [
@@ -141,11 +141,11 @@
             "-funwind-tables",
             "--std=gnu++17",
             "-o",
-            "bin/PurePursuit.cpp.o",
-            "src\\PurePursuit.cpp"
+            "bin/opcontrol.cpp.o",
+            "src\\opcontrol.cpp"
         ],
         "directory": "C:\\Users\\zayn_\\Desktop\\Programming\\robot\\More\\more\\7405K_20-21",
-        "file": "src\\PurePursuit.cpp"
+        "file": "src\\opcontrol.cpp"
     },
     {
         "arguments": [
@@ -178,11 +178,11 @@
             "-funwind-tables",
             "--std=gnu++17",
             "-o",
-            "bin/opcontrol.cpp.o",
-            "src\\opcontrol.cpp"
+            "bin/Acceleration.cpp.o",
+            "src\\Acceleration.cpp"
         ],
         "directory": "C:\\Users\\zayn_\\Desktop\\Programming\\robot\\More\\more\\7405K_20-21",
-        "file": "src\\opcontrol.cpp"
+        "file": "src\\Acceleration.cpp"
     },
     {
         "arguments": [

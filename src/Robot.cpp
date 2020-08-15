@@ -7,25 +7,25 @@ using namespace pros;
 #define TO_RAD(n) n * M_PI / 180;
 
 Controller Robot::master(E_CONTROLLER_MASTER);
-Motor Robot::FL(20, true);
-Motor Robot::FR(18);
-Motor Robot::BL(13);
-Motor Robot::BR(11, true);
-Motor Robot::IL(2);
-Motor Robot::IR(15, true);
+Motor Robot::FL(10, true);
+Motor Robot::FR(20);
+Motor Robot::BL(2);
+Motor Robot::BR(12, true);
+Motor Robot::IL(3, true);
+Motor Robot::IR(11);
 Motor Robot::R1(8, true);
-Motor Robot::R2(10);
+Motor Robot::R2(13);
 ADIEncoder Robot::LE(3, 4);
 ADIEncoder Robot::RE(1, 2, true);
 ADIEncoder Robot::BE(5, 6);
-Imu Robot::IMU(10);
+Imu Robot::IMU(9);
 Vision Robot::vision(16);
 Acceleration Robot::power_acc(1, 1);
 Acceleration Robot::strafe_acc(1, 1);
 Acceleration Robot::turn_acc(2.6, 20);
-PID Robot::power_PID(.2, 0, 1.3, 8);
-PID Robot::strafe_PID(.26, 0, 1.3, 17);
-PID Robot::turn_PID(.64, 0, 0, 0);
+PID Robot::power_PID(.4, 0, 1.3, 8);
+PID Robot::strafe_PID(.52, 0, 1.3, 17);
+PID Robot::turn_PID(1.28, 0, 0, 0);
 
 
 std::atomic<double> Robot::y = 0;
@@ -68,7 +68,7 @@ void Robot::drive(void* ptr){
 	  int power_dz2 = 100;
 
 	  int strafe_dz = 20;
-	  int strafe_dz1 = 70;
+	  int strafe_dz1 = 60;
 
 		int power = power_acc.get_curve(master.get_analog(ANALOG_LEFT_Y));
 		int strafe = strafe_acc.get_curve(master.get_analog(ANALOG_LEFT_X));
@@ -78,24 +78,29 @@ void Robot::drive(void* ptr){
 	  if (abs(power) > power_dz && abs(strafe) > strafe_dz) strafe=0;
 	  if (abs(power) < power_dz1) power=0;
 
-    if (fcd_toggle%2 == 1){
-      double theta = TO_RAD(IMU.get_rotation());
-      power = power*cos(theta) - strafe*sin(theta);
-      strafe = power*sin(theta) + strafe*cos(theta); 
+    //if (fcd_toggle%2 == 1){
+    //  double theta = TO_RAD(IMU.get_rotation());
+    //  int divider = 360/(round(IMU.get_rotation()/10)*10);
+    //  power = power*cos(theta) - strafe*sin(theta);
+    //  if(power > 0 && 360/divider == 4){strafe=-power;}
+    // else if(power < 0 && 360/divider == 4){strafe=power;}
+    //  else if(power > 0 && 360/divider == -4){strafe=power;}
+    //  else if(power < 0 && 360/divider == -4){strafe=-power;}
+    //  else{strafe = power*sin(theta) + strafe*cos(theta);} 
+   // }
+    //if (master.get_digital(DIGITAL_DOWN)) fcd_toggle++;
+    if (master.get_digital(DIGITAL_LEFT)){
+      move_to(0, 0, int(IMU.get_rotation()/360)*360);
     }
-    if (master.get_digital(DIGITAL_DOWN)) fcd_toggle++;
-
 		mecanum(power, strafe, turn);
 
-		bool inttake = master.get_digital(DIGITAL_L1);
-		bool outtake = master.get_digital(DIGITAL_L2);
+		bool inttake = master.get_digital(DIGITAL_R1);
+		bool outtake = master.get_digital(DIGITAL_R2);
 
-		bool flip = master.get_digital(DIGITAL_R1);
+		bool flip = master.get_digital(DIGITAL_L1);
 
-		bool fps = master.get_digital(DIGITAL_R2);
-		if (fps){
-			move_to(0, 0, IMU.get_rotation() - (int(IMU.get_rotation()) % 360));
-		}
+		bool fps = master.get_digital(DIGITAL_L2);
+
 		double motorpwr = 0;
 
 		if (inttake || outtake){
@@ -113,7 +118,7 @@ void Robot::intake(int coefficient, bool flip){
 	if (coefficient < 0){
 		coefficient = 0;
 	}
-	R2 = (!flip) ? coefficient * 127 : -coefficient * 127;
+	R2 = (!flip) ? -coefficient * 127 : coefficient * 127;
 }
 
 
