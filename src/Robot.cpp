@@ -23,7 +23,7 @@ Vision Robot::vision(16);
 Acceleration Robot::power_acc(1, 1);
 Acceleration Robot::strafe_acc(1, 1);
 Acceleration Robot::turn_acc(2.6, 20);
-PID Robot::power_PID(.25, 0, 2.2, 8);
+PID Robot::power_PID(.35, 0, 3, 8);
 PID Robot::strafe_PID(.26, 0, 1.3, 17);
 PID Robot::turn_PID(0.64, 0, 0, 0);
 
@@ -94,31 +94,42 @@ void Robot::drive(void* ptr){
     }
 		mecanum(power, strafe, turn);
 
-		bool inttake = master.get_digital(DIGITAL_R1);
-		bool outtake = master.get_digital(DIGITAL_R2);
+		bool inttake = master.get_digital(DIGITAL_R2);
+		bool outtake = master.get_digital(DIGITAL_X);
+    
+    bool justIntake = master.get_digital(DIGITAL_R1);
+    bool justIndexer = master.get_digital(DIGITAL_L2);
 
 		bool flip = master.get_digital(DIGITAL_L1);
 
-		bool fps = master.get_digital(DIGITAL_L2);
+		//bool fps = master.get_digital(DIGITAL_L2);
 
 		double motorpwr = 0;
 
 		if (inttake || outtake){
 			motorpwr = (inttake) ? 1 : -1;
-		}
+		} else if (justIntake){
+      IL = 127;
+      IR = 127;
+      continue;
+    } else if (justIndexer){
+      R1 = 127;
+      continue;
+    } 
 		intake(motorpwr, flip);
 	}
 }
 
 
 void Robot::intake(int coefficient, bool flip){
-	IL = coefficient * 127;
-	IR = coefficient * 127;
-	R1 = coefficient * 127;
-	if (coefficient < 0){
-		coefficient = 0;
-	}
-	R2 = (!flip) ? -coefficient * 127 : coefficient * 127;
+  
+   IL = coefficient * 127;
+	 IR = coefficient * 127;
+   R1 = coefficient * 127;
+   if (coefficient < 0){
+	  coefficient = 0;
+   }
+   R2 = (!flip) ? -coefficient * 127 : coefficient * 127; 
 }
 
 
@@ -294,4 +305,8 @@ bool Robot::task_exists(std::string name) {
 
 void Robot::reset_IMU(){
 	IMU.reset();
+}
+
+void Robot::reset_LineTrackers(){
+ analogCalibrate(LINE_TRACKER_PORT); 
 }
