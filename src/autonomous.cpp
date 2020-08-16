@@ -8,20 +8,21 @@ void autonomous() {
 	Robot::start_task("FPS", Robot::fps);
 	Robot::start_task("DISPLAY", Robot::display);
 
-	std::vector<std::vector<double>> path {{.1,.1}, {0, 3000}, {-1000, 3000}, {1000, 3000}, {0, 3000}, {0, 0}};
-	Robot::move_to_pure_pursuit(path, 1);
-
-	/* test 1
+  //std::vector<std::vector<double>> path {{.1,.1}, {0, 1000}, {-1000, 1000}, {1000, 1000}, {0, 1000}, {0, 0}};
+	//Robot::move_to_pure_pursuit(path, 1);
 	Robot::start_task("FPS", Robot::fps);
 	Robot::start_task("DISPLAY", Robot::display);
 	delay(300);
-	Robot::move_to(2000, 1000, 90);
+	Robot::move_to(500, 0, 0);
 	delay(300);
-	Robot::intake(1);
-	Robot::move_to(2000, -1000, 90, .7);
-	delay(300);
-	Robot::intake(0);
 	Robot::move_to(0, 0, 0);
-	*/
+	delay(300);
+	Robot::move_to(1000, 0, 0);
+  delay(300);
+  Robot::move_to(0, 0, 0);
+  delay(300);
+  Robot::move_to(1500, 0, 0);
+  delay(300);
+  Robot::move_to(0,0,0);
 
 }

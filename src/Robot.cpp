@@ -23,9 +23,9 @@ Vision Robot::vision(16);
 Acceleration Robot::power_acc(1, 1);
 Acceleration Robot::strafe_acc(1, 1);
 Acceleration Robot::turn_acc(2.6, 20);
-PID Robot::power_PID(.4, 0, 1.3, 8);
-PID Robot::strafe_PID(.52, 0, 1.3, 17);
-PID Robot::turn_PID(1.28, 0, 0, 0);
+PID Robot::power_PID(.25, 0, 2.2, 8);
+PID Robot::strafe_PID(.26, 0, 1.3, 17);
+PID Robot::turn_PID(0.64, 0, 0, 0);
 
 
 std::atomic<double> Robot::y = 0;
