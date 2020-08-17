@@ -16,7 +16,7 @@ PID::PID(double p, double i, double d, double min){
 
 
 double PID::get_value(double error){
-	
+
 	int time = millis();
 	int delta_time = time - prev_time;
 	//Allow for PID to take into account imperfect loop times- delay(5) does not always delay 5 milliseconds
@@ -26,7 +26,7 @@ double PID::get_value(double error){
 
 	prev_error = error;
 	prev_time = time;
-	
+
 	double speed = (kp * error) + (ki * I) + (kd * D);
 	return (abs(speed) > minspeed) ? speed : (speed > 0) ? minspeed : -minspeed;
 }
