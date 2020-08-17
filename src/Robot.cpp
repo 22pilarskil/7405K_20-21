@@ -16,16 +16,16 @@ Motor Robot::IR(11);
 Motor Robot::R1(8, true);
 Motor Robot::R2(13);
 ADIEncoder Robot::LE(3, 4);
-ADIEncoder Robot::RE(1, 2, true);
+ADIEncoder Robot::RE(7, 8, true);
 ADIEncoder Robot::BE(5, 6);
 Imu Robot::IMU(9);
 Vision Robot::vision(16);
 Acceleration Robot::power_acc(1, 1);
 Acceleration Robot::strafe_acc(1, 1);
 Acceleration Robot::turn_acc(2.6, 20);
-PID Robot::power_PID(.35, 0, 3, 8);
-PID Robot::strafe_PID(.26, 0, 1.3, 17);
-PID Robot::turn_PID(0.64, 0, 0, 0);
+PID Robot::power_PID(.4, 0, 4, 8);
+PID Robot::strafe_PID(.26, 0, 1, 19);
+PID Robot::turn_PID(0.7, 0, 0, 10);
 
 
 std::atomic<double> Robot::y = 0;
@@ -307,6 +307,3 @@ void Robot::reset_IMU(){
 	IMU.reset();
 }
 
-void Robot::reset_LineTrackers(){
- analogCalibrate(LINE_TRACKER_PORT); 
-}
