@@ -58,6 +58,11 @@ void Robot::vis_sense(void* ptr){
 	}
  }
 
+void Robot::reset_PID(){
+	power_PID.reset();
+	strafe_PID.reset();
+	turn_PID.reset();
+}
 
 void Robot::drive(void* ptr){
 	int fcd_toggle;
@@ -219,9 +224,15 @@ void Robot::move_to(double new_y, double new_x, double heading, bool pure_pursui
 
 		mecanum(power * scale, strafe * scale, turn * scale);
 
-		if (pure_pursuit) return;
+		if (pure_pursuit) {
+			reset_PID();
+			return;
+		}
 	}
-	Robot::brake("stop");
+	brake("stop");
+	reset_PID();
+
+
 	//lcd::print(6, "DONE");
 	//lcd::print(7, "YE: %d - XE: %d - IE: %d", int(y_error), int(x_error), int(imu_error));
 }

@@ -1,5 +1,6 @@
 #include "main.h"
 #include "PID.h"
+using namespace pros;
 
 PID::PID(double p, double i, double d, double min){
 	kp = p;
@@ -9,7 +10,6 @@ PID::PID(double p, double i, double d, double min){
 	I = 0;
 	D = 0;
 	minspeed = min;
-
 }
 double PID::get_value(double error){
 	I += error;
