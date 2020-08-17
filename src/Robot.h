@@ -1,5 +1,4 @@
 #include "main.h"
-#include "Acceleration.h"
 #include "PID.h"
 #include <map>
 #include <memory>
@@ -9,6 +8,7 @@ using namespace pros;
 
 class Robot{
 	public:
+
 		static Controller master;
 		static Motor FL;
 		static Motor FR;
@@ -23,19 +23,20 @@ class Robot{
 		static ADIEncoder BE;
 		static Imu IMU;
 		static Vision vision;
-		static Acceleration power_acc;
-		static Acceleration strafe_acc;
-		static Acceleration turn_acc;
+
 		static PID power_PID;
 		static PID strafe_PID;
 		static PID turn_PID;
+
 		static std::atomic<double> x;
 		static std::atomic<double> y;
 		static std::atomic<double> turn_offset_x;
 		static std::atomic<double> turn_offset_y;
+		static std::map<std::string, std::unique_ptr<pros::Task>> tasks;
 		static double offset_back;
 		static double offset_middle;
 		static double wheel_circumference;
+
     	static void move_to(double new_y, double new_x, double heading, bool pure_pursuit = false, double scale = 1);
 		static void move_to_pure_pursuit(std::vector<std::vector<double>> points, double scale = 1);
 		static void brake(std::string mode);
@@ -46,9 +47,9 @@ class Robot{
 		static void display(void* ptr);
 		static void mecanum(int power, int strafe, int turn);
 		static void reset_IMU();
+		static void reset_PID();
 		static void start_tasks();
 		static void start_task(std::string name, void (*func)(void*));
 		static bool task_exists(std::string name);
-		static std::map<std::string, std::unique_ptr<pros::Task>> tasks;
 
 };
