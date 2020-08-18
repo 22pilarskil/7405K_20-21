@@ -7,22 +7,22 @@ using namespace pros;
 #define TO_RAD(n) n * M_PI / 180;
 
 Controller Robot::master(E_CONTROLLER_MASTER);
-Motor Robot::FL(10, true);
-Motor Robot::FR(20);
-Motor Robot::BL(2);
-Motor Robot::BR(12, true);
+Motor Robot::FL(9, true);
+Motor Robot::FR(12);
+Motor Robot::BL(1);
+Motor Robot::BR(19, true);
 Motor Robot::IL(3, true);
 Motor Robot::IR(11);
-Motor Robot::R1(8, true);
-Motor Robot::R2(13);
+Motor Robot::R1(4, true);
+Motor Robot::R2(8);
 ADIEncoder Robot::LE(3, 4);
 ADIEncoder Robot::RE(7, 8, true);
 ADIEncoder Robot::BE(5, 6);
-Imu Robot::IMU(9);
-Vision Robot::vision(16);
-PID Robot::power_PID(.4, 0, 0, 8);
-PID Robot::strafe_PID(.26, 0, 0, 19);
-PID Robot::turn_PID(0.7, 0, 0, 10);
+Imu Robot::IMU(5);
+Vision Robot::vision(21);
+PID Robot::power_PID(.3, 0, .5, 10);
+PID Robot::strafe_PID(.52, 0, 0, 19);
+PID Robot::turn_PID(1.3, 0, 0, 16);
 
 
 std::atomic<double> Robot::y = 0;
@@ -48,9 +48,9 @@ void Robot::vis_sense(void* ptr){
 		vision_object_s_t blue_ball = vision.get_by_sig(0, 2);
 		int red_x_coord = red_ball.x_middle_coord;
 		int blue_x_coord = blue_ball.x_middle_coord;
-		lcd::print(6, "Relative: %d - Absolute: %d",
+		lcd::print(6, "Relative: %d - Absolute: %d", 
 			(red_x_coord > 0 && red_x_coord < 316 && red_ball.signature != 255) ? int((316/2 - red_x_coord)/10) : 0, red_ball.signature);
-		lcd::print(7, "Relative: %d - Absolute: %d",
+		lcd::print(7, "Relative: %d - Absolute: %d", 
 			(blue_x_coord > 0 && blue_x_coord < 316 && blue_ball.signature != 255) ? int((316/2 - blue_x_coord)/10) : 0, blue_ball.signature);
 		delay(100);
 	}
@@ -70,29 +70,29 @@ void Robot::drive(void* ptr){
 	int fcd_toggle;
 
   	while (true){
-
-			int power_dz = 110;
+		
+		int power_dz = 110;
 	  	int power_dz1 = 30;
 	  	int power_dz2 = 100;
 
 	  	int strafe_dz = 20;
 	  	int strafe_dz1 = 60;
 
-			int power = master.get_analog(ANALOG_LEFT_Y);
-			int strafe = master.get_analog(ANALOG_LEFT_X);
-			int turn = master.get_analog(ANALOG_RIGHT_X);
+		int power = master.get_analog(ANALOG_LEFT_Y);
+		int strafe = master.get_analog(ANALOG_LEFT_X);
+		int turn = master.get_analog(ANALOG_RIGHT_X);
 
-			if (abs(strafe) > strafe_dz1 && abs(power) > power_dz2) power = 0;
-	  	if (abs(power) > power_dz && abs(strafe) > strafe_dz) strafe = 0;
-	  	if (abs(power) < power_dz1) power = 0;
+		// if (abs(strafe) > strafe_dz1 && abs(power) > power_dz2) power = 0;
+	 //  	if (abs(power) > power_dz && abs(strafe) > strafe_dz) strafe = 0;
+	 //  	if (abs(power) < power_dz1) power = 0;
 
 	  	/*
     	if (fcd_toggle % 2 == 1){
       		double theta = TO_RAD(IMU.get_rotation());
       		int divider = 360 / (round(IMU.get_rotation() / 10) * 10);
       		power = power * cos(theta) - strafe * sin(theta);
-      		if(power > 0 && 360 / divider == 4) strafe = -power;
-     		else if(power < 0 && 360 / divider == 4) strafe = power;
+      		if(power > 0 && 360 / divider == 4) strafe = -power; 
+     		else if(power < 0 && 360 / divider == 4) strafe = power; 
       		else if(power > 0 && 360 / divider == -4) strafe = power;
       		else if(power < 0 && 360 / divider == -4) strafe = -power;
       		else{strafe = power * sin(theta) + strafe * cos(theta);
@@ -101,44 +101,35 @@ void Robot::drive(void* ptr){
     	*/
 
     	if (master.get_digital(DIGITAL_LEFT)) move_to(0, 0, int(IMU.get_rotation()/360)*360);
-			mecanum(power, strafe, turn);
+		mecanum(power, strafe, turn);
 
-			bool inttake = master.get_digital(DIGITAL_R2);
-			bool outtake = master.get_digital(DIGITAL_X);
+		bool inttake = master.get_digital(DIGITAL_R2);
+		bool outtake = master.get_digital(DIGITAL_X);
+    
+		bool flip = master.get_digital(DIGITAL_L1);
 
-    	bool intake_only = master.get_digital(DIGITAL_R1);
-    	bool indexer_only = master.get_digital(DIGITAL_L2);
+		double motorpwr = 0;
 
-			bool flip = master.get_digital(DIGITAL_L1);
-
-			double motorpwr = 0;
-
-			if (inttake || outtake){
-				motorpwr = (inttake) ? 1 : -1;
-			}
-			else if (intake_only){
-		    	IL = 127;
-		      IR = 127;
-	      	continue;
-	    }
-	    else if (indexer_only){
-	      	R1 = 127;
-	      	continue;
-	    }
-			intake(motorpwr, flip);
-		}
+		if (inttake || outtake){
+			motorpwr = (inttake) ? 1 : -1;
+		} 
+		
+		intake(motorpwr, flip, true);
+	}
 }
 
 
-void Robot::intake(int coefficient, bool flip){
-
-   	IL = coefficient * 127;
-		IR = coefficient * 127;
-   	R1 = coefficient * 127;
-   	if (coefficient < 0){
-	  	coefficient = 0;
+void Robot::intake(int coefficient, bool flip, bool rollers){
+  	if(rollers == false){
+		R1 = coefficient * 127;
+	   	R2 = (!flip) ? -coefficient * 127 : coefficient * 127; 
    	}
-   	R2 = (!flip) ? -coefficient * 127 : coefficient * 127;
+   	IL = coefficient * 127;
+	IR = coefficient * 127;
+   	if (coefficient < 0){
+	  coefficient = 0;
+   	}
+   	
 }
 
 
@@ -154,8 +145,8 @@ void Robot::fps(void* ptr){
 
 		double cur_turn_offset_x = 360 * (offset_back * dphi) / wheel_circumference;
 		double cur_turn_offset_y = 360 * (offset_middle * dphi) / wheel_circumference;
-		/* Calculate how much the encoders have turned as a result of turning ONLY in order to
-		isolate readings representing lateral or axial movement from readings representing
+		/* Calculate how much the encoders have turned as a result of turning ONLY in order to 
+		isolate readings representing lateral or axial movement from readings representing 
 		turning in place */
 
 		turn_offset_x = (float)turn_offset_x + cur_turn_offset_x;
@@ -207,7 +198,7 @@ void Robot::display(void* ptr){
 }
 
 
-void Robot::move_to(double new_y, double new_x, double heading, bool pure_pursuit, double scale){
+void Robot::move_to(double new_y, double new_x, double heading, int intakes, bool rollers, bool pure_pursuit, double scale){
 
 	double y_error = new_y - y;
 	double x_error = - (new_x - x);
@@ -215,10 +206,11 @@ void Robot::move_to(double new_y, double new_x, double heading, bool pure_pursui
 	double heading2 = (heading < 0) ? heading + 360 : heading -360;
 	heading = (abs(IMU.get_rotation() - heading) < abs(IMU.get_rotation() - heading2)) ? heading : heading2;
 	double imu_error = - (IMU.get_rotation() - heading);
-	/* Calculate inverse headings (i.e. 1 deg = -359 deg), then find which heading is closer to current
+	/* Calculate inverse headings (i.e. 1 deg = -359 deg), then find which heading is closer to current 
 	heading (i.e. at IMU val 150, travel to 1 deg (|150 - 1| = 149 deg traveled) as opposed to -359 deg
 	(|150 - (-359)| = 509 deg traveled) */
 
+	Robot::intake(intakes,1,rollers);
 	reset_PID();
 
 	while (abs(y_error) > 5 || abs(x_error) > 5 || abs(imu_error) > 1){ //while both goals are not reached
@@ -229,9 +221,9 @@ void Robot::move_to(double new_y, double new_x, double heading, bool pure_pursui
 		double turn = turn_PID.get_value(imu_error);
 		//Apply rotation matrix to errors as they are derived from calculations using rotation matrices
 
-		imu_error = - (IMU.get_rotation() - heading);
+		imu_error = - (IMU.get_rotation() - heading); 
 		y_error = new_y - y;
-		x_error = - (new_x - x);
+		x_error = - (new_x - x); 
 
 		mecanum(power * scale, strafe * scale, turn * scale);
 
@@ -240,6 +232,7 @@ void Robot::move_to(double new_y, double new_x, double heading, bool pure_pursui
 			return;
 		}
 	}
+	Robot::intake(0,1,rollers);
 	brake("stop");
 }
 
@@ -261,7 +254,7 @@ void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, double
 
       		lcd::print(7, "%f, %d", distance(cur, end), index);
 
-        	target = get_intersection(start, end, cur, radius, scale);
+        	target = get_intersection(start, end, cur, radius, scale); 
         	heading = get_degrees(target, cur);
 
         	lcd::print(6, "{%f, %f} %f", target[0], target[1], heading);
