@@ -81,11 +81,12 @@ def get_intersection(start, end, cur, radius):
         elif (distance1 > distance2): return (x2+cur[0], y2+cur[1])
 
 cur = (.2, .2)
-radius = 500
+radius = 300
 step = 10
 batch_size = 10
 all_degrees = []
-points = [(.2, .2), (1000, 0), (1000, 1000)]
+points = [(0, 0), (800, .1), (800, 320), (200, 1000)]
+stop_points = [(500, 0), (525, 525), (360, 750)]
 
 path = []
 PID = []
@@ -115,6 +116,7 @@ def show_points(points):
     end_point = points[-1]
     plt.plot(*zip(*points), '-o')
     plt.plot(cur[0], cur[1], '-o')
+    plt.scatter(*zip(*stop_points), s=150, color='none', edgecolor='red')
 
 
 def show_PID(no_PID, PID):
@@ -140,6 +142,8 @@ def show_std(deviation, path):
 
 #show_std(deviation, path)
 
+show_PID(no_PID, PID)
+
 #print(deviation)
 
-print(get_degrees((0, 0), (1000, 1000)))
+#print(get_degrees((0, 0), (1000, 1000)))
