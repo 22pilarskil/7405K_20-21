@@ -30,18 +30,18 @@ def get_deviation(headings, numb):
         delta_numb = headingsLength-index
         if delta_numb < numb:
             index+=delta_numb
-        
+
         heading_range = headings[prev_heading:index]
-        heading_range_length = len(heading_range) 
+        heading_range_length = len(heading_range)
         prev_heading=index
-        
+
         mean = sum(heading_range)/heading_range_length
         varianceList = [abs(heading-mean)**2 for heading in heading_range]
         variance = Math.sqrt(sum(varianceList)/heading_range_length)
         #   True = Turning | False = Straight
-        
+
         all_headings.extend([variance])
-        
+
     return all_headings
 
 
@@ -67,7 +67,7 @@ def get_intersection(start, end, cur, radius):
 
 
         discriminant = abs(radius ** 2 * d ** 2 - D ** 2)
-        
+
 
         x1 = (D * dy + np.sign(dy) * dx * Math.sqrt(discriminant)) / (d ** 2);
         y1 = (-D * dx + abs(dy) * Math.sqrt(discriminant)) / (d ** 2);
@@ -108,11 +108,11 @@ for i in range(len(points) - 1):
                 no_PID.append(cur)
             else:
                 PID.append(cur)
-                
+
 deviation = get_deviation(all_degrees, batch_size)
 
 def show_points(points):
-  
+
     end_point = points[-1]
     plt.plot(*zip(*points), '-o')
     plt.plot(cur[0], cur[1], '-o')
@@ -133,7 +133,7 @@ def show_std(deviation, path):
     segment_length = int(len(path)/len(deviation))
     leftover = len(path)%len(deviation)
     split = [segment_length] * (len(deviation) - 1) + [segment_length + leftover]
-    Inputt = iter(path) 
+    Inputt = iter(path)
     Output = [list(islice(Inputt, elem)) for elem in split]
     for x in Output:
         plt.plot(*zip(*x), '-o')

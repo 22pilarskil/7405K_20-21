@@ -30,11 +30,11 @@
             "-funwind-tables",
             "--std=gnu++17",
             "-o",
-            "bin/Robot.cpp.o",
-            "src\\Robot.cpp"
+            "bin/PID.cpp.o",
+            "src\\PID.cpp"
         ],
         "directory": "C:\\Users\\aidan\\Downloads\\7405K_20-21",
-        "file": "src\\Robot.cpp"
+        "file": "src\\PID.cpp"
     },
     {
         "arguments": [
@@ -104,11 +104,11 @@
             "-funwind-tables",
             "--std=gnu++17",
             "-o",
-            "bin/PID.cpp.o",
-            "src\\PID.cpp"
+            "bin/opcontrol.cpp.o",
+            "src\\opcontrol.cpp"
         ],
         "directory": "C:\\Users\\aidan\\Downloads\\7405K_20-21",
-        "file": "src\\PID.cpp"
+        "file": "src\\opcontrol.cpp"
     },
     {
         "arguments": [
@@ -141,11 +141,11 @@
             "-funwind-tables",
             "--std=gnu++17",
             "-o",
-            "bin/opcontrol.cpp.o",
-            "src\\opcontrol.cpp"
+            "bin/autonomous.cpp.o",
+            "src\\autonomous.cpp"
         ],
         "directory": "C:\\Users\\aidan\\Downloads\\7405K_20-21",
-        "file": "src\\opcontrol.cpp"
+        "file": "src\\autonomous.cpp"
     },
     {
         "arguments": [
@@ -215,10 +215,10 @@
             "-funwind-tables",
             "--std=gnu++17",
             "-o",
-            "bin/autonomous.cpp.o",
-            "src\\autonomous.cpp"
+            "bin/Robot.cpp.o",
+            "src\\Robot.cpp"
         ],
         "directory": "C:\\Users\\aidan\\Downloads\\7405K_20-21",
-        "file": "src\\autonomous.cpp"
+        "file": "src\\Robot.cpp"
     }
 ]
