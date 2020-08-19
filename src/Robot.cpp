@@ -62,6 +62,15 @@ void Robot::vis_sense(void* ptr){
 	}
 }
 
+void Robot::lin_intake(int balls){
+	int line2;
+	int line1;
+	while(line2 != 1 && line1 != 2){
+		if(LT1.get_value())
+	}
+}
+
+
 
 void Robot::reset_PID(){
 

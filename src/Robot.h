@@ -45,6 +45,7 @@ class Robot{
 		static void brake(std::string mode);
 		static void drive(void* ptr);
 		static void intake(int coefficient, bool flip, bool rollers=false);
+		static void lin_intake(int balls);
 		static void fps(void* ptr);
 		static void vis_sense(void* ptr);
 		static void display(void* ptr);

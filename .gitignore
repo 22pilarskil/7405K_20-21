@@ -1,5 +1,3 @@
-firmware/
-include/
 bin/
 common.mk
 compile_commands.json
