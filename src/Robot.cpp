@@ -14,12 +14,14 @@ Motor Robot::BR(19, true);
 Motor Robot::IL(3, true);
 Motor Robot::IR(11);
 Motor Robot::R1(4, true);
-Motor Robot::R2(8);
+Motor Robot::R2(10);
 ADIEncoder Robot::LE(3, 4);
 ADIEncoder Robot::RE(7, 8, true);
 ADIEncoder Robot::BE(5, 6);
 Imu Robot::IMU(5);
 Vision Robot::vision(21);
+ADIAnalogIn Robot::LT1 (1);
+ADIAnalogIn Robot::LT2 (2);
 PID Robot::power_PID(.3, 0, .5, 10);
 PID Robot::strafe_PID(.52, 0, 0, 19);
 PID Robot::turn_PID(1.3, 0, 0, 16);
@@ -35,6 +37,10 @@ double Robot::wheel_circumference = 2.75 * M_PI;
 bool flip = true;
 int radius = 300;
 std::map<std::string, std::unique_ptr<pros::Task>> Robot::tasks;
+
+
+//L2: Blue Ball-1860 Red Ball-743
+//L1: Blue Ball-490 Red Ball-2511
 
 
 void Robot::vis_sense(void* ptr){
@@ -82,9 +88,10 @@ void Robot::drive(void* ptr){
 		int strafe = master.get_analog(ANALOG_LEFT_X);
 		int turn = master.get_analog(ANALOG_RIGHT_X);
 
-		// if (abs(strafe) > strafe_dz1 && abs(power) > power_dz2) power = 0;
-	 //  	if (abs(power) > power_dz && abs(strafe) > strafe_dz) strafe = 0;
-	 //  	if (abs(power) < power_dz1) power = 0;
+
+		if (abs(strafe) > strafe_dz1 && abs(power) > power_dz2) power = 0;
+	  	if (abs(power) > power_dz && abs(strafe) > strafe_dz) strafe = 0;
+	  	if (abs(power) < power_dz1) power = 0;
 
 	  	/*
     	if (fcd_toggle % 2 == 1){
@@ -105,7 +112,10 @@ void Robot::drive(void* ptr){
 
 		bool inttake = master.get_digital(DIGITAL_R2);
 		bool outtake = master.get_digital(DIGITAL_X);
-    
+
+		bool just_intake = master.get_digital(DIGITAL_R1);
+		bool just_indexer = master.get_digital(DIGITAL_L2);
+
 		bool flip = master.get_digital(DIGITAL_L1);
 
 		double motorpwr = 0;
@@ -113,23 +123,29 @@ void Robot::drive(void* ptr){
 		if (inttake || outtake){
 			motorpwr = (inttake) ? 1 : -1;
 		} 
-		
-		intake(motorpwr, flip, true);
+
+		if(just_intake){
+			IL = 127;
+			IR = 127;
+		} else if (just_indexer){
+			R1 =   127;
+		   	R2 = (!flip) ?  -127 : 127; 
+		}
+		else {
+			intake(motorpwr, flip, true);
+		}
 	}
 }
 
 
 void Robot::intake(int coefficient, bool flip, bool rollers){
-  	if(rollers == false){
+ 	IL = coefficient * 127;
+	IR = coefficient * 127;
+	if(rollers){
+	   	if (coefficient < 0) coefficient = 0;
 		R1 = coefficient * 127;
 	   	R2 = (!flip) ? -coefficient * 127 : coefficient * 127; 
-   	}
-   	IL = coefficient * 127;
-	IR = coefficient * 127;
-   	if (coefficient < 0){
-	  coefficient = 0;
-   	}
-   	
+	}
 }
 
 
@@ -193,6 +209,9 @@ void Robot::display(void* ptr){
 		lcd::print(1, "LE: %d - RE: %d", LE.get_value(), RE.get_value());
 		lcd::print(2, "Back Encoder: %d", BE.get_value());
 		lcd::print(3, "IMU value: %f", IMU.get_rotation());
+		lcd::print(4, "Line1 Value: %d", LT1.get_value());
+		lcd::print(5, "Line2 Value: %d", LT2.get_value());
+
 		delay(10);
 	}
 }
@@ -313,4 +332,9 @@ bool Robot::task_exists(std::string name) {
 
 void Robot::reset_IMU(){
 	IMU.reset();
+}
+
+void Robot::reset_LineTrackers(){
+	LT1.calibrate();
+	LT2.calibrate();
 }

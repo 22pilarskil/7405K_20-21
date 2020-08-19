@@ -23,6 +23,9 @@ class Robot{
 		static ADIEncoder BE;
 		static Imu IMU;
 		static Vision vision;
+		static ADIAnalogIn LT1;
+		static ADIAnalogIn LT2;
+
 
 		static PID power_PID;
 		static PID strafe_PID;
@@ -47,6 +50,7 @@ class Robot{
 		static void display(void* ptr);
 		static void mecanum(int power, int strafe, int turn);
 		static void reset_IMU();
+		static void reset_LineTrackers();
 		static void reset_PID();
 		static void start_tasks();
 		static void start_task(std::string name, void (*func)(void*));
