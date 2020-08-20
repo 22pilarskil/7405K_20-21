@@ -9,5 +9,5 @@ void opcontrol() {
 	Robot::start_task("DISPLAY", Robot::display);
 	Robot::start_task("DRIVE", Robot::drive);
 	Robot::start_task("FPS", Robot::fps);
-  Robot::start_task("VISION", Robot::vis_sense);
+  	//Robot::start_task("VISION", Robot::vis_sense);
 }

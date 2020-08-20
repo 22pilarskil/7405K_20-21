@@ -20,7 +20,7 @@ ADIEncoder Robot::RE(7, 8, true);
 ADIEncoder Robot::BE(5, 6);
 Imu Robot::IMU(5);
 Vision Robot::vision(21);
-ADIAnalogIn Robot::LT1 (1);
+ADIDigitalIn Robot::LT1 (1);
 ADIAnalogIn Robot::LT2 (2);
 PID Robot::power_PID(.3, 0, .5, 10);
 PID Robot::strafe_PID(.52, 0, 0, 19);
@@ -77,15 +77,15 @@ void Robot::reset_PID(){
 void Robot::drive(void* ptr){
 
 	int fcd_toggle;
+	bool turn_off_indexer = true;
+	int power_dz = 110;
+	int power_dz1 = 30;
+	int power_dz2 = 100;
+
+	int strafe_dz = 20;
+	int strafe_dz1 = 60;
 
   	while (true){
-
-		int power_dz = 110;
-	  	int power_dz1 = 30;
-	  	int power_dz2 = 100;
-
-	  	int strafe_dz = 20;
-	  	int strafe_dz1 = 60;
 
 		int power = master.get_analog(ANALOG_LEFT_Y);
 		int strafe = master.get_analog(ANALOG_LEFT_X);
@@ -116,27 +116,31 @@ void Robot::drive(void* ptr){
 		bool inttake = master.get_digital(DIGITAL_R2);
 		bool outtake = master.get_digital(DIGITAL_X);
 
-		bool just_intake = LT2.get_value() < 1500;//master.get_digital(DIGITAL_R1);
+		bool just_intake = master.get_digital(DIGITAL_R1);
 		bool just_indexer = master.get_digital(DIGITAL_L2);
+		bool t = LT1.get_value();//LT2.get_value() < 2000
+		if(t) turn_off_indexer = false;
 
 		bool flip = master.get_digital(DIGITAL_L1);
 
 		double motorpwr = 0;
 
-		if (inttake || outtake){
-			motorpwr = (inttake) ? 1 : -1;
-		}
-
 		if(just_intake){
 			IL = 127;
 			IR = 127;
-		} else if (just_indexer){
-			R1 =   127;
+		} 
+		else if (just_indexer && turn_off_indexer){
+			R1 = 127;
 		   	R2 = (!flip) ?  -127 : 127;
 		}
-		else {
-			intake(motorpwr, flip, true);
+		else if (inttake || outtake){
+			motorpwr = (inttake) ? 1 : -1;
+			intake(motorpwr, flip, turn_off_indexer);
 		}
+		else {
+			intake(motorpwr, flip, turn_off_indexer);
+		}
+		lcd::print(6, "%d", turn_off_indexer);
 	}
 }
 
@@ -148,6 +152,10 @@ void Robot::intake(int coefficient, bool flip, bool rollers){
 	   	if (coefficient < 0) coefficient = 0;
 		R1 = coefficient * 127;
 	   	R2 = (!flip) ? -coefficient * 127 : coefficient * 127;
+	}
+	else {
+		R1 = 0;
+		R2 = 0;
 	}
 }
 

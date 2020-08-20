@@ -12,7 +12,9 @@ void autonomous() {
 	delay(100);
 	std::vector<std::vector<double>> points {{0, 0}, {800, 0.1}, {700, 470}, {365, 760}};//, {700, 470}, {160, 970}};
 	Robot::move_to_pure_pursuit(points, 1, 1);
-	//Robot::intake(1, false, true);
+	Robot::intake(1, false, true);
+	delay(500);
+	Robot::intake(0, false, true);
 	//Robot::move_to(211, 211, -45);
 	//Robot::move_to(0, -1000, 0);
 	/*Robot::move_to(500, 0, 0, 1);

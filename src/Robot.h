@@ -23,7 +23,7 @@ class Robot{
 		static ADIEncoder BE;
 		static Imu IMU;
 		static Vision vision;
-		static ADIAnalogIn LT1;
+		static ADIDigitalIn LT1;
 		static ADIAnalogIn LT2;
 
 
