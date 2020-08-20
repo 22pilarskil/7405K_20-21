@@ -33,6 +33,8 @@ class Robot{
 
 		static std::atomic<double> x;
 		static std::atomic<double> y;
+		static std::atomic<int> balls_ejected;
+		static std::atomic<int> balls_intook;
 		static std::atomic<double> turn_offset_x;
 		static std::atomic<double> turn_offset_y;
 		static std::map<std::string, std::unique_ptr<pros::Task>> tasks;
@@ -44,7 +46,7 @@ class Robot{
 		static void move_to_pure_pursuit(std::vector<std::vector<double>> points, double scale = 1, int intakes = 0, bool rollers = false);
 		static void brake(std::string mode);
 		static void drive(void* ptr);
-		static void intake(int coefficient, bool flip, bool rollers=false);
+		static void intake(int coefficient, bool flip, bool rollers=false, bool R1_only=false);
 		static void lin_intake(int balls);
 		static void fps(void* ptr);
 		static void vis_sense(void* ptr);
@@ -53,6 +55,8 @@ class Robot{
 		static void reset_sensors();
 		static void reset_PID();
 		static void start_tasks();
+		static int ball_count();
+		static int balls_intook_count();
 		static void start_task(std::string name, void (*func)(void*));
 		static bool task_exists(std::string name);
 

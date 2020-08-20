@@ -10,14 +10,17 @@ void autonomous() {
 	Robot::start_task("FPS", Robot::fps);
 	Robot::start_task("DISPLAY", Robot::display);
 	delay(100);
-	std::vector<std::vector<double>> points {{0, 0}, {800, 0.1}, {700, 470}, {365, 760}};//, {700, 470}, {160, 970}};
+	std::vector<std::vector<double>> points {{0, 0}, {800, 0.1}, {700, 470}, {300, 800}};//, {700, 470}, {160, 970}};
 	Robot::move_to_pure_pursuit(points, 1, 1);
-	Robot::intake(1, false, true);
-<<<<<<< HEAD
-=======
-	delay(500);
+	while(Robot::ball_count() < 2 || Robot::balls_intook_count() < 3){
+		Robot::intake(1, false, true);
+	}
+	delay(300);//lcd::print(7, "%d", Robot::ball_count());
 	Robot::intake(0, false, true);
->>>>>>> 75c631e1ab527d61bf52185f6e655d78fbfcf4d1
+	Robot::intake(1, false, false);
+	Robot::move_to(500, 570, Robot::IMU.get_rotation());
+	Robot::move_to(570, 490, -45);
+	Robot::intake(0, false, true);
 	//Robot::move_to(211, 211, -45);
 	//Robot::move_to(0, -1000, 0);
 	/*Robot::move_to(500, 0, 0, 1);

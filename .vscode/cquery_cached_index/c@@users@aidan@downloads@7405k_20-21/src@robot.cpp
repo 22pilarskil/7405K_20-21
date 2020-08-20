@@ -20,7 +20,7 @@ ADIEncoder Robot::RE(7, 8, true);
 ADIEncoder Robot::BE(5, 6);
 Imu Robot::IMU(5);
 Vision Robot::vision(21);
-ADIAnalogIn Robot::LT1 (1);
+ADIDigitalIn Robot::LT1 (1);
 ADIAnalogIn Robot::LT2 (2);
 PID Robot::power_PID(.3, 0, .5, 10);
 PID Robot::strafe_PID(.52, 0, 0, 19);
@@ -29,6 +29,8 @@ PID Robot::turn_PID(1.3, 0, 0, 16);
 
 std::atomic<double> Robot::y = 0;
 std::atomic<double> Robot::x = 0;
+std::atomic<int> Robot::balls_ejected = 0;
+std::atomic<int> Robot::balls_intook = 0;
 std::atomic<double> Robot::turn_offset_x = 0;
 std::atomic<double> Robot::turn_offset_y = 0;
 double Robot::offset_back = 4 + 5/16;
@@ -116,7 +118,7 @@ void Robot::drive(void* ptr){
 		bool inttake = master.get_digital(DIGITAL_R2);
 		bool outtake = master.get_digital(DIGITAL_X);
 
-		bool just_intake = LT2.get_value() < 1500;//master.get_digital(DIGITAL_R1);
+		bool just_intake = master.get_digital(DIGITAL_R1);
 		bool just_indexer = master.get_digital(DIGITAL_L2);
 
 		bool flip = master.get_digital(DIGITAL_L1);
@@ -132,22 +134,23 @@ void Robot::drive(void* ptr){
 			IR = 127;
 		} else if (just_indexer){
 			R1 =   127;
-		   	R2 = (!flip) ?  -127 : 127;
+		  R2 = (!flip) ?  -127 : 127;
 		}
 		else {
-			intake(motorpwr, flip, true);
+			intake(motorpwr, flip, false);
 		}
+		lcd::print(6, "%d, %f", LT1.get_value(), LT2_average);
 	}
 }
 
 
-void Robot::intake(int coefficient, bool flip, bool rollers){
+void Robot::intake(int coefficient, bool flip, bool rollers, bool R1_only){
  	IL = coefficient * 127;
 	IR = coefficient * 127;
 	if(rollers){
 	   	if (coefficient < 0) coefficient = 0;
-		R1 = coefficient * 127;
-	   	R2 = (!flip) ? -coefficient * 127 : coefficient * 127;
+			R1 = coefficient * 127;
+	   	if (!R1_only) R2 = (!flip) ? -coefficient * 127 : coefficient * 127;
 	}
 }
 
@@ -157,6 +160,8 @@ void Robot::fps(void* ptr){
 	double last_x = 0;
 	double last_y = 0;
 	double last_phi = 0;
+	bool just_checked = true;
+	bool just_checked_ = true;
 	while (true){
 
 		double cur_phi = TO_RAD(IMU.get_rotation());
@@ -190,10 +195,33 @@ void Robot::fps(void* ptr){
 		last_y = cur_y;
 		last_x = cur_x;
 		last_phi = cur_phi;
+
+		if (just_checked && LT1.get_value()){
+			just_checked = false;
+		}
+		else if (!LT1.get_value() && !just_checked){
+			just_checked = true;
+			balls_ejected = int(balls_ejected) + 1;
+		}
+		if (just_checked_ && LT2.get_value() < 2000){
+			just_checked_ = false;
+			balls_intook = int(balls_intook) + 1;
+		}
+		else if (LT2.get_value() > 2000 && !just_checked_){
+			just_checked_ = true;
+		}
+		lcd::print(7, "%d", int(balls_intook));
 		delay(5);
 	}
 }
 
+int Robot::ball_count(){
+	return balls_ejected;
+}
+
+int Robot::balls_intook_count(){
+	return balls_intook;
+}
 
 void Robot::mecanum(int power, int strafe, int turn) {
 
@@ -332,12 +360,12 @@ bool Robot::task_exists(std::string name) {
 
 void Robot::reset_sensors(){
 	IMU.reset();
-	int num_iter = 0;
-	double LT1_total = 0;
-	double LT2_total = 0;
+	double num_iter = 50;
+	double LT1_total;
+	double LT2_total;
 	for (int i = 0; i < num_iter; i++){
-		LT1_total += LT1.get_value();
-		LT2_total += LT2.get_value();
+		LT1_total += double(LT1.get_value());
+		LT2_total += double(LT2.get_value());
 	}
 	LT1_average = LT1_total / num_iter;
 	LT2_average = LT2_total / num_iter;
