@@ -20,7 +20,7 @@ ADIEncoder Robot::RE(7, 8, true);
 ADIEncoder Robot::BE(5, 6);
 Imu Robot::IMU(5);
 Vision Robot::vision(21);
-ADIDigitalIn Robot::LT1 (1);
+ADIDigitalIn Robot::LM1 (1);
 ADIAnalogIn Robot::LT2 (2);
 PID Robot::power_PID(.3, 0, .5, 10);
 PID Robot::strafe_PID(.52, 0, 0, 19);
@@ -36,7 +36,6 @@ std::atomic<double> Robot::turn_offset_y = 0;
 double Robot::offset_back = 4 + 5/16;
 double Robot::offset_middle = 5 + 7/16;
 double Robot::wheel_circumference = 2.75 * M_PI;
-double LT1_average = 0;
 double LT2_average = 0;
 bool flip = true;
 int radius = 300;
@@ -113,9 +112,10 @@ void Robot::drive(void* ptr){
     	*/
 
     	if (master.get_digital(DIGITAL_LEFT)) move_to(0, 0, int(IMU.get_rotation()/360)*360);
+
 		mecanum(power, strafe, turn);
 
-		bool inttake = master.get_digital(DIGITAL_R2);
+		bool intake_ = master.get_digital(DIGITAL_R2);
 		bool outtake = master.get_digital(DIGITAL_X);
 
 		bool just_intake = master.get_digital(DIGITAL_R1);
@@ -125,32 +125,33 @@ void Robot::drive(void* ptr){
 
 		double motorpwr = 0;
 
-		if (inttake || outtake){
-			motorpwr = (inttake) ? 1 : -1;
-		}
+		if (intake_ || outtake) motorpwr = (intake_) ? 1 : -1;
 
-		if(just_intake){
-			IL = 127;
-			IR = 127;
-		} else if (just_indexer){
-			R1 =   127;
-		  R2 = (!flip) ?  -127 : 127;
-		}
-		else {
-			intake(motorpwr, flip, false);
-		}
-		lcd::print(6, "%d, %f", LT1.get_value(), LT2_average);
+		if (just_intake) intake(1, flip, "intakes");
+		else if (just_indexer) intake(1, flip, "indexer");
+		else intake(motorpwr, flip, "both");
+
+		lcd::print(6, "%d", LM1.get_value());
 	}
 }
 
 
-void Robot::intake(int coefficient, bool flip, bool rollers, bool R1_only){
- 	IL = coefficient * 127;
-	IR = coefficient * 127;
-	if(rollers){
+void Robot::intake(int coefficient, bool flip, std::string powered){
+	if (coefficient == 0){
+		IL = 0;
+		IR = 0;
+		R1 = 0;
+		R2 = 0;
+		return;
+	}
+	if (powered.compare("intakes") == 0 || powered.compare("both") == 0){
+		IL = coefficient * 127;
+		IR = coefficient * 127;
+	}
+	if (powered.compare("indexer") == 0 || powered.compare("both") == 0){
+		R1 = coefficient * 127;
 	   	if (coefficient < 0) coefficient = 0;
-			R1 = coefficient * 127;
-	   	if (!R1_only) R2 = (!flip) ? -coefficient * 127 : coefficient * 127;
+	   	R2 = (!flip) ? -coefficient * 127 : coefficient * 127;
 	}
 }
 
@@ -160,8 +161,6 @@ void Robot::fps(void* ptr){
 	double last_x = 0;
 	double last_y = 0;
 	double last_phi = 0;
-	bool just_checked = true;
-	bool just_checked_ = true;
 	while (true){
 
 		double cur_phi = TO_RAD(IMU.get_rotation());
@@ -196,26 +195,34 @@ void Robot::fps(void* ptr){
 		last_x = cur_x;
 		last_phi = cur_phi;
 
-		if (just_checked && LT1.get_value()){
-			just_checked = false;
+		delay(5);
+	}
+}
+
+void Robot::sensors(void* ptr){
+	bool just_checked_ejected = true;
+	bool just_checked_intook = true;
+	while(true){
+		if (just_checked_ejected && LM1.get_value()){
+			just_checked_ejected = false;
 		}
-		else if (!LT1.get_value() && !just_checked){
-			just_checked = true;
+		else if (!LM1.get_value() && !just_checked_ejected){
+			just_checked_ejected = true;
 			balls_ejected = int(balls_ejected) + 1;
 		}
-		if (just_checked_ && LT2.get_value() < 2000){
-			just_checked_ = false;
+		if (just_checked_intook && LT2.get_value() < 2000){
+			just_checked_intook = false;
 			balls_intook = int(balls_intook) + 1;
 		}
-		else if (LT2.get_value() > 2000 && !just_checked_){
-			just_checked_ = true;
+		else if (LT2.get_value() > 2000 && !just_checked_intook){
+			just_checked_intook = true;
 		}
 		lcd::print(7, "%d", int(balls_intook));
 		delay(5);
 	}
 }
 
-int Robot::ball_count(){
+int Robot::balls_ejected_count(){
 	return balls_ejected;
 }
 
@@ -246,7 +253,7 @@ void Robot::display(void* ptr){
 }
 
 
-void Robot::move_to(double new_y, double new_x, double heading, bool pure_pursuit, int intakes, bool rollers, double scale){
+void Robot::move_to(double new_y, double new_x, double heading, bool pure_pursuit, double scale, int coefficient, bool flip, std::string powered){
 
 	double y_error = new_y - y;
 	double x_error = - (new_x - x);
@@ -258,7 +265,7 @@ void Robot::move_to(double new_y, double new_x, double heading, bool pure_pursui
 	heading (i.e. at IMU val 150, travel to 1 deg (|150 - 1| = 149 deg traveled) as opposed to -359 deg
 	(|150 - (-359)| = 509 deg traveled) */
 
-	intake(intakes,1,rollers);
+	intake(coefficient, flip, powered);
 
 	while (abs(y_error) > 5 || abs(x_error) > 5 || abs(imu_error) > 1){ //while both goals are not reached
 
@@ -278,12 +285,11 @@ void Robot::move_to(double new_y, double new_x, double heading, bool pure_pursui
 			return;
 		}
 	}
-	intake(0,1,false);
 	brake("stop");
 }
 
 
-void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, double scale, int intakes, bool rollers){
+void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, double scale, int coefficient, bool flip, std::string powered){
 
 	std::vector<double> end;
 	std::vector<double> start;
@@ -304,7 +310,7 @@ void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, double
         	heading = get_degrees(target, cur);
 
         	lcd::print(6, "{%f, %f} %f", target[0], target[1], heading);
-        	Robot::move_to(target[0], target[1], heading, true, intakes, rollers);
+        	Robot::move_to(target[0], target[1], heading, true, scale, coefficient, flip, powered);
         	delay(10);
         	cur = {(float)y, (float)x};
       	}
@@ -314,10 +320,9 @@ void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, double
 	double y_error = end[0] - y;
 	double imu_error = IMU.get_rotation() - heading;
 
-  brake("stop");
+  	brake("stop");
 	lcd::print(6, "DONE");
 	lcd::print(7, "YE: %d - XE: %d - IE: %d", int(x_error), int(y_error), int(imu_error));
-	intake(0, 1, false);
 }
 
 
@@ -361,12 +366,9 @@ bool Robot::task_exists(std::string name) {
 void Robot::reset_sensors(){
 	IMU.reset();
 	double num_iter = 50;
-	double LT1_total;
 	double LT2_total;
 	for (int i = 0; i < num_iter; i++){
-		LT1_total += double(LT1.get_value());
 		LT2_total += double(LT2.get_value());
 	}
-	LT1_average = LT1_total / num_iter;
 	LT2_average = LT2_total / num_iter;
 }

@@ -23,7 +23,7 @@ class Robot{
 		static ADIEncoder BE;
 		static Imu IMU;
 		static Vision vision;
-		static ADIDigitalIn LT1;
+		static ADIDigitalIn LM1;
 		static ADIAnalogIn LT2;
 
 
@@ -42,20 +42,20 @@ class Robot{
 		static double offset_middle;
 		static double wheel_circumference;
 
-    static void move_to(double new_y, double new_x, double heading, bool pure_pursuit = false, int intakes = 0, bool rollers = false, double scale = 1);
-		static void move_to_pure_pursuit(std::vector<std::vector<double>> points, double scale = 1, int intakes = 0, bool rollers = false);
+    	static void move_to(double new_y, double new_x, double heading, bool pure_pursuit = false, double scale = 1, int coefficient = 0, bool flip = false, std::string powered = "both");
+		static void move_to_pure_pursuit(std::vector<std::vector<double>> points, double scale = 1, int coefficient = 0, bool flip = false, std::string powered = "both");
 		static void brake(std::string mode);
 		static void drive(void* ptr);
-		static void intake(int coefficient, bool flip, bool rollers=false, bool R1_only=false);
-		static void lin_intake(int balls);
+		static void intake(int coefficient, bool flip = false, std::string powered = "both");
 		static void fps(void* ptr);
+		static void sensors(void* ptr);
 		static void vis_sense(void* ptr);
 		static void display(void* ptr);
 		static void mecanum(int power, int strafe, int turn);
 		static void reset_sensors();
 		static void reset_PID();
 		static void start_tasks();
-		static int ball_count();
+		static int balls_ejected_count();
 		static int balls_intook_count();
 		static void start_task(std::string name, void (*func)(void*));
 		static bool task_exists(std::string name);
