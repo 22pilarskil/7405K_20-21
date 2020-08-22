@@ -1,7 +1,10 @@
 #include "Robot.h"
 #include "PurePursuit.h"
+#include "filter.h"
 #include <cmath>
 #include <atomic>
+#include <vector>
+#include <numeric>
 using namespace pros;
 
 #define TO_RAD(n) n * M_PI / 180;
@@ -33,6 +36,9 @@ std::atomic<int> Robot::balls_ejected = 0;
 std::atomic<int> Robot::balls_intook = 0;
 std::atomic<double> Robot::turn_offset_x = 0;
 std::atomic<double> Robot::turn_offset_y = 0;
+std::vector<double> LE_values;
+std::vector<double> RE_values;
+std::vector<double> BE_values;
 double Robot::offset_back = 4 + 5/16;
 double Robot::offset_middle = 5 + 7/16;
 double Robot::wheel_circumference = 2.75 * M_PI;
@@ -40,11 +46,6 @@ double LT2_average = 0;
 bool flip = true;
 int radius = 300;
 std::map<std::string, std::unique_ptr<pros::Task>> Robot::tasks;
-
-
-//L2: Blue Ball-1860 Red Ball-743
-//L1: Blue Ball-490 Red Ball-2511
-
 
 void Robot::vis_sense(void* ptr){
 
@@ -65,6 +66,80 @@ void Robot::vis_sense(void* ptr){
 	}
 }
 
+void LE_filter(void* ptr){
+	vector<float> positions = {0};
+	vector<float> distances = {0};
+	while(true){
+		float position = LE.get_value();   
+		positions.push_back(position);
+
+		float distance = position-distances[-1];
+		distances.push_back(distance);
+
+		float meanSensor = accumulate(positions.begin(), positions.end(), 0)/positions.size();
+		vector<double> position_var;
+		for(int post_count; post_count < distances.size(); post_count++){position_var.push_back(pow(positions[post_count]-meanSensor, 2));}
+		float varSensor = accumulate(position_var.begin(), position_var.end(), 0)/distances.size();
+
+		float meanMove = accumulate(distances.begin(), distances.end(), 0)/distances.size();
+		vector<double> distance_var;
+		for(int dist_count; dist_count < distances.size(); dist_count++){distance_var.push_back(pow(distances[dist_count]-meanMove, 2));}
+		float varMove = accumulate(distance_var.begin(), distance_var.end(), 0)/distances.size();
+
+		Filter Filter0(0,  0, meanSensor, varSensor, meanMove, varMove, positions, distances);
+		LE_values = Filter0.get_prediction();
+	}
+}
+
+void RE_filter(void* ptr){
+	vector<float> positions = {0};
+	vector<float> distances = {0};
+	while(true){
+		float position = RE.get_value();   
+		positions.push_back(position);
+
+		float distance = position-distances[-1];
+		distances.push_back(distance);
+
+		float meanSensor = accumulate(positions.begin(), positions.end(), 0)/positions.size();
+		vector<double> position_var;
+		for(int post_count; post_count < distances.size(); post_count++){position_var.push_back(pow(positions[post_count]-meanSensor, 2));}
+		float varSensor = accumulate(position_var.begin(), position_var.end(), 0)/distances.size();
+
+		float meanMove = accumulate(distances.begin(), distances.end(), 0)/distances.size();
+		vector<double> distance_var;
+		for(int dist_count; dist_count < distances.size(); dist_count++){distance_var.push_back(pow(distances[dist_count]-meanMove, 2));}
+		float varMove = accumulate(distance_var.begin(), distance_var.end(), 0)/distances.size();
+
+		Filter Filter0(0,  0, meanSensor, varSensor, meanMove, varMove, positions, distances);
+		RE_values = Filter0.get_prediction();
+	}
+}
+
+void BE_filter(void* ptr){
+	vector<float> positions = {0};
+	vector<float> distances = {0};
+	while(true){
+		float position = BE.get_value();   
+		positions.push_back(position);
+
+		float distance = position-distances[-1];
+		distances.push_back(distance);
+
+		float meanSensor = accumulate(positions.begin(), positions.end(), 0)/positions.size();
+		vector<double> position_var;
+		for(int post_count; post_count < distances.size(); post_count++){position_var.push_back(pow(positions[post_count]-meanSensor, 2));}
+		float varSensor = accumulate(position_var.begin(), position_var.end(), 0)/distances.size();
+
+		float meanMove = accumulate(distances.begin(), distances.end(), 0)/distances.size();
+		vector<double> distance_var;
+		for(int dist_count; dist_count < distances.size(); dist_count++){distance_var.push_back(pow(distances[dist_count]-meanMove, 2));}
+		float varMove = accumulate(distance_var.begin(), distance_var.end(), 0)/distances.size();
+
+		Filter Filter0(0,  0, meanSensor, varSensor, meanMove, varMove, positions, distances);
+		BE_values = Filter0.get_prediction();
+	}
+}
 
 
 void Robot::reset_PID(){
