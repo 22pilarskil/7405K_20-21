@@ -6,8 +6,7 @@
 #include <cmath>
 using namespace std;
 
-Filter::Filter(int _mean0, int _var0, float _meanSensor, float _varSensor, float _meanMove, float _varMove, vector<float> _positions, vector<float> _distances)
-{
+Filter::Filter(int _mean0, int _var0, float _meanSensor, float _varSensor, float _meanMove, float _varMove, vector<float> _positions, vector<float> _distances){
 	mean0 = _mean0;
 	var0 = _var0;
 	meanSensor = _meanSensor;
@@ -18,8 +17,7 @@ Filter::Filter(int _mean0, int _var0, float _meanSensor, float _varSensor, float
 	distances = _distances;
 }
 
-vector<double> predict(double var, double mean, double varMove, double meanMove)
-{
+vector<double> predict(double var, double mean, double varMove, double meanMove){
 	// += is a little better
 	// You probably want to pass by reference, but It wont make that much of a difference (compiler will prob inline it)
 	var += varMove;
@@ -27,8 +25,7 @@ vector<double> predict(double var, double mean, double varMove, double meanMove)
 	return vector<double>{var, mean};
 }
 
-vector<double> correct(double var, double mean, double varSensor, double meanSensor)
-{
+vector<double> correct(double var, double mean, double varSensor, double meanSensor){
 	//You originally had the following variables as floats, then returned them in an array of doubles.
 	//Since as soon as this function is done, the local variables will be trashed, double may be simpler, because
 	//there is no casting required. If you want them to be floats, return vector<float>
@@ -37,8 +34,7 @@ vector<double> correct(double var, double mean, double varSensor, double meanSen
 	return vector<double>{newVar, newMean};
 }
 
-vector<double> Filter::get_prediction()
-{
+vector<double> Filter::get_prediction(){
 	vector<double> new_var = predict(var0, mean0, varMove, meanMove);
 	vector<double> all_vals = correct(new_var[0], new_var[1], varSensor, meanSensor);
 	vector<vector<double>> vals; //Preset the size (whats the maximum possible size in the end)?
