@@ -66,7 +66,7 @@ void Robot::vis_sense(void* ptr){
 	}
 }
 
-void LE_filter(void* ptr){
+void Robot::LE_filter(void* ptr){
 	vector<float> positions = {0};
 	vector<float> distances = {0};
 	while(true){
@@ -91,7 +91,7 @@ void LE_filter(void* ptr){
 	}
 }
 
-void RE_filter(void* ptr){
+void Robot::RE_filter(void* ptr){
 	vector<float> positions = {0};
 	vector<float> distances = {0};
 	while(true){
@@ -116,7 +116,7 @@ void RE_filter(void* ptr){
 	}
 }
 
-void BE_filter(void* ptr){
+void Robot::BE_filter(void* ptr){
 	vector<float> positions = {0};
 	vector<float> distances = {0};
 	while(true){

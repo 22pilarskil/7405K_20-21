@@ -52,6 +52,9 @@ class Robot{
 		static void vis_sense(void* ptr);
 		static void display(void* ptr);
 		static void mecanum(int power, int strafe, int turn);
+		static void BE_filter(void* ptr);
+		static void LE_filter(void* ptr);
+		static void RE_filter(void* ptr);
 		static void reset_sensors();
 		static void reset_PID();
 		static void start_tasks();
