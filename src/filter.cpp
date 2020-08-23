@@ -6,15 +6,16 @@
 #include <cmath>
 using namespace std;
 
-Filter::Filter(int _mean0, int _var0, float _meanSensor, float _varSensor, float _meanMove, float _varMove, vector<float> _positions, vector<float> _distances){
-	mean0 = _mean0;
-	var0 = _var0;
-	meanSensor = _meanSensor;
-	varSensor = _varSensor;
-	meanMove = _meanMove;
-	varMove = _varMove;
-	positions = _positions;
-	distances = _distances;
+Filter::Filter(int _mean0, int _var0, float _meanSensor, float _varSensor, float _meanMove, float _varMove, vector<float> _positions, vector<float> _distances)
+:	mean0( _mean0), //this is called an initializer list. It assigns values to the variables on creation, which is better
+	var0( _var0),
+	meanSensor( _meanSensor),
+	varSensor( _varSensor),
+	meanMove( _meanMove),
+	varMove( _varMove),
+	positions( _positions),
+	distances( _distances){
+
 }
 
 vector<double> predict(double var, double mean, double varMove, double meanMove){
