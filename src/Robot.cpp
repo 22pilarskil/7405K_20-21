@@ -18,7 +18,7 @@ Motor Robot::BR(19, true);
 Motor Robot::IL(3);
 Motor Robot::IR(11, true);
 Motor Robot::R1(4);
-Motor Robot::R2(20);
+Motor Robot::R2(20, true);
 ADIEncoder Robot::LE(3, 4);
 ADIEncoder Robot::RE(7, 8, true);
 ADIEncoder Robot::BE(5, 6);
@@ -234,9 +234,9 @@ void Robot::intake(int coefficient, bool flip, std::string powered){
 		IR = coefficient * 127;
 	}
 	if (powered.compare("indexer") == 0 || powered.compare("both") == 0){
-		R1 = coefficient * 127;
+		R1 = - coefficient * 127;
 	   	if (coefficient < 0) coefficient = 0;
-	   	R2 = (!flip) ? -coefficient * 127 : coefficient * 127;
+	   	R2 = (!flip) ? coefficient * 127 : - coefficient * 127;
 	}
 }
 
