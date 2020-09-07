@@ -4,9 +4,8 @@
 #include <vector>
 #include <numeric>
 #include <cmath>
-using namespace std;
 
-Filter::Filter(double _mean0, double _var0, const float _meanSensor, const float _varSensor, const float _meanMove, const float _varMove, vector<float> _positions, vector<float> _distances)
+Filter::Filter(double _mean0, double _var0, const float _meanSensor, const float _varSensor, const float _meanMove, const float _varMove, std::vector<float> _positions, std::vector<float> _distances)
 :	mean0( _mean0), //this is called an initializer list. It assigns values to the variables on creation, which is better
 	var0( _var0),
 	meanSensor( _meanSensor),
@@ -33,17 +32,17 @@ void correct(double &var0, double &mean0, double &varSensor, double &meanSensor)
 //	return vector<double>{newVar, newMean};
 }
 
-vector<double> Filter::get_prediction(){
+std::vector<double> Filter::get_prediction(){
 	predict(var0, mean0, varMove, meanMove);
     correct(var0, mean0, varSensor, meanSensor);
 //
-	vector<vector<double>> vals (positions.size(), vector<double>(2));
+	std::vector<std::vector<double>> vals (positions.size(), std::vector<double>(2));
 	//Preset the size (whats the maximum possible size in the end)?
 	for (int i = 0; i < positions.size(); i++)
 	{
 		predict(var0, mean0, varMove, distances[i]);
 		correct(var0, mean0, varSensor, positions[i]);
-		vals.push_back(vector<double> {var0, mean0});
+		vals.push_back(std::vector<double> {var0, mean0});
 	}
 	return vals[-1];
 };
