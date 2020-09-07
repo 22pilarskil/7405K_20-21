@@ -1,6 +1,6 @@
 #include "main.h"
 #include "Robot.h"
-#include "PurePursuit.h"
+#include "lib/PurePursuit.h"
 using namespace pros;
 
 void opcontrol() {

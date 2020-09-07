@@ -1,6 +1,6 @@
 #include "Robot.h"
-#include "PurePursuit.h"
-#include "filter.h"
+#include "lib/PurePursuit.h"
+#include "lib/filter.h"
 #include <cmath>
 #include <atomic>
 #include <vector>
