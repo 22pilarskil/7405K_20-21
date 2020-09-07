@@ -37,7 +37,8 @@ vector<double> Filter::get_prediction(){
 	predict(var0, mean0, varMove, meanMove);
     correct(var0, mean0, varSensor, meanSensor);
 //
-	vector<vector<double>> vals; //Preset the size (whats the maximum possible size in the end)?
+	vector<vector<double>> vals (positions.size(), vector<double>(2));
+	//Preset the size (whats the maximum possible size in the end)?
 	for (int i = 0; i < positions.size(); i++)
 	{
 		predict(var0, mean0, varMove, distances[i]);
