@@ -23,7 +23,7 @@ class Robot{
 		static ADIEncoder BE;
 		static Imu IMU;
 		static Vision vision;
-		static ADIDigitalIn LM1;
+		static ADIAnalogIn LM1;
 		static ADIAnalogIn LT2;
 
 
@@ -55,6 +55,7 @@ class Robot{
 		static void BE_filter(void* ptr);
 		static void LE_filter(void* ptr);
 		static void RE_filter(void* ptr);
+		static void quickScore();
 		static void reset_sensors();
 		static void reset_PID();
 		static void start_tasks();

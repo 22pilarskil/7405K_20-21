@@ -31,9 +31,8 @@ std::vector<double> get_deviation(std::vector<double> headings, int numb){
   std::vector<double> all_headings;
   for(int index = numb; index <= headingsLength; index += numb) {
     double delta_numb = headingsLength - index;
-    if(delta_numb < numb){
-      index += delta_numb;
-    }
+    if(delta_numb < numb) index += delta_numb;
+    
     std::vector<float> heading_range(headings.begin() + prev_heading, headings.begin() + index);
     int heading_range_length = heading_range.size();
     prev_heading = index;
@@ -58,13 +57,7 @@ double get_degrees(std::vector<double> p1, std::vector<double> p2) {
 }
 
 double distance(std::vector<double> cur, std::vector<double> end){
-
-  double x1 = cur[0];
-  double y1 = cur[1];
-  double x2 = end[0];
-  double y2 = end[1];
-
-  return sqrt(SQD(x1 - x2) + SQD(y1 - y2));
+  return sqrt(SQD(cur[0] - end[0]) + SQD(cur[1] - end[1]));
 }
 
 std::vector<double> get_intersection(std::vector<double> start, std::vector<double> end, std::vector<double> cur, double radius, double scale){

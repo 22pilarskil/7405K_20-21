@@ -5,6 +5,7 @@
 #include <atomic>
 #include <vector>
 #include <numeric>
+#include <chrono>
 using namespace pros;
 
 #define TO_RAD(n) n * M_PI / 180;
@@ -14,17 +15,17 @@ Motor Robot::FL(9, true);
 Motor Robot::FR(12);
 Motor Robot::BL(1);
 Motor Robot::BR(19, true);
-Motor Robot::IL(3, true);
-Motor Robot::IR(11);
-Motor Robot::R1(4, true);
-Motor Robot::R2(10);
+Motor Robot::IL(3);
+Motor Robot::IR(11, true);
+Motor Robot::R1(4);
+Motor Robot::R2(20);
 ADIEncoder Robot::LE(3, 4);
 ADIEncoder Robot::RE(7, 8, true);
 ADIEncoder Robot::BE(5, 6);
 Imu Robot::IMU(5);
 Vision Robot::vision(21);
-ADIDigitalIn Robot::LM1 (1);
-ADIAnalogIn Robot::LT2 (2);
+ADIAnalogIn Robot::LM1 (2);
+ADIAnalogIn Robot::LT2 (1);
 PID Robot::power_PID(.3, 0, .5, 10);
 PID Robot::strafe_PID(.52, 0, 0, 19);
 PID Robot::turn_PID(1.3, 0, 0, 16);
@@ -151,17 +152,19 @@ void Robot::reset_PID(){
 
 
 void Robot::drive(void* ptr){
-
 	int fcd_toggle;
+	int intake_state=1;
+	bool intake_last;
+
+	int power_dz = 110;
+	int power_dz1 = 30;
+	int power_dz2 = 100;
+
+	int strafe_dz = 20;
+	int strafe_dz1 = 60;
 
   	while (true){
 
-		int power_dz = 110;
-	  	int power_dz1 = 30;
-	  	int power_dz2 = 100;
-
-	  	int strafe_dz = 20;
-	  	int strafe_dz1 = 60;
 
 		int power = master.get_analog(ANALOG_LEFT_Y);
 		int strafe = master.get_analog(ANALOG_LEFT_X);
@@ -172,20 +175,6 @@ void Robot::drive(void* ptr){
 	  	if (abs(power) > power_dz && abs(strafe) > strafe_dz) strafe = 0;
 	  	if (abs(power) < power_dz1) power = 0;
 
-	  	/*
-    	if (fcd_toggle % 2 == 1){
-      		double theta = TO_RAD(IMU.get_rotation());
-      		int divider = 360 / (round(IMU.get_rotation() / 10) * 10);
-      		power = power * cos(theta) - strafe * sin(theta);
-      		if(power > 0 && 360 / divider == 4) strafe = -power;
-     		else if(power < 0 && 360 / divider == 4) strafe = power;
-      		else if(power > 0 && 360 / divider == -4) strafe = power;
-      		else if(power < 0 && 360 / divider == -4) strafe = -power;
-      		else{strafe = power * sin(theta) + strafe * cos(theta);
-   		}
-    	if (master.get_digital(DIGITAL_DOWN)) fcd_toggle ++;
-    	*/
-
     	if (master.get_digital(DIGITAL_LEFT)) move_to(0, 0, int(IMU.get_rotation()/360)*360);
 
 		mecanum(power, strafe, turn);
@@ -195,21 +184,42 @@ void Robot::drive(void* ptr){
 
 		bool just_intake = master.get_digital(DIGITAL_R1);
 		bool just_indexer = master.get_digital(DIGITAL_L2);
+		bool just_index = master.get_digital(DIGITAL_Y);
+		bool just_rollers = master.get_digital(DIGITAL_B);
+		bool intake_decider = master.get_digital(DIGITAL_DOWN);
 
+		bool score = master.get_digital(DIGITAL_A);
 		bool flip = master.get_digital(DIGITAL_L1);
 
 		double motorpwr = 0;
 
+		if(intake_decider && !intake_last){intake_state++;intake_last=true;}
+		else if(!intake_decider) intake_last=false;
+
 		if (intake_ || outtake) motorpwr = (intake_) ? 1 : -1;
 
-		if (just_intake) intake(1, flip, "intakes");
+		if (LT2.get_value() < 2800 && LM1.get_value() < 2800 && intake_ && intake_state%2 == 0) quickScore(); 
+		else if (just_intake) intake(1, flip, "intakes");
 		else if (just_indexer) intake(1, flip, "indexer");
+		else if (score) quickScore();
 		else intake(motorpwr, flip, "both");
+		
+		// if (score) quickScore();
 
-		lcd::print(6, "%d", LM1.get_value());
+		lcd::print(1, "%d", LM1.get_value());
+		lcd::print(2, "%d", LT2.get_value());
+		lcd::print(5, "%d", intake_state);
 	}
 }
 
+
+void Robot::quickScore(){
+	for(int iter=0; iter<800000; iter++){ 
+		R2=-127;
+		if(iter>150000) R1=127;
+	}
+	R1=R2=0;
+}
 
 void Robot::intake(int coefficient, bool flip, std::string powered){
 	if (coefficient == 0){
