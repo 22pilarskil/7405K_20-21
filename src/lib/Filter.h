@@ -4,8 +4,8 @@ using namespace std;
 
 class Filter {
   private:
-    int mean0;
-	int var0;
+    double mean0;
+	double var0;
 	float meanSensor;
 	float varSensor;
 	float meanMove;
@@ -15,6 +15,6 @@ class Filter {
 	vector<double> predict(double var, double mean, double varMove, double meanMove);
 	vector<double> correct(double var, double mean, double varSensor, double meanSensor);
   public:            
-    Filter(int a, int b, float c, float d, float e, float f, vector<float> g, vector<float> h);
+    Filter(double _mean0, double _var0, const float _meanSensor, const float _varSensor, const float _meanMove, const float _varMove, vector<float> _positions, vector<float> _distances);
 	vector<double> get_prediction();
 };
