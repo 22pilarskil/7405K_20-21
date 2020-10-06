@@ -11,6 +11,7 @@ class PID{
 		int prev_time;
 		double I;
 		double D;
+		int counter;
 
 		PID(double p, double i, double d, double min = 0);
 		double get_value(double error);

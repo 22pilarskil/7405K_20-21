@@ -12,6 +12,7 @@ PID::PID(double p, double i, double d, double min){
 	prev_time = 0;
 	I = 0;
 	D = 0;
+	counter = 25;
 }
 
 
@@ -26,15 +27,14 @@ double PID::get_value(double error){
 
 	prev_error = error;
 	prev_time = time;
+	counter++;
 
 	double speed = (kp * error) + (ki * I) + (kd * D);
-	return (abs(speed) > minspeed) ? speed : (speed > 0) ? minspeed : -minspeed;
+	double coefficient = (std::min(100, counter))/100;
+	return coefficient * (abs(speed) > minspeed) ? speed : (speed > 0) ? minspeed : -minspeed;
 }
 
 
 void PID::reset(){
-	prev_error = 0;
-	prev_time = millis();
-	I = 0;
-	D = 0;
+	counter = 25;
 }

@@ -22,8 +22,6 @@ class filter():
 			var, mean = self.predict(var, mean, self.varMove, self.distances[m])
 			var, mean = self.correct(var, mean, self.varSensor, self.positions[m])
 			vals.append([var, mean])
-	
-
 		return vals[-1]
 
 	def predict(self, var, mean, varMove, meanMove):

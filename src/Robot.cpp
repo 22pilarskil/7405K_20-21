@@ -11,8 +11,8 @@ using namespace pros;
 #define TO_RAD(n) n * M_PI / 180;
 
 Controller Robot::master(E_CONTROLLER_MASTER);
-Motor Robot::FL(9, true);
-Motor Robot::FR(12);
+Motor Robot::FL(10, true);
+Motor Robot::FR(14);
 Motor Robot::BL(1);
 Motor Robot::BR(19, true);
 Motor Robot::IL(3);
@@ -22,13 +22,13 @@ Motor Robot::R2(20, true);
 ADIEncoder Robot::LE(3, 4);
 ADIEncoder Robot::RE(7, 8, true);
 ADIEncoder Robot::BE(5, 6);
-Imu Robot::IMU(5);
+Imu Robot::IMU(8);
 Vision Robot::vision(21);
 ADIAnalogIn Robot::LM1 (2);
 ADIAnalogIn Robot::LT2 (1);
-PID Robot::power_PID(.3, 0, .5, 10);
-PID Robot::strafe_PID(.52, 0, 0, 19);
-PID Robot::turn_PID(1.3, 0, 0, 16);
+PID Robot::power_PID(.15, 0, 1.5, 15);
+PID Robot::strafe_PID(.52, 0, 0, 2);
+PID Robot::turn_PID(1.0, 0, 0, 16);
 
 
 std::atomic<double> Robot::y = 0;
@@ -150,8 +150,9 @@ void Robot::reset_PID(){
 	turn_PID.reset();
 }
 
-
 void Robot::drive(void* ptr){
+	LT2.calibrate();
+	LM1.calibrate();
 	int fcd_toggle;
 	int intake_state=1;
 	bool intake_last;
@@ -171,9 +172,9 @@ void Robot::drive(void* ptr){
 		int turn = master.get_analog(ANALOG_RIGHT_X);
 
 
-		if (abs(strafe) > strafe_dz1 && abs(power) > power_dz2) power = 0;
-	  	if (abs(power) > power_dz && abs(strafe) > strafe_dz) strafe = 0;
-	  	if (abs(power) < power_dz1) power = 0;
+		//if (abs(strafe) > strafe_dz1 && abs(power) > power_dz2) power = 0;
+	  	//if (abs(power) > power_dz && abs(strafe) > strafe_dz) strafe = 0;
+	  	//if (abs(power) < power_dz1) power = 0;
 
     	if (master.get_digital(DIGITAL_LEFT)) move_to(0, 0, int(IMU.get_rotation()/360)*360);
 
@@ -187,24 +188,87 @@ void Robot::drive(void* ptr){
 		bool just_index = master.get_digital(DIGITAL_Y);
 		bool just_rollers = master.get_digital(DIGITAL_B);
 		bool intake_decider = master.get_digital(DIGITAL_DOWN);
+		bool flipout = master.get_digital(DIGITAL_Y);
 
 		bool score = master.get_digital(DIGITAL_A);
 		bool flip = master.get_digital(DIGITAL_L1);
+		bool storingScore = master.get_digital(DIGITAL_RIGHT);
 
-		double motorpwr = 0;
 
-		if(intake_decider && !intake_last){intake_state++;intake_last=true;}
-		else if(!intake_decider) intake_last=false;
 
-		if (intake_ || outtake) motorpwr = (intake_) ? 1 : -1;
+		if(storingScore && !intake_last){intake_state++;intake_last=true;}
+		else if(!storingScore) intake_last=false;
 
-		if (LT2.get_value() < 2800 && LM1.get_value() < 2800 && intake_ && intake_state%2 == 0) quickScore(); 
-		else if (just_intake) intake(1, flip, "intakes");
-		else if (just_indexer) intake(1, flip, "indexer");
-		else if (score) quickScore();
-		else intake(motorpwr, flip, "both");
+		if(intake_state%2 == 0){
+			bool ballPlace1 = LM1.get_value() < 2200;
+			bool ballPlace2 = LT2.get_value() < 2200;
+
+			lcd::print(3, "%d", ballPlace1);
+			lcd::print(4, "%d", ballPlace2);
+			int power = 60;
+			if(ballPlace1 && !ballPlace2){
+				R1 = -power*1.2;
+				R2 = power;
+				IL = power*3;
+				IR = power*3;
+			} else if(ballPlace1 && ballPlace2){
+				IL = power*3;
+				IR = power*3;
+				R1 = 0;
+				R2 = 0;
+			} else if(!ballPlace1 && ballPlace2) {
+				R1 = -power*1.2;
+				IL = power*3;
+				IR = power*3;
+				R2 = 0;
+			} else if (!ballPlace1 && !ballPlace2){
+				R1 = -power*1.2;
+				R2 = power;
+				IL = power*3;
+				IR = power*3;
+			} else {
+				IL = power*3;
+				IR = power*3;
+				R1 = 0;
+				R2 = 0;
+			}
+		} else {
+			R1=0;
+			R2=0;
+			IL=0;
+			IR=0;
+		}
+
+		// double motorpwr = 0;
+
+		// if(flipout){
+		// 	IL = -127;
+		// 	IR = -127;
+		// 	R1 = 127;
+		// 	R2 = 127;
+		// }
+        //if(intake_last && intake_) {
+        //    if(LT2.get_value() > 2800) intake(1, false, "both");
+        //    else if(LT2.get_value() < 2800 && LM1.get_value() > 2800) intake(1, false, "indexer");
+        //    else if(LT2.get_value() < 2800 && LM1.get_value() < 2800) intake(1, false, "intakes"); 
+        //}
+        
+        /*if (just_indexer && just_intake){
+            just_indexer = false;
+            just_intake = false;
+            intake_ = true;
+        }*/
+        
+        // if (intake_ || outtake) motorpwr = (intake_) ? 1 : -1;
+
+		// if (LT2.get_value() < 2800 && LM1.get_value() < 2800 && intake_ && intake_state%2 == 0) quickScore(); 
+        // else if (just_intake && just_indexer) intake(1, false, "both");
+        // else if (just_intake) intake(1, flip, "intakes");
+		// else if (just_indexer) intake(1, flip, "indexer");
+		// else if (score) quickScore();
+		// else if (!flipout) intake(motorpwr, flip, "both");
 		
-		// if (score) quickScore();
+		//  if (score) quickScore();
 
 		lcd::print(1, "%d", LM1.get_value());
 		lcd::print(2, "%d", LT2.get_value());
@@ -212,14 +276,14 @@ void Robot::drive(void* ptr){
 	}
 }
 
-
 void Robot::quickScore(){
 	for(int iter=0; iter<800000; iter++){ 
-		R2=-127;
-		if(iter>150000) R1=127;
+		R2=127;
+		if(iter>130000) R1=-127;
 	}
 	R1=R2=0;
 }
+
 
 void Robot::intake(int coefficient, bool flip, std::string powered){
 	if (coefficient == 0){
@@ -232,12 +296,21 @@ void Robot::intake(int coefficient, bool flip, std::string powered){
 	if (powered.compare("intakes") == 0 || powered.compare("both") == 0){
 		IL = coefficient * 127;
 		IR = coefficient * 127;
+        if(!powered.compare("both") == 0){
+            R1=0;
+            R2=0;
+        }
 	}
 	if (powered.compare("indexer") == 0 || powered.compare("both") == 0){
 		R1 = - coefficient * 127;
 	   	if (coefficient < 0) coefficient = 0;
 	   	R2 = (!flip) ? coefficient * 127 : - coefficient * 127;
-	}
+	    if(!powered.compare("both") == 0)
+        {
+            IL=0;
+            IR=0;
+        }
+    }
 }
 
 
@@ -352,7 +425,7 @@ void Robot::move_to(double new_y, double new_x, double heading, bool pure_pursui
 
 	intake(coefficient, flip, powered);
 
-	while (abs(y_error) > 5 || abs(x_error) > 5 || abs(imu_error) > 1){ //while both goals are not reached
+	while (abs(y_error) > 10 || abs(x_error) > 10 || abs(imu_error) > 1){ //while both goals are not reached
 
 		double phi = TO_RAD(IMU.get_rotation());
 		double power = power_PID.get_value(y_error * std::cos(phi) + x_error * std::sin(phi));
@@ -370,6 +443,7 @@ void Robot::move_to(double new_y, double new_x, double heading, bool pure_pursui
 			return;
 		}
 	}
+	reset_PID();
 	brake("stop");
 }
 
@@ -406,6 +480,7 @@ void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, double
 	double imu_error = IMU.get_rotation() - heading;
 
   	brake("stop");
+	reset_PID();
 	lcd::print(6, "DONE");
 	lcd::print(7, "YE: %d - XE: %d - IE: %d", int(x_error), int(y_error), int(imu_error));
 }
@@ -450,6 +525,8 @@ bool Robot::task_exists(std::string name) {
 
 void Robot::reset_sensors(){
 	IMU.reset();
+	LT2.calibrate();
+	LM1.calibrate();
 	double num_iter = 50;
 	double LT2_total;
 	for (int i = 0; i < num_iter; i++){
