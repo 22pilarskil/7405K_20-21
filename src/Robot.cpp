@@ -164,6 +164,9 @@ void Robot::drive(void* ptr){
 	int strafe_dz = 20;
 	int strafe_dz1 = 60;
 
+	int initialLM1 = LM1.get_value();
+	int initialLT2 = LT2.get_value();
+
   	while (true){
 
 
@@ -200,53 +203,48 @@ void Robot::drive(void* ptr){
 		else if(!storingScore) intake_last=false;
 
 		if(intake_state%2 == 0){
-			bool ballPlace1 = LM1.get_value() < 2200;
-			bool ballPlace2 = LT2.get_value() < 2200;
+			bool ballPlace1 = LM1.get_value() < initialLM1 - 100;
+			bool ballPlace2 = LT2.get_value() < initialLT2 - 100;
 
 			lcd::print(3, "%d", ballPlace1);
 			lcd::print(4, "%d", ballPlace2);
-			int power = 60;
+			int power = 127;
 			if(ballPlace1 && !ballPlace2){
 				R1 = -power*1.2;
-				R2 = power;
+				R2 = 0;//power;
 				IL = power*3;
 				IR = power*3;
 			} else if(ballPlace1 && ballPlace2){
-				IL = power*3;
-				IR = power*3;
+				IL = power;
+				IR = power;
 				R1 = 0;
 				R2 = 0;
 			} else if(!ballPlace1 && ballPlace2) {
-				R1 = -power*1.2;
-				IL = power*3;
-				IR = power*3;
+				R1 = -power*.6;
+				IL = power;
+				IR = power;
 				R2 = 0;
 			} else if (!ballPlace1 && !ballPlace2){
-				R1 = -power*1.2;
-				R2 = power;
-				IL = power*3;
-				IR = power*3;
-			} else {
-				IL = power*3;
-				IR = power*3;
+				R1 = -power*.6;
+				R2 = 0;//power*.5;
+				IL = power;
+				IR = power;
+			} else if (ballPlace1 && ballPlace2){
+				IL = power;
+				IR = power;
 				R1 = 0;
 				R2 = 0;
-			}
-		} else {
-			R1=0;
-			R2=0;
-			IL=0;
-			IR=0;
+			} 
+		} 
+
+		double motorpwr = 0;
+
+		if(flipout){
+			IL = -127;
+			IR = -127;
+			R1 = 127;
+			R2 = 127;
 		}
-
-		// double motorpwr = 0;
-
-		// if(flipout){
-		// 	IL = -127;
-		// 	IR = -127;
-		// 	R1 = 127;
-		// 	R2 = 127;
-		// }
         //if(intake_last && intake_) {
         //    if(LT2.get_value() > 2800) intake(1, false, "both");
         //    else if(LT2.get_value() < 2800 && LM1.get_value() > 2800) intake(1, false, "indexer");
@@ -259,19 +257,23 @@ void Robot::drive(void* ptr){
             intake_ = true;
         }*/
         
-        // if (intake_ || outtake) motorpwr = (intake_) ? 1 : -1;
+		// if (intake_state%2 != 0){
+		// 	if (intake_ || outtake) motorpwr = (intake_) ? 1 : -1;
+		// 	if (LT2.get_value() < 2800 && LM1.get_value() < 2800 && intake_ && intake_state%2 == 0) quickScore(); 
+		// 	else if (just_intake && just_indexer) intake(1, false, "both");
+		// 	else if (just_intake) intake(1, flip, "intakes");
+		// 	else if (just_indexer) intake(1, flip, "indexer");
+		// 	else if (score) quickScore();
+		// 	else if (!flipout) intake(motorpwr, flip, "both");	
+		// }
 
-		// if (LT2.get_value() < 2800 && LM1.get_value() < 2800 && intake_ && intake_state%2 == 0) quickScore(); 
-        // else if (just_intake && just_indexer) intake(1, false, "both");
-        // else if (just_intake) intake(1, flip, "intakes");
-		// else if (just_indexer) intake(1, flip, "indexer");
-		// else if (score) quickScore();
-		// else if (!flipout) intake(motorpwr, flip, "both");
+	
 		
 		//  if (score) quickScore();
 
-		lcd::print(1, "%d", LM1.get_value());
-		lcd::print(2, "%d", LT2.get_value());
+		lcd::print(1, "%d %d", LM1.get_value(), initialLM1);
+		lcd::print(2, "%d %d", LT2.get_value(), initialLT2);
+		
 		lcd::print(5, "%d", intake_state);
 	}
 }
@@ -404,7 +406,7 @@ void Robot::display(void* ptr){
 		master.print(0, 0, "Joystick %d", master.get_analog(ANALOG_LEFT_X));
 		lcd::print(1, "LE: %d - RE: %d", LE.get_value(), RE.get_value());
 		lcd::print(2, "Back Encoder: %d", BE.get_value());
-		lcd::print(3, "IMU value: %f", IMU.get_rotation());
+		// lcd::print(3, "IMU value: %f", IMU.get_rotation());
 
 		delay(10);
 	}
@@ -444,6 +446,7 @@ void Robot::move_to(double new_y, double new_x, double heading, bool pure_pursui
 		}
 	}
 	reset_PID();
+	lcd::print(6, "DONE");
 	brake("stop");
 }
 
