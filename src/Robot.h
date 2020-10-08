@@ -23,7 +23,7 @@ class Robot{
 		static ADIEncoder BE;
 		static Imu IMU;
 		static Vision vision;
-		static ADIAnalogIn LM1;
+		static ADIAnalogIn LT1;
 		static ADIAnalogIn LT2;
 
 
@@ -33,6 +33,11 @@ class Robot{
 
 		static std::atomic<double> x;
 		static std::atomic<double> y;
+		static std::atomic<int> LT1_balls;
+		static std::atomic<int> LT2_balls;
+		static int initialLT1;
+		static int initialLT2;
+
 		static std::atomic<int> balls_ejected;
 		static std::atomic<int> balls_intook;
 		static std::atomic<double> turn_offset_x;
@@ -56,8 +61,10 @@ class Robot{
 		static void LE_filter(void* ptr);
 		static void RE_filter(void* ptr);
 		static void quickScore();
+		static void store();
 		static void reset_sensors();
 		static void reset_PID();
+		static void flipout();
 		static void start_tasks();
 		static int balls_ejected_count();
 		static int balls_intook_count();

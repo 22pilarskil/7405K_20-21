@@ -24,7 +24,7 @@ ADIEncoder Robot::RE(7, 8, true);
 ADIEncoder Robot::BE(5, 6);
 Imu Robot::IMU(8);
 Vision Robot::vision(21);
-ADIAnalogIn Robot::LM1 (2);
+ADIAnalogIn Robot::LT1 (2);
 ADIAnalogIn Robot::LT2 (1);
 PID Robot::power_PID(.15, 0, 1.5, 15);
 PID Robot::strafe_PID(.52, 0, 0, 2);
@@ -33,8 +33,8 @@ PID Robot::turn_PID(1.0, 0, 0, 16);
 
 std::atomic<double> Robot::y = 0;
 std::atomic<double> Robot::x = 0;
-std::atomic<int> Robot::balls_ejected = 0;
-std::atomic<int> Robot::balls_intook = 0;
+std::atomic<int> Robot::LT1_balls = 0;
+std::atomic<int> Robot::LT2_balls = 0;
 std::atomic<double> Robot::turn_offset_x = 0;
 std::atomic<double> Robot::turn_offset_y = 0;
 std::vector<double> LE_values;
@@ -43,9 +43,12 @@ std::vector<double> BE_values;
 double Robot::offset_back = 4 + 5/16;
 double Robot::offset_middle = 5 + 7/16;
 double Robot::wheel_circumference = 2.75 * M_PI;
+int Robot::initialLT1 = 0;
+int Robot::initialLT2 = 0;
 double LT2_average = 0;
 bool flip = true;
 int radius = 300;
+int buffer = 300;
 std::map<std::string, std::unique_ptr<pros::Task>> Robot::tasks;
 
 void Robot::vis_sense(void* ptr){
@@ -67,81 +70,6 @@ void Robot::vis_sense(void* ptr){
 	}
 }
 
-void Robot::LE_filter(void* ptr){
-	vector<float> positions = {0};
-	vector<float> distances = {0};
-	while(true){
-		float position = LE.get_value();   
-		positions.push_back(position);
-
-		float distance = position-distances[-1];
-		distances.push_back(distance);
-
-		float meanSensor = accumulate(positions.begin(), positions.end(), 0)/positions.size();
-		vector<double> position_var;
-		for(int post_count; post_count < distances.size(); post_count++){position_var.push_back(pow(positions[post_count]-meanSensor, 2));}
-		float varSensor = accumulate(position_var.begin(), position_var.end(), 0)/distances.size();
-
-		float meanMove = accumulate(distances.begin(), distances.end(), 0)/distances.size();
-		vector<double> distance_var;
-		for(int dist_count; dist_count < distances.size(); dist_count++){distance_var.push_back(pow(distances[dist_count]-meanMove, 2));}
-		float varMove = accumulate(distance_var.begin(), distance_var.end(), 0)/distances.size();
-
-		Filter Filter0(0,  0, meanSensor, varSensor, meanMove, varMove, positions, distances);
-		LE_values = Filter0.get_prediction();
-	}
-}
-
-void Robot::RE_filter(void* ptr){
-	vector<float> positions = {0};
-	vector<float> distances = {0};
-	while(true){
-		float position = RE.get_value();   
-		positions.push_back(position);
-
-		float distance = position-distances[-1];
-		distances.push_back(distance);
-
-		float meanSensor = accumulate(positions.begin(), positions.end(), 0)/positions.size();
-		vector<double> position_var;
-		for(int post_count; post_count < distances.size(); post_count++){position_var.push_back(pow(positions[post_count]-meanSensor, 2));}
-		float varSensor = accumulate(position_var.begin(), position_var.end(), 0)/distances.size();
-
-		float meanMove = accumulate(distances.begin(), distances.end(), 0)/distances.size();
-		vector<double> distance_var;
-		for(int dist_count; dist_count < distances.size(); dist_count++){distance_var.push_back(pow(distances[dist_count]-meanMove, 2));}
-		float varMove = accumulate(distance_var.begin(), distance_var.end(), 0)/distances.size();
-
-		Filter Filter0(0,  0, meanSensor, varSensor, meanMove, varMove, positions, distances);
-		RE_values = Filter0.get_prediction();
-	}
-}
-
-void Robot::BE_filter(void* ptr){
-	vector<float> positions = {0};
-	vector<float> distances = {0};
-	while(true){
-		float position = BE.get_value();   
-		positions.push_back(position);
-
-		float distance = position-distances[-1];
-		distances.push_back(distance);
-
-		float meanSensor = accumulate(positions.begin(), positions.end(), 0)/positions.size();
-		vector<double> position_var;
-		for(int post_count; post_count < distances.size(); post_count++){position_var.push_back(pow(positions[post_count]-meanSensor, 2));}
-		float varSensor = accumulate(position_var.begin(), position_var.end(), 0)/distances.size();
-
-		float meanMove = accumulate(distances.begin(), distances.end(), 0)/distances.size();
-		vector<double> distance_var;
-		for(int dist_count; dist_count < distances.size(); dist_count++){distance_var.push_back(pow(distances[dist_count]-meanMove, 2));}
-		float varMove = accumulate(distance_var.begin(), distance_var.end(), 0)/distances.size();
-
-		Filter Filter0(0,  0, meanSensor, varSensor, meanMove, varMove, positions, distances);
-		BE_values = Filter0.get_prediction();
-	}
-}
-
 
 void Robot::reset_PID(){
 
@@ -152,32 +80,16 @@ void Robot::reset_PID(){
 
 void Robot::drive(void* ptr){
 	LT2.calibrate();
-	LM1.calibrate();
+	LT1.calibrate();
 	int fcd_toggle;
-	int intake_state=1;
+	int intake_state = 1;
 	bool intake_last;
 
-	int power_dz = 110;
-	int power_dz1 = 30;
-	int power_dz2 = 100;
-
-	int strafe_dz = 20;
-	int strafe_dz1 = 60;
-
-	int initialLM1 = LM1.get_value();
-	int initialLT2 = LT2.get_value();
-
   	while (true){
-
 
 		int power = master.get_analog(ANALOG_LEFT_Y);
 		int strafe = master.get_analog(ANALOG_LEFT_X);
 		int turn = master.get_analog(ANALOG_RIGHT_X);
-
-
-		//if (abs(strafe) > strafe_dz1 && abs(power) > power_dz2) power = 0;
-	  	//if (abs(power) > power_dz && abs(strafe) > strafe_dz) strafe = 0;
-	  	//if (abs(power) < power_dz1) power = 0;
 
     	if (master.get_digital(DIGITAL_LEFT)) move_to(0, 0, int(IMU.get_rotation()/360)*360);
 
@@ -188,94 +100,65 @@ void Robot::drive(void* ptr){
 
 		bool just_intake = master.get_digital(DIGITAL_R1);
 		bool just_indexer = master.get_digital(DIGITAL_L2);
-		bool just_index = master.get_digital(DIGITAL_Y);
-		bool just_rollers = master.get_digital(DIGITAL_B);
-		bool intake_decider = master.get_digital(DIGITAL_DOWN);
-		bool flipout = master.get_digital(DIGITAL_Y);
-
-		bool score = master.get_digital(DIGITAL_A);
 		bool flip = master.get_digital(DIGITAL_L1);
 		bool storingScore = master.get_digital(DIGITAL_RIGHT);
-
-
 
 		if(storingScore && !intake_last){intake_state++;intake_last=true;}
 		else if(!storingScore) intake_last=false;
 
 		if(intake_state%2 == 0){
-			bool ballPlace1 = LM1.get_value() < initialLM1 - 100;
-			bool ballPlace2 = LT2.get_value() < initialLT2 - 100;
-
-			lcd::print(3, "%d", ballPlace1);
-			lcd::print(4, "%d", ballPlace2);
-			int power = 127;
-			if(ballPlace1 && !ballPlace2){
-				R1 = -power*1.2;
-				R2 = 0;//power;
-				IL = power*3;
-				IR = power*3;
-			} else if(ballPlace1 && ballPlace2){
-				IL = power;
-				IR = power;
-				R1 = 0;
-				R2 = 0;
-			} else if(!ballPlace1 && ballPlace2) {
-				R1 = -power*.6;
-				IL = power;
-				IR = power;
-				R2 = 0;
-			} else if (!ballPlace1 && !ballPlace2){
-				R1 = -power*.6;
-				R2 = 0;//power*.5;
-				IL = power;
-				IR = power;
-			} else if (ballPlace1 && ballPlace2){
-				IL = power;
-				IR = power;
-				R1 = 0;
-				R2 = 0;
-			} 
-		} 
+			store();
+		}
 
 		double motorpwr = 0;
 
-		if(flipout){
-			IL = -127;
-			IR = -127;
-			R1 = 127;
-			R2 = 127;
-		}
-        //if(intake_last && intake_) {
-        //    if(LT2.get_value() > 2800) intake(1, false, "both");
-        //    else if(LT2.get_value() < 2800 && LM1.get_value() > 2800) intake(1, false, "indexer");
-        //    else if(LT2.get_value() < 2800 && LM1.get_value() < 2800) intake(1, false, "intakes"); 
-        //}
-        
-        /*if (just_indexer && just_intake){
-            just_indexer = false;
-            just_intake = false;
-            intake_ = true;
-        }*/
-        
 		// if (intake_state%2 != 0){
-		// 	if (intake_ || outtake) motorpwr = (intake_) ? 1 : -1;
-		// 	if (LT2.get_value() < 2800 && LM1.get_value() < 2800 && intake_ && intake_state%2 == 0) quickScore(); 
-		// 	else if (just_intake && just_indexer) intake(1, false, "both");
-		// 	else if (just_intake) intake(1, flip, "intakes");
-		// 	else if (just_indexer) intake(1, flip, "indexer");
-		// 	else if (score) quickScore();
-		// 	else if (!flipout) intake(motorpwr, flip, "both");	
+			// if (intake_ || outtake) motorpwr = (intake_) ? 1 : -1;
+			// if (LT2.get_value() < 2800 && LT1.get_value() < 2800 && intake_ && intake_state%2 == 0) quickScore(); 
+			// else if (just_intake && just_indexer) intake(1, false, "both");
+			// else if (just_intake) intake(1, flip, "intakes");
+			// else if (just_indexer) intake(1, flip, "indexer");
+			// else if (!flipout) intake(motorpwr, flip, "both");
 		// }
 
-	
+		lcd::print(1, "%d %d %d", LT1.get_value(), initialLT1, int(LT1_balls));
+		lcd::print(2, "%d %d %d", LT2.get_value(), initialLT2, int(LT2_balls));
 		
-		//  if (score) quickScore();
-
-		lcd::print(1, "%d %d", LM1.get_value(), initialLM1);
-		lcd::print(2, "%d %d", LT2.get_value(), initialLT2);
-		
-		lcd::print(5, "%d", intake_state);
+		lcd::print(3, "%d", intake_state);
 	}
+}
+
+void Robot::flipout(){
+	IL = -127;
+	IR = -127;
+	R1 = 127;
+	R2 = 127;
+}
+
+void Robot::store(){
+
+	/*bool ballPlace1 = LT1.get_value() < initialLT1 - 100;
+	bool ballPlace2 = LT2.get_value() < initialLT2 - 100;
+
+	int power = 127;
+	IL = power;
+	IR = power;
+	if (!ballPlace1 && !ballPlace2){
+		R1 = -power;
+		R2 = power;
+	}
+	else if (!ballPlace1 && ballPlace2){
+		R1 = -power;
+		R2 = 0;
+	}
+	else if (ballPlace1 && !ballPlace2){
+		R1 = -power;
+		R2 = power * .8;
+	}
+	else if (ballPlace1 && ballPlace2){
+		R1 = 0;
+		R2 = 0;
+	}*/
 }
 
 void Robot::quickScore(){
@@ -360,34 +243,27 @@ void Robot::fps(void* ptr){
 }
 
 void Robot::sensors(void* ptr){
-	bool just_checked_ejected = true;
-	bool just_checked_intook = true;
-	while(true){
-		if (just_checked_ejected && LM1.get_value()){
-			just_checked_ejected = false;
-		}
-		else if (!LM1.get_value() && !just_checked_ejected){
-			just_checked_ejected = true;
-			balls_ejected = int(balls_ejected) + 1;
-		}
-		if (just_checked_intook && LT2.get_value() < 2000){
-			just_checked_intook = false;
-			balls_intook = int(balls_intook) + 1;
-		}
-		else if (LT2.get_value() > 2000 && !just_checked_intook){
-			just_checked_intook = true;
-		}
-		lcd::print(7, "%d", int(balls_intook));
-		delay(5);
-	}
-}
-
-int Robot::balls_ejected_count(){
-	return balls_ejected;
-}
-
-int Robot::balls_intook_count(){
-	return balls_intook;
+	initialLT1 = LT1.get_value();
+	initialLT2 = LT2.get_value();
+	int LT1_time = 0;
+	int LT2_time = 0;
+    while (true){
+        if (LT1.get_value() < initialLT1 - buffer){
+            if (LT1_time > 50){
+                LT1_balls += 1;
+            }
+            LT1_time = 0;
+        }
+		if (LT2.get_value() < initialLT2 - buffer){
+            if (LT2_time > 50){
+                LT2_balls += 1;
+            }
+            LT2_time = 0;
+        }
+        delay(5);
+        LT2_time += 5;
+        LT1_time += 5;
+    }
 }
 
 void Robot::mecanum(int power, int strafe, int turn) {
@@ -529,11 +405,80 @@ bool Robot::task_exists(std::string name) {
 void Robot::reset_sensors(){
 	IMU.reset();
 	LT2.calibrate();
-	LM1.calibrate();
-	double num_iter = 50;
-	double LT2_total;
-	for (int i = 0; i < num_iter; i++){
-		LT2_total += double(LT2.get_value());
+	LT1.calibrate();
+}
+
+void Robot::LE_filter(void* ptr){
+	vector<float> positions = {0};
+	vector<float> distances = {0};
+	while(true){
+		float position = LE.get_value();   
+		positions.push_back(position);
+
+		float distance = position-distances[-1];
+		distances.push_back(distance);
+
+		float meanSensor = accumulate(positions.begin(), positions.end(), 0)/positions.size();
+		vector<double> position_var;
+		for(int post_count; post_count < distances.size(); post_count++){position_var.push_back(pow(positions[post_count]-meanSensor, 2));}
+		float varSensor = accumulate(position_var.begin(), position_var.end(), 0)/distances.size();
+
+		float meanMove = accumulate(distances.begin(), distances.end(), 0)/distances.size();
+		vector<double> distance_var;
+		for(int dist_count; dist_count < distances.size(); dist_count++){distance_var.push_back(pow(distances[dist_count]-meanMove, 2));}
+		float varMove = accumulate(distance_var.begin(), distance_var.end(), 0)/distances.size();
+
+		Filter Filter0(0,  0, meanSensor, varSensor, meanMove, varMove, positions, distances);
+		LE_values = Filter0.get_prediction();
 	}
-	LT2_average = LT2_total / num_iter;
+}
+
+void Robot::RE_filter(void* ptr){
+	vector<float> positions = {0};
+	vector<float> distances = {0};
+	while(true){
+		float position = RE.get_value();   
+		positions.push_back(position);
+
+		float distance = position-distances[-1];
+		distances.push_back(distance);
+
+		float meanSensor = accumulate(positions.begin(), positions.end(), 0)/positions.size();
+		vector<double> position_var;
+		for(int post_count; post_count < distances.size(); post_count++){position_var.push_back(pow(positions[post_count]-meanSensor, 2));}
+		float varSensor = accumulate(position_var.begin(), position_var.end(), 0)/distances.size();
+
+		float meanMove = accumulate(distances.begin(), distances.end(), 0)/distances.size();
+		vector<double> distance_var;
+		for(int dist_count; dist_count < distances.size(); dist_count++){distance_var.push_back(pow(distances[dist_count]-meanMove, 2));}
+		float varMove = accumulate(distance_var.begin(), distance_var.end(), 0)/distances.size();
+
+		Filter Filter0(0,  0, meanSensor, varSensor, meanMove, varMove, positions, distances);
+		RE_values = Filter0.get_prediction();
+	}
+}
+
+void Robot::BE_filter(void* ptr){
+	vector<float> positions = {0};
+	vector<float> distances = {0};
+	while(true){
+		float position = BE.get_value();   
+		positions.push_back(position);
+
+		float distance = position-distances[-1];
+		distances.push_back(distance);
+
+		float meanSensor = accumulate(positions.begin(), positions.end(), 0)/positions.size();
+		vector<double> position_var;
+		for(int post_count; post_count < distances.size(); post_count++){position_var.push_back(pow(positions[post_count]-meanSensor, 2));}
+		float varSensor = accumulate(position_var.begin(), position_var.end(), 0)/distances.size();
+
+		float meanMove = accumulate(distances.begin(), distances.end(), 0)/distances.size();
+		vector<double> distance_var;
+		for(int dist_count; dist_count < distances.size(); dist_count++){distance_var.push_back(pow(distances[dist_count]-meanMove, 2));}
+		float varMove = accumulate(distance_var.begin(), distance_var.end(), 0)/distances.size();
+
+		Filter Filter0(0,  0, meanSensor, varSensor, meanMove, varMove, positions, distances);
+		BE_values = Filter0.get_prediction();
+	}
 }
