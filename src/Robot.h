@@ -25,6 +25,7 @@ class Robot{
 		static Vision vision;
 		static ADIAnalogIn LT1;
 		static ADIAnalogIn LT2;
+		static ADIUltrasonic ultrasonic;
 
 
 		static PID power_PID;

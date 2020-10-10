@@ -31,7 +31,7 @@ double PID::get_value(double error){
 
 	double speed = (kp * error) + (ki * I) + (kd * D);
 	double coefficient = (std::min(100, counter))/100;
-	return coefficient * (abs(speed) > minspeed) ? speed : (speed > 0) ? minspeed : -minspeed;
+	return coefficient *(abs(speed) > minspeed) ? speed : (speed > 0) ? minspeed : -minspeed;
 }
 
 

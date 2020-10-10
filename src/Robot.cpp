@@ -24,11 +24,10 @@ ADIEncoder Robot::RE(7, 8, true);
 ADIEncoder Robot::BE(5, 6);
 Imu Robot::IMU(8);
 Vision Robot::vision(21);
-ADIAnalogIn Robot::LT1 (2);
-ADIAnalogIn Robot::LT2 (1);
+ADIUltrasonic Robot::ultrasonic(1, 2);
 PID Robot::power_PID(.15, 0, 1.5, 15);
 PID Robot::strafe_PID(.52, 0, 0, 2);
-PID Robot::turn_PID(1.0, 0, 0, 16);
+PID Robot::turn_PID(0.85, 0, 0, 13);
 
 
 std::atomic<double> Robot::y = 0;
@@ -79,11 +78,9 @@ void Robot::reset_PID(){
 }
 
 void Robot::drive(void* ptr){
-	LT2.calibrate();
-	LT1.calibrate();
 	int fcd_toggle;
-	int intake_state = 1;
-	bool intake_last;
+	// int intake_state = 1;
+	// bool intake_last;
 
   	while (true){
 
@@ -103,28 +100,26 @@ void Robot::drive(void* ptr){
 		bool flip = master.get_digital(DIGITAL_L1);
 		bool storingScore = master.get_digital(DIGITAL_RIGHT);
 
-		if(storingScore && !intake_last){intake_state++;intake_last=true;}
-		else if(!storingScore) intake_last=false;
+		// if(storingScore && !intake_last){intake_state++;intake_last=true;}
+		// else if(!storingScore) intake_last=false;
 
-		if(intake_state%2 == 0){
-			store();
-		}
+		// if(intake_state%2 == 0){
+		// 	store();
+		// }
 
 		double motorpwr = 0;
 
 		// if (intake_state%2 != 0){
-			// if (intake_ || outtake) motorpwr = (intake_) ? 1 : -1;
-			// if (LT2.get_value() < 2800 && LT1.get_value() < 2800 && intake_ && intake_state%2 == 0) quickScore(); 
-			// else if (just_intake && just_indexer) intake(1, false, "both");
-			// else if (just_intake) intake(1, flip, "intakes");
-			// else if (just_indexer) intake(1, flip, "indexer");
-			// else if (!flipout) intake(motorpwr, flip, "both");
+		if (intake_ || outtake) motorpwr = (intake_) ? 1 : -1;
+		// if (LT2.get_value() < 2800 && LT1.get_value() < 2800 && intake_ && intake_state%2 == 0) quickScore(); 
+		if (just_intake && just_indexer) intake(1, false, "both");
+		else if (just_intake) intake(1, flip, "intakes");
+		else if (just_indexer) intake(1, flip, "indexer");
+		else intake(motorpwr, flip, "both");
 		// }
 
-		lcd::print(1, "%d %d %d", LT1.get_value(), initialLT1, int(LT1_balls));
-		lcd::print(2, "%d %d %d", LT2.get_value(), initialLT2, int(LT2_balls));
-		
-		lcd::print(3, "%d", intake_state);
+		lcd::print(1, "%d", ultrasonic.get_value());		
+		// lcd::print(3, "%d", intake_state);
 	}
 }
 
@@ -243,27 +238,27 @@ void Robot::fps(void* ptr){
 }
 
 void Robot::sensors(void* ptr){
-	initialLT1 = LT1.get_value();
-	initialLT2 = LT2.get_value();
-	int LT1_time = 0;
-	int LT2_time = 0;
-    while (true){
-        if (LT1.get_value() < initialLT1 - buffer){
-            if (LT1_time > 50){
-                LT1_balls += 1;
-            }
-            LT1_time = 0;
-        }
-		if (LT2.get_value() < initialLT2 - buffer){
-            if (LT2_time > 50){
-                LT2_balls += 1;
-            }
-            LT2_time = 0;
-        }
-        delay(5);
-        LT2_time += 5;
-        LT1_time += 5;
-    }
+	// initialLT1 = LT1.get_value();
+	// initialLT2 = LT2.get_value();
+	// int LT1_time = 0;
+	// int LT2_time = 0;
+    // while (true){
+    //     if (LT1.get_value() < initialLT1 - buffer){
+    //         if (LT1_time > 50){
+    //             LT1_balls += 1;
+    //         }
+    //         LT1_time = 0;
+    //     }
+	// 	if (LT2.get_value() < initialLT2 - buffer){
+    //         if (LT2_time > 50){
+    //             LT2_balls += 1;
+    //         }
+    //         LT2_time = 0;
+    //     }
+    //     delay(5);
+    //     LT2_time += 5;
+    //     LT1_time += 5;
+    // }
 }
 
 void Robot::mecanum(int power, int strafe, int turn) {
@@ -404,8 +399,8 @@ bool Robot::task_exists(std::string name) {
 
 void Robot::reset_sensors(){
 	IMU.reset();
-	LT2.calibrate();
-	LT1.calibrate();
+	// LT2.calibrate();
+	// LT1.calibrate();
 }
 
 void Robot::LE_filter(void* ptr){
