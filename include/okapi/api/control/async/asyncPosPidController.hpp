@@ -1,6 +1,4 @@
 /*
- * @author Ryan Benasutti, WPI
- *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -81,7 +79,22 @@ class AsyncPosPIDController : public AsyncWrapper<double, double>,
    */
   void setMaxVelocity(std::int32_t imaxVelocity) override;
 
+  /**
+   * Set controller gains.
+   *
+   * @param igains The new gains.
+   */
+  void setGains(const IterativePosPIDController::Gains &igains);
+
+  /**
+   * Gets the current gains.
+   *
+   * @return The current gains.
+   */
+  IterativePosPIDController::Gains getGains() const;
+
   protected:
   std::shared_ptr<OffsetableControllerInput> offsettableInput;
+  std::shared_ptr<IterativePosPIDController> internalController;
 };
 } // namespace okapi

@@ -24,7 +24,8 @@ ADIEncoder Robot::RE(7, 8, true);
 ADIEncoder Robot::BE(5, 6);
 Imu Robot::IMU(8);
 Vision Robot::vision(21);
-ADIUltrasonic Robot::ultrasonic(1, 2);
+ADIUltrasonic Robot::UB(1, 2);
+ADIUltrasonic Robot::UT ({{5, 1, 2}});
 PID Robot::power_PID(.15, 0, 1.5, 15);
 PID Robot::strafe_PID(.52, 0, 0, 2);
 PID Robot::turn_PID(0.85, 0, 0, 13);
@@ -32,22 +33,21 @@ PID Robot::turn_PID(0.85, 0, 0, 13);
 
 std::atomic<double> Robot::y = 0;
 std::atomic<double> Robot::x = 0;
-std::atomic<int> Robot::LT1_balls = 0;
-std::atomic<int> Robot::LT2_balls = 0;
 std::atomic<double> Robot::turn_offset_x = 0;
 std::atomic<double> Robot::turn_offset_y = 0;
+std::atomic<int> Robot::UB_count = 0;
+std::atomic<int> Robot::UT_count = 0;
 std::vector<double> LE_values;
 std::vector<double> RE_values;
-std::vector<double> BE_values;
+std::vector<double> BE_values;	
 double Robot::offset_back = 4 + 5/16;
 double Robot::offset_middle = 5 + 7/16;
 double Robot::wheel_circumference = 2.75 * M_PI;
-int Robot::initialLT1 = 0;
-int Robot::initialLT2 = 0;
-double LT2_average = 0;
 bool flip = true;
 int radius = 300;
-int buffer = 300;
+int buffer = 200;
+int UT_LastBall;;
+int UB_LastBall;
 std::map<std::string, std::unique_ptr<pros::Task>> Robot::tasks;
 
 void Robot::vis_sense(void* ptr){
@@ -78,9 +78,10 @@ void Robot::reset_PID(){
 }
 
 void Robot::drive(void* ptr){
+	delay(300);
 	int fcd_toggle;
-	// int intake_state = 1;
-	// bool intake_last;
+	int intake_state = 1;
+	bool intake_last;
 
   	while (true){
 
@@ -100,26 +101,50 @@ void Robot::drive(void* ptr){
 		bool flip = master.get_digital(DIGITAL_L1);
 		bool storingScore = master.get_digital(DIGITAL_RIGHT);
 
-		// if(storingScore && !intake_last){intake_state++;intake_last=true;}
-		// else if(!storingScore) intake_last=false;
+		if(storingScore && !intake_last){
+			intake_state++;
+			intake_last=true;
+			UT_LastBall = (int) UT_count;
+			UB_LastBall = (int) UB_count;
+		} else if(!storingScore) intake_last=false;
 
-		// if(intake_state%2 == 0){
-		// 	store();
-		// }
+		if(intake_state%2 == 0){
+			store();
+			lcd::print(1, "%d %d", UB.get_value(), int(UB_count));
+			lcd::print(3, "%d %d", UT.get_value(), int(UT_count));
+		}
+		else {
 
-		double motorpwr = 0;
+			double motorpwr = 0;
 
-		// if (intake_state%2 != 0){
-		if (intake_ || outtake) motorpwr = (intake_) ? 1 : -1;
-		// if (LT2.get_value() < 2800 && LT1.get_value() < 2800 && intake_ && intake_state%2 == 0) quickScore(); 
-		if (just_intake && just_indexer) intake(1, false, "both");
-		else if (just_intake) intake(1, flip, "intakes");
-		else if (just_indexer) intake(1, flip, "indexer");
-		else intake(motorpwr, flip, "both");
-		// }
+			if (intake_ || outtake) motorpwr = (intake_) ? 1 : -1;
+			if (just_intake && just_indexer) intake(1, false, "both");
+			else if (just_intake) intake(1, flip, "intakes");
+			else if (just_indexer) intake(1, flip, "indexer");
+			else intake(motorpwr, flip, "both");
+		}
+	}
+}
 
-		lcd::print(1, "%d", ultrasonic.get_value());		
-		// lcd::print(3, "%d", intake_state);
+
+void Robot::store(){
+	int ballsTop = int(UT_count - UT_LastBall);
+	int ballsBottom = int(UB_count - UB_LastBall);
+	
+	IL = 127;
+	IR = 127;
+
+	if(ballsTop == 1 && ballsBottom == 1){
+		R1 = -80;
+		R2 = 0;
+	}
+	else if(ballsTop == 1 && ballsBottom == 2){
+		R1 = 0;
+		R2 = 0;
+	}
+	else if (ballsTop == 0 && ballsBottom <= 1){
+		R1 = -80;
+		R2 = 50;
 	}
 }
 
@@ -129,41 +154,6 @@ void Robot::flipout(){
 	R1 = 127;
 	R2 = 127;
 }
-
-void Robot::store(){
-
-	/*bool ballPlace1 = LT1.get_value() < initialLT1 - 100;
-	bool ballPlace2 = LT2.get_value() < initialLT2 - 100;
-
-	int power = 127;
-	IL = power;
-	IR = power;
-	if (!ballPlace1 && !ballPlace2){
-		R1 = -power;
-		R2 = power;
-	}
-	else if (!ballPlace1 && ballPlace2){
-		R1 = -power;
-		R2 = 0;
-	}
-	else if (ballPlace1 && !ballPlace2){
-		R1 = -power;
-		R2 = power * .8;
-	}
-	else if (ballPlace1 && ballPlace2){
-		R1 = 0;
-		R2 = 0;
-	}*/
-}
-
-void Robot::quickScore(){
-	for(int iter=0; iter<800000; iter++){ 
-		R2=127;
-		if(iter>130000) R1=-127;
-	}
-	R1=R2=0;
-}
-
 
 void Robot::intake(int coefficient, bool flip, std::string powered){
 	if (coefficient == 0){
@@ -183,9 +173,9 @@ void Robot::intake(int coefficient, bool flip, std::string powered){
 	}
 	if (powered.compare("indexer") == 0 || powered.compare("both") == 0){
 		R1 = - coefficient * 127;
-	   	if (coefficient < 0) coefficient = 0;
+		if (coefficient < 0) coefficient = 0;
 	   	R2 = (!flip) ? coefficient * 127 : - coefficient * 127;
-	    if(!powered.compare("both") == 0)
+		if(!powered.compare("both") == 0)
         {
             IL=0;
             IR=0;
@@ -238,27 +228,29 @@ void Robot::fps(void* ptr){
 }
 
 void Robot::sensors(void* ptr){
-	// initialLT1 = LT1.get_value();
-	// initialLT2 = LT2.get_value();
-	// int LT1_time = 0;
-	// int LT2_time = 0;
-    // while (true){
-    //     if (LT1.get_value() < initialLT1 - buffer){
-    //         if (LT1_time > 50){
-    //             LT1_balls += 1;
-    //         }
-    //         LT1_time = 0;
-    //     }
-	// 	if (LT2.get_value() < initialLT2 - buffer){
-    //         if (LT2_time > 50){
-    //             LT2_balls += 1;
-    //         }
-    //         LT2_time = 0;
-    //     }
-    //     delay(5);
-    //     LT2_time += 5;
-    //     LT1_time += 5;
-    // }
+	int UB_reset = 0;
+	int UT_reset = 0;
+	while(true){
+		if (UB.get_value() < 200){
+			if (UB_reset > 20){
+				UB_count = UB_count + 1;
+			}
+			UB_reset = 0;
+		}
+		else if (UB.get_value() > 200 && UB.get_value() < 300){
+			UB_reset += 1;
+		}
+		if (UT.get_value() < 200){
+			if (UT_reset > 20){
+				UT_count = UT_count + 1;
+			}
+			UT_reset = 0;
+		}
+		else if (UT.get_value() > 200 && UT.get_value() < 300){
+			UT_reset += 1;
+		}
+		delay(5);
+	}
 }
 
 void Robot::mecanum(int power, int strafe, int turn) {
@@ -330,30 +322,30 @@ void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, double
 	std::vector<double> cur {(float)y, (float)x};
 	double heading;
 
-  	for (int index = 0; index < points.size() - 1; index++) {
+	for (int index = 0; index < points.size() - 1; index++) {
 
-      	start = points[index];
-      	end = points[index + 1];
+		start = points[index];
+		end = points[index + 1];
 
-      	while (distance(cur, end) > radius){
+		while (distance(cur, end) > radius){
 
-      		lcd::print(7, "%f, %d", distance(cur, end), index);
+			lcd::print(7, "%f, %d", distance(cur, end), index);
 
-        	target = get_intersection(start, end, cur, radius, scale);
-        	heading = get_degrees(target, cur);
+target = get_intersection(start, end, cur, radius, scale);
+			heading = get_degrees(target, cur);
 
-        	lcd::print(6, "{%f, %f} %f", target[0], target[1], heading);
-        	Robot::move_to(target[0], target[1], heading, true, scale, coefficient, flip, powered);
-        	delay(10);
-        	cur = {(float)y, (float)x};
-      	}
+			lcd::print(6, "{%f, %f} %f", target[0], target[1], heading);
+			Robot::move_to(target[0], target[1], heading, true, scale, coefficient, flip, powered);
+			delay(10);
+			cur = {(float)y, (float)x};
+		}
     }
 
     double x_error = end[1] - x;
 	double y_error = end[0] - y;
 	double imu_error = IMU.get_rotation() - heading;
 
-  	brake("stop");
+	brake("stop");
 	reset_PID();
 	lcd::print(6, "DONE");
 	lcd::print(7, "YE: %d - XE: %d - IE: %d", int(x_error), int(y_error), int(imu_error));

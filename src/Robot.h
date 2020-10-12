@@ -23,9 +23,8 @@ class Robot{
 		static ADIEncoder BE;
 		static Imu IMU;
 		static Vision vision;
-		static ADIAnalogIn LT1;
-		static ADIAnalogIn LT2;
-		static ADIUltrasonic ultrasonic;
+		static ADIUltrasonic UB;
+		static ADIUltrasonic UT;
 
 
 		static PID power_PID;
@@ -34,15 +33,13 @@ class Robot{
 
 		static std::atomic<double> x;
 		static std::atomic<double> y;
-		static std::atomic<int> LT1_balls;
-		static std::atomic<int> LT2_balls;
-		static int initialLT1;
-		static int initialLT2;
 
 		static std::atomic<int> balls_ejected;
 		static std::atomic<int> balls_intook;
 		static std::atomic<double> turn_offset_x;
 		static std::atomic<double> turn_offset_y;
+		static std::atomic<int> UB_count;
+		static std::atomic<int> UT_count;
 		static std::map<std::string, std::unique_ptr<pros::Task>> tasks;
 		static double offset_back;
 		static double offset_middle;

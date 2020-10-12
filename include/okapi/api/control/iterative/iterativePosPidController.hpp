@@ -1,8 +1,6 @@
 /*
  * Based on the Arduino PID controller: https://github.com/br3ttb/Arduino-PID-Library
  *
- * @author Ryan Benasutti, WPI
- *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -26,6 +24,9 @@ class IterativePosPIDController : public IterativePositionController<double, dou
     double kI{0};
     double kD{0};
     double kBias{0};
+
+    bool operator==(const Gains &rhs) const;
+    bool operator!=(const Gains &rhs) const;
   };
 
   /**

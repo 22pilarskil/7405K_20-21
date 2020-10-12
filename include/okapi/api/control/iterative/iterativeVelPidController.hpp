@@ -1,6 +1,4 @@
 /*
- * @author Ryan Benasutti, WPI
- *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -22,6 +20,9 @@ class IterativeVelPIDController : public IterativeVelocityController<double, dou
     double kD{0};
     double kF{0};
     double kSF{0};
+
+    bool operator==(const Gains &rhs) const;
+    bool operator!=(const Gains &rhs) const;
   };
 
   /**
