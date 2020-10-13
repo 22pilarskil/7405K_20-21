@@ -46,8 +46,9 @@ double Robot::wheel_circumference = 2.75 * M_PI;
 bool flip = true;
 int radius = 300;
 int buffer = 200;
-int UT_LastBall;;
+int UT_LastBall;
 int UB_LastBall;
+int storing_count;
 std::map<std::string, std::unique_ptr<pros::Task>> Robot::tasks;
 
 void Robot::vis_sense(void* ptr){
@@ -100,6 +101,7 @@ void Robot::drive(void* ptr){
 		bool just_indexer = master.get_digital(DIGITAL_L2);
 		bool flip = master.get_digital(DIGITAL_L1);
 		bool storingScore = master.get_digital(DIGITAL_RIGHT);
+		bool quickScore = master.get_digital(DIGITAL_A);
 
 		if(storingScore && !intake_last){
 			intake_state++;
@@ -121,6 +123,13 @@ void Robot::drive(void* ptr){
 			if (just_intake && just_indexer) intake(1, false, "both");
 			else if (just_intake) intake(1, flip, "intakes");
 			else if (just_indexer) intake(1, flip, "indexer");
+			else if (quickScore){
+				for(int iter=0; iter<800000; iter++){ 
+					R2=127;
+					if(iter>250000) R1=-127;
+				}
+				R1=R2=0;
+			}
 			else intake(motorpwr, flip, "both");
 		}
 	}
@@ -137,15 +146,26 @@ void Robot::store(){
 	if(ballsTop == 1 && ballsBottom == 1){
 		R1 = -80;
 		R2 = 0;
+		storing_count = 0;
 	}
-	else if(ballsTop == 1 && ballsBottom == 2){
+	else if(ballsTop == 1 && ballsBottom == 2){		
 		R1 = 0;
 		R2 = 0;
+		if (storing_count == 0){
+			for(int i; i<100000; i++) {
+				if(i > 75000) R2=0;
+				else R2=80;
+				R1=-70;
+			};
+		}
+		storing_count++;
 	}
 	else if (ballsTop == 0 && ballsBottom <= 1){
 		R1 = -80;
 		R2 = 50;
+		storing_count = 0;
 	}
+
 }
 
 void Robot::flipout(){
@@ -231,22 +251,19 @@ void Robot::sensors(void* ptr){
 	int UB_reset = 0;
 	int UT_reset = 0;
 	while(true){
-		if (UB.get_value() < 200){
-			if (UB_reset > 20){
-				UB_count = UB_count + 1;
-			}
+		if (UB.get_value() < 150){
+			if (UB_reset > 20) UB_count++;
 			UB_reset = 0;
 		}
-		else if (UB.get_value() > 200 && UB.get_value() < 300){
+		else if (UB.get_value() > 150 && UB.get_value() < 250){
 			UB_reset += 1;
 		}
-		if (UT.get_value() < 200){
-			if (UT_reset > 20){
-				UT_count = UT_count + 1;
-			}
+
+		if (UT.get_value() < 150){
+			if (UT_reset > 20) UT_count++;
 			UT_reset = 0;
 		}
-		else if (UT.get_value() > 200 && UT.get_value() < 300){
+		else if (UT.get_value() > 150 && UT.get_value() < 250){
 			UT_reset += 1;
 		}
 		delay(5);
