@@ -47,14 +47,8 @@ int buffer = 200;
 int UT_LastBall;
 int UB_LastBall;
 int storing_count;
-int LastX = 0;
-int LastY = 0;
-int lastIMU = 0;
-int currentLSB = 3000;
 int UB_count = 0;
 int UT_count = 0;
-int LSB_count = 0;
-// float line_trough = 3000;
 std::map<std::string, std::unique_ptr<pros::Task>>
 	Robot::tasks;
 
@@ -86,7 +80,8 @@ void Robot::reset_PID()
 void Robot::reset_Balls()
 {
 	UT_LastBall = (int)UT_count;
-	UB_LastBall = (int)UB_count;	
+	UB_LastBall = (int)UB_count;
+	storing_count = 0;	
 }
 
 void Robot::drive(void *ptr)
@@ -117,10 +112,6 @@ void Robot::drive(void *ptr)
 		bool flip = master.get_digital(DIGITAL_L1);
 		bool storingScore = master.get_digital(DIGITAL_RIGHT);
 		bool quickScore = master.get_digital(DIGITAL_A);
-		if (master.get_digital(DIGITAL_UP))
-		{
-			lcd::print(6, "%d %d %d", LastX, LastY, lastIMU);
-		}
 
 		if (storingScore && !intake_last)
 		{
@@ -178,15 +169,15 @@ void Robot::store()
 	{
 		R1 = -80;
 		R2 = 0;
-		storing_count = 0;
 	}
 	else if (sensorTop == 1 && sensorBottom == 2)
 	{
 		R1 = 0;
 		R2 = 0;
+		lcd::print(1, "HERE");
 		if (storing_count == 0)
 		{
-			for (int i; i < 200000; i++)
+			for (int i = 0; i < 200000; i++)
 			{
 				if (i > 85000)
 					R2 = 0;
@@ -201,7 +192,6 @@ void Robot::store()
 	{
 		R1 = -80;
 		R2 = 50;
-		storing_count = 0;
 	}
 }
 
@@ -288,10 +278,6 @@ void Robot::fps(void *ptr)
 		last_y = cur_y;
 		last_x = cur_x;
 		last_phi = cur_phi;
-
-		LastX = last_x;
-		LastY = last_y;
-		lastIMU = last_phi;
 
 		delay(5);
 	}
