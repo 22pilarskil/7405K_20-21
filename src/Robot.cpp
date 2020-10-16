@@ -27,10 +27,9 @@ Imu Robot::IMU(8);
 Vision Robot::vision(21);
 ADIUltrasonic Robot::UB(1, 2);
 ADIUltrasonic Robot::UT({{5, 1, 2}});
-ADIAnalogIn Robot::LSB({{5, 3}});
-PID Robot::power_PID(.15, 0, 1.5, 15);
-PID Robot::strafe_PID(.52, 0, 0, 2);
-PID Robot::turn_PID(0.85, 0, 0, 13);
+PID Robot::power_PID(.2, 0, 1.5, 5);
+PID Robot::strafe_PID(.25, 0, 1.5, 2);
+PID Robot::turn_PID(0.85, 0, 0, 5);
 
 std::atomic<double> Robot::y = 0;
 std::atomic<double> Robot::x = 0;
@@ -72,10 +71,6 @@ void Robot::vis_sense(void *ptr)
 		vision_object_s_t blue_ball = vision.get_by_sig(0, 2);
 		int red_x_coord = red_ball.x_middle_coord;
 		int blue_x_coord = blue_ball.x_middle_coord;
-		lcd::print(6, "Relative: %d - Absolute: %d",
-				   (red_x_coord > 0 && red_x_coord < 316 && red_ball.signature != 255) ? int((316 / 2 - red_x_coord) / 10) : 0, red_ball.signature);
-		lcd::print(7, "Relative: %d - Absolute: %d",
-				   (blue_x_coord > 0 && blue_x_coord < 316 && blue_ball.signature != 255) ? int((316 / 2 - blue_x_coord) / 10) : 0, blue_ball.signature);
 		delay(100);
 	}
 }
@@ -86,6 +81,12 @@ void Robot::reset_PID()
 	power_PID.reset();
 	strafe_PID.reset();
 	turn_PID.reset();
+}
+
+void Robot::reset_Balls()
+{
+	UT_LastBall = (int)UT_count;
+	UB_LastBall = (int)UB_count;	
 }
 
 void Robot::drive(void *ptr)
@@ -102,8 +103,10 @@ void Robot::drive(void *ptr)
 		int strafe = master.get_analog(ANALOG_LEFT_X);
 		int turn = master.get_analog(ANALOG_RIGHT_X);
 
-		if (master.get_digital(DIGITAL_LEFT))
-			move_to(0, 0, int(IMU.get_rotation() / 360) * 360);
+		if (master.get_digital(DIGITAL_LEFT)){
+			std::vector<double> pose {0, 0, IMU.get_rotation() / 360 * 360};
+			move_to(pose);
+		}
 
 		mecanum(power, strafe, turn);
 
@@ -123,8 +126,7 @@ void Robot::drive(void *ptr)
 		{
 			intake_state++;
 			intake_last = true;
-			UT_LastBall = (int)UT_count;
-			UB_LastBall = (int)UB_count;
+			reset_Balls();
 		}
 		else if (!storingScore)
 			intake_last = false;
@@ -132,8 +134,6 @@ void Robot::drive(void *ptr)
 		if (intake_state % 2 == 0)
 		{
 			store();
-			lcd::print(1, "%d %d", UB.get_value(), int(UB_count));
-			lcd::print(3, "%d %d", UT.get_value(), int(UT_count));
 		}
 		else
 		{
@@ -161,7 +161,6 @@ void Robot::drive(void *ptr)
 			else
 				intake(motorpwr, flip, "both");
 		}
-		lcd::print(3, "%d", LSB.get_value());
 	}
 }
 
@@ -169,32 +168,12 @@ void Robot::store()
 {
 	int sensorTop = int(UT_count - UT_LastBall);
 	int sensorBottom = int(UB_count - UB_LastBall);
-	//LSB.get_value
-	std::unordered_map<string, bool> ballPositions = {
-		{"front", false},
-		{"bottom", false},
-		{"top", false},
-	};
-	if (currentLSB < 1500)
-	{
-		ballPositions.at("bottom") = true;
-	}
-	else
-	{
-		ballPositions.at("bottom") = false;
-	}
-	// if (line_trough > currentLSval)
-	// {
-	// 	line_trough = currentLSval;
-	// }
-	lcd::print(7, "T: %d B: %d BOT: %d MID: %d TOP: %d", sensorTop, sensorBottom, ballPositions.at("bottom"), ballPositions.at("bottom"), ballPositions.at("top"));
+	lcd::print(1, "%d %d", UB.get_value(), int(UB_count));
+	lcd::print(2, "%d %d", UT.get_value(), int(UT_count));
+	lcd::print(7, "T: %d B: %d", sensorTop, sensorBottom);
 	IL = 127;
 	IR = 127;
 
-	if (currentLSB < 1500) //if the ball is infront of the line sensor and there is no flag
-	{
-		ballPositions.at("front") = true;
-	}
 	if (sensorTop == 1 && sensorBottom == 1)
 	{
 		R1 = -80;
@@ -205,17 +184,17 @@ void Robot::store()
 	{
 		R1 = 0;
 		R2 = 0;
-		// if (storing_count == 0)
-		// {
-		// 	for (int i; i < 200000; i++)
-		// 	{
-		// 		if (i > 85000)
-		// 			R2 = 0;
-		// 		else
-		// 			R2 = 80;
-		// 		R1 = -127;
-		// 	};
-		// }
+		if (storing_count == 0)
+		{
+			for (int i; i < 200000; i++)
+			{
+				if (i > 85000)
+					R2 = 0;
+				else
+					R2 = 80;
+				R1 = -127;
+			};
+		}
 		storing_count++;
 	}
 	else if (sensorTop == 0 && sensorBottom <= 1)
@@ -302,6 +281,7 @@ void Robot::fps(void *ptr)
 		y = (float)y + global_dy;
 		x = (float)x + global_dx;
 
+		lcd::print(3, "IMU value: %f", IMU.get_rotation());
 		lcd::print(4, "Offset: %d - Y: %f", int(turn_offset_y), (float)y);
 		lcd::print(5, "Offset: %d - X: %f", int(turn_offset_x), (float)x);
 
@@ -321,24 +301,11 @@ void Robot::sensors(void *ptr)
 {
 	int UB_reset = 0;
 	int UT_reset = 0;
-	int LSB_reset = 0;
-	int LSB_flag = false;
-	int lastLSB = int(LSB.get_value());
 	while (true)
 	{
-		if (LSB.get_value() - lastLSB > 400) //if there is a diffence for the line sensor
-		{
-			if (LSB_count < 30)
-			{
-				LSB_count++;
-			}
-			else if (LSB.get_value() - lastLSB > 400)
-			{
-				currentLSB = int(LSB.get_value());
-			}
-		}
 		if (UB.get_value() < 150)
 		{
+
 			if (UB_reset > 60)
 				UB_count++;
 			UB_reset = 0;
@@ -379,16 +346,19 @@ void Robot::display(void *ptr)
 	while (true)
 	{
 		master.print(0, 0, "Joystick %d", master.get_analog(ANALOG_LEFT_X));
-		lcd::print(1, "LE: %d - RE: %d", LE.get_value(), RE.get_value());
-		lcd::print(2, "Back Encoder: %d", BE.get_value());
-		// lcd::print(3, "IMU value: %f", IMU.get_rotation());
+		//lcd::print(1, "LE: %d - RE: %d", LE.get_value(), RE.get_value());
+		//lcd::print(2, "Back Encoder: %d", BE.get_value());
+		//lcd::print(3, "IMU value: %f", IMU.get_rotation());
 
 		delay(10);
 	}
 }
 
-void Robot::move_to(double new_y, double new_x, double heading, bool pure_pursuit, double scale, int coefficient, bool flip, std::string powered)
+void Robot::move_to(std::vector<double> pose, bool pure_pursuit, bool store_, int coefficient, bool flip, std::string powered)
 {
+	double new_y = pose[0];
+	double new_x = pose[1];
+	double heading = pose[2];
 
 	double y_error = new_y - y;
 	double x_error = -(new_x - x);
@@ -399,12 +369,15 @@ void Robot::move_to(double new_y, double new_x, double heading, bool pure_pursui
 	/* Calculate inverse headings (i.e. 1 deg = -359 deg), then find which heading is closer to current
 	heading (i.e. at IMU val 150, travel to 1 deg (|150 - 1| = 149 deg traveled) as opposed to -359 deg
 	(|150 - (-359)| = 509 deg traveled) */
-
-	intake(coefficient, flip, powered);
+	if (!store_) {
+		intake(coefficient, flip, powered);
+	}
 
 	while (abs(y_error) > 10 || abs(x_error) > 10 || abs(imu_error) > 1)
 	{ //while both goals are not reached
-
+		if (store_){
+			store();
+		}
 		double phi = TO_RAD(IMU.get_rotation());
 		double power = power_PID.get_value(y_error * std::cos(phi) + x_error * std::sin(phi));
 		double strafe = strafe_PID.get_value(x_error * std::cos(phi) - y_error * std::sin(phi));
@@ -415,7 +388,7 @@ void Robot::move_to(double new_y, double new_x, double heading, bool pure_pursui
 		y_error = new_y - y;
 		x_error = -(new_x - x);
 
-		mecanum(power * scale, strafe * scale, turn * scale);
+		mecanum(power, strafe, turn);
 
 		if (pure_pursuit)
 		{
@@ -427,7 +400,7 @@ void Robot::move_to(double new_y, double new_x, double heading, bool pure_pursui
 	brake("stop");
 }
 
-void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, double scale, int coefficient, bool flip, std::string powered)
+void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, bool store_, int coefficient, bool flip, std::string powered)
 {
 
 	std::vector<double> end;
@@ -447,11 +420,12 @@ void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, double
 
 			lcd::print(7, "%f, %d", distance(cur, end), index);
 
-			target = get_intersection(start, end, cur, radius, scale);
+			target = get_intersection(start, end, cur, radius);
 			heading = get_degrees(target, cur);
 
 			lcd::print(6, "{%f, %f} %f", target[0], target[1], heading);
-			Robot::move_to(target[0], target[1], heading, true, scale, coefficient, flip, powered);
+			std::vector<double> pose {target[0], target[1], heading};
+			Robot::move_to(pose, true, store_, coefficient, flip, powered);
 			delay(10);
 			cur = {(float)y, (float)x};
 		}

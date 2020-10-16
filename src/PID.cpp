@@ -2,17 +2,18 @@
 #include "PID.h"
 using namespace pros;
 
-PID::PID(double p, double i, double d, double min){
+PID::PID(double p, double i, double d, double min, int counter_){
 	kp = p;
 	ki = i;
 	kd = d;
 	minspeed = min;
+	counter = counter_;
 
 	prev_error = 0;
 	prev_time = 0;
 	I = 0;
 	D = 0;
-	counter = 25;
+	counter_reset = counter_;
 }
 
 
@@ -36,5 +37,5 @@ double PID::get_value(double error){
 
 
 void PID::reset(){
-	counter = 25;
+	counter = counter_reset;
 }

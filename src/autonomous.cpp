@@ -8,12 +8,18 @@ void autonomous()
 	delay(100);
 	Robot::start_task("FPS", Robot::fps);
 	Robot::start_task("DISPLAY", Robot::display);
+	Robot::reset_Balls();
 	Robot::start_task("SENSORS", Robot::sensors);
 	delay(100);
-
-	std::vector<std::vector<double>> points{{0, 0}, {800, 0.1}, {300, 700}, {}};
-	// , {300, 800}
-	Robot::move_to_pure_pursuit(points, 1, 1);
+	while(true){
+		Robot::store();
+		delay(5);
+	}
+	//std::vector<std::vector<double>> points{{0, 0}, {400, 0.1}, {250, 750}, {300, 800}};
+	//Robot::store();
+	//std::vector<double> pose {1000, 1000, 0};
+	//Robot::move_to(pose);
+	//Robot::move_to_pure_pursuit(points, true);
 	// while(Robot::balls_ejected_count() < 2 || Robot::balls_intook_count() < 3){
 	// 	Robot::intake(1);
 	// }

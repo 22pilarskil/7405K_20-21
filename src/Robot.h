@@ -25,7 +25,6 @@ public:
 	static Vision vision;
 	static ADIUltrasonic UB;
 	static ADIUltrasonic UT;
-	static ADIAnalogIn LSB;
 
 	static PID power_PID;
 	static PID strafe_PID;
@@ -43,8 +42,8 @@ public:
 	static double offset_middle;
 	static double wheel_circumference;
 
-	static void move_to(double new_y, double new_x, double heading, bool pure_pursuit = false, double scale = 1, int coefficient = 0, bool flip = false, std::string powered = "both");
-	static void move_to_pure_pursuit(std::vector<std::vector<double>> points, double scale = 1, int coefficient = 0, bool flip = false, std::string powered = "both");
+	static void move_to(std::vector<double> pose, bool pure_pursuit = false, bool store_ = false, int coefficient = 0, bool flip = false, std::string powered = "both");
+	static void move_to_pure_pursuit(std::vector<std::vector<double>> points, bool store_ = false, int coefficient = 0, bool flip = false, std::string powered = "both");
 	static void brake(std::string mode);
 	static void drive(void *ptr);
 	static void intake(int coefficient, bool flip = false, std::string powered = "both");
@@ -59,6 +58,7 @@ public:
 	static void quickScore();
 	static void store();
 	static void reset_sensors();
+	static void reset_Balls();
 	static void reset_PID();
 	static void flipout();
 	static void start_tasks();
