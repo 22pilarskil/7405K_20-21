@@ -11,19 +11,28 @@ void autonomous()
 	Robot::reset_Balls();
 	Robot::start_task("SENSORS", Robot::sensors);
 	delay(100);
-	while(true){
-		Robot::store();
-		delay(5);
-	}
-	//std::vector<std::vector<double>> points{{0, 0}, {400, 0.1}, {250, 750}, {300, 800}};
+	// while(true){
+	// 	Robot::store();
+	// 	delay(5);
+	// }
+	std::vector<std::vector<double>> points{{0, 0}, {400, 0.1}, {275, 700}, {300, 800}, {200, 600}};
+	Robot::move_to_pure_pursuit(points, true);
+	delay(1000);
+	std::vector<std::vector<double>> points1{{0, 0}, {850, 850}, {2500, -450}, {2700, 640}};
+	Robot::move_to_pure_pursuit(points1, true);
+	// std::vector<double> pose {850, 850, -45};
+	// Robot::move_to(pose);
+	// std::vector<double> pose1 {850, 850, 40};
+	// Robot::move_to(pose1);300
+	// delay(1000);
+	// pose = {2700, 500, -90};
+	// Robot::move_to(pose);
 	//Robot::store();
-	//std::vector<double> pose {1000, 1000, 0};
-	//Robot::move_to(pose);
-	//Robot::move_to_pure_pursuit(points, true);
+	// std::vector<double> pose {1000, 1000, 0};
+	// Robot::move_to(pose);
 	// while(Robot::balls_ejected_count() < 2 || Robot::balls_intook_count() < 3){
 	// 	Robot::intake(1);
 	// }
-	delay(300);
 	// lcd::print(7, "%d", Robot::ball_count());
 	// Robot::intake(0);
 	// Robot::intake(1, false, "intakes");

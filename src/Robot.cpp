@@ -355,15 +355,12 @@ void Robot::move_to(std::vector<double> pose, bool pure_pursuit, bool store_, in
 	/* Calculate inverse headings (i.e. 1 deg = -359 deg), then find which heading is closer to current
 	heading (i.e. at IMU val 150, travel to 1 deg (|150 - 1| = 149 deg traveled) as opposed to -359 deg
 	(|150 - (-359)| = 509 deg traveled) */
-	if (!store_) {
-		intake(coefficient, flip, powered);
-	}
 
 	while (abs(y_error) > 10 || abs(x_error) > 10 || abs(imu_error) > 1)
 	{ //while both goals are not reached
-		if (store_){
-			store();
-		}
+		 if (store_){
+		 	store();
+		 }
 		double phi = TO_RAD(IMU.get_rotation());
 		double power = power_PID.get_value(y_error * std::cos(phi) + x_error * std::sin(phi));
 		double strafe = strafe_PID.get_value(x_error * std::cos(phi) - y_error * std::sin(phi));
