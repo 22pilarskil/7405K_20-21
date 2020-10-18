@@ -77,11 +77,13 @@ void Robot::reset_PID()
 	turn_PID.reset();
 }
 
-void Robot::reset_Balls()
+void Robot::reset_Balls(int ultrasonic_bottom, int ultrasonic_top)
 {
 	UT_LastBall = (int)UT_count;
 	UB_LastBall = (int)UB_count;
-	storing_count = 0;	
+	UT_count = ultrasonic_top;
+	UB_count = ultrasonic_bottom;
+	storing_count = 0;
 }
 
 void Robot::drive(void *ptr)
@@ -162,18 +164,21 @@ void Robot::store()
 	lcd::print(1, "%d %d", UB.get_value(), int(UB_count));
 	lcd::print(2, "%d %d", UT.get_value(), int(UT_count));
 	lcd::print(7, "T: %d B: %d", sensorTop, sensorBottom);
-	IL = 127;
-	IR = 127;
+
 
 	if (sensorTop == 1 && sensorBottom == 1)
 	{
 		R1 = -80;
 		R2 = 0;
+		IL = 127;
+		IR = 127;
 	}
 	else if (sensorTop == 1 && sensorBottom == 2)
 	{
 		R1 = 0;
 		R2 = 0;
+		IL = 0;
+		IR = 0;
 		lcd::print(1, "HERE");
 		if (storing_count == 0)
 		{
@@ -192,6 +197,8 @@ void Robot::store()
 	{
 		R1 = -80;
 		R2 = 50;
+		IL = 127;
+		IR = 127;
 	}
 }
 
@@ -332,8 +339,8 @@ void Robot::display(void *ptr)
 	while (true)
 	{
 		master.print(0, 0, "Joystick %d", master.get_analog(ANALOG_LEFT_X));
-		//lcd::print(1, "LE: %d - RE: %d", LE.get_value(), RE.get_value());
-		//lcd::print(2, "Back Encoder: %d", BE.get_value());
+		lcd::print(1, "LE: %d - RE: %d", LE.get_value(), RE.get_value());
+		lcd::print(2, "Back Encoder: %d", BE.get_value());
 		//lcd::print(3, "IMU value: %f", IMU.get_rotation());
 
 		delay(10);
@@ -358,9 +365,9 @@ void Robot::move_to(std::vector<double> pose, bool pure_pursuit, bool store_, in
 
 	while (abs(y_error) > 10 || abs(x_error) > 10 || abs(imu_error) > 1)
 	{ //while both goals are not reached
-		 if (store_){
-		 	store();
-		 }
+		if (store_){
+			store();
+		}
 		double phi = TO_RAD(IMU.get_rotation());
 		double power = power_PID.get_value(y_error * std::cos(phi) + x_error * std::sin(phi));
 		double strafe = strafe_PID.get_value(x_error * std::cos(phi) - y_error * std::sin(phi));

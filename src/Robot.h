@@ -58,7 +58,7 @@ public:
 	static void quickScore();
 	static void store();
 	static void reset_sensors();
-	static void reset_Balls();
+	static void reset_Balls(int ultrasonic_bottom = 0, int ultrasonic_top = 0);
 	static void reset_PID();
 	static void flipout();
 	static void start_tasks();
