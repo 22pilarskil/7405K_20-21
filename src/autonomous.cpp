@@ -11,13 +11,13 @@ void autonomous()
 	Robot::reset_Balls(1);
 	Robot::start_task("SENSORS", Robot::sensors);
 	delay(100);
-	while(true){
-		Robot::store();
-		delay(5);
-	}
-	// std::vector<std::vector<double>> points{{0, 0}, {800, 0.1}, {800, 750}, {220, 1100}};
-	// Robot::move_to_pure_pursuit(points, true);
-	// delay(1000);
+	// while(true){
+	// 	Robot::store();
+	// 	delay(5);
+	// }
+	std::vector<std::vector<double>> points{{0, 0}, {800, 0.1}, {800, 750}, {220, 1100}};
+	Robot::move_to_pure_pursuit(points, true);
+	delay(1000);
 	// std::vector<std::vector<double>> points1{{0, 0}, {850, 850}, {2500, -450}, {2700, 640}};
 	// Robot::move_to_pure_pursuit(points1, true);
 	// std::vector<double> pose {850, 850, -45};

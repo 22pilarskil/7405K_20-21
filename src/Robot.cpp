@@ -84,6 +84,23 @@ void Robot::reset_Balls(int ultrasonic_bottom, int ultrasonic_top)
 	UT_count = ultrasonic_top;
 	UB_count = ultrasonic_bottom;
 	storing_count = 0;
+	kill_task("ADJUST");
+}
+
+void Robot::adjust_ball_positions(void *ptr)
+{
+	for (int i = 0; i < 200000; i++)
+	{
+		if (i > 85000)
+			R2 = 0;
+		else
+			R2 = 80;
+		R1 = -127;
+	}
+	R1 = 0;
+	R2 = 0;
+	IL = 0;
+	IR = 0;
 }
 
 void Robot::drive(void *ptr)
@@ -175,21 +192,10 @@ void Robot::store()
 	}
 	else if (sensorTop == 1 && sensorBottom == 2)
 	{
-		R1 = 0;
-		R2 = 0;
-		IL = 0;
-		IR = 0;
 		lcd::print(1, "HERE");
 		if (storing_count == 0)
 		{
-			for (int i = 0; i < 200000; i++)
-			{
-				if (i > 85000)
-					R2 = 0;
-				else
-					R2 = 80;
-				R1 = -127;
-			};
+			start_task("ADJUST", adjust_ball_positions);
 		}
 		storing_count++;
 	}
@@ -408,7 +414,7 @@ void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, bool s
 		while (distance(cur, end) > radius)
 		{
 
-			lcd::print(7, "%f, %d", distance(cur, end), index);
+			//lcd::print(7, "%f, %d", distance(cur, end), index);
 
 			target = get_intersection(start, end, cur, radius);
 			heading = get_degrees(target, cur);
@@ -428,7 +434,7 @@ void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, bool s
 	brake("stop");
 	reset_PID();
 	lcd::print(6, "DONE");
-	lcd::print(7, "YE: %d - XE: %d - IE: %d", int(x_error), int(y_error), int(imu_error));
+	//lcd::print(7, "YE: %d - XE: %d - IE: %d", int(x_error), int(y_error), int(imu_error));
 }
 
 void Robot::brake(std::string mode)
@@ -469,6 +475,13 @@ void Robot::start_task(std::string name, void (*func)(void *))
 bool Robot::task_exists(std::string name)
 {
 	return tasks.find(name) != tasks.end();
+}
+
+void Robot::kill_task(std::string name) {
+	if (task_exists(name))
+	{
+		tasks.erase(name);
+	}
 }
 
 void Robot::reset_sensors()

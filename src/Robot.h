@@ -48,6 +48,7 @@ public:
 	static void drive(void *ptr);
 	static void intake(int coefficient, bool flip = false, std::string powered = "both");
 	static void fps(void *ptr);
+	static void adjust_ball_positions(void *ptr);
 	static void sensors(void *ptr);
 	static void vis_sense(void *ptr);
 	static void display(void *ptr);
@@ -66,4 +67,5 @@ public:
 	static int balls_intook_count();
 	static void start_task(std::string name, void (*func)(void *));
 	static bool task_exists(std::string name);
+	static void kill_task(std::string name);
 };
