@@ -16,14 +16,21 @@ void autonomous()
 	// 	delay(5);
 	// }
 	std::vector<std::vector<double>> points{{0, 0}, {800, 0.1}, {800, 600}, {220, 1100}};
-	Robot::start_task("STORE", Robot::store);
-	Robot::move_to_pure_pursuit(points);
+	// Robot::start_task("STORE", Robot::store);
+	// Robot::move_to_pure_pursuit(points);
 	Robot::intake(1, false, "intakes");
-	delay(600);
-	Robot::quickscore();
+	while(Robot::LM1.get_value() == 0){
+		delay(1);
+	}
+	Robot::intake(-1, false, "intakes");
+	delay(70);
 	Robot::intake(0);
-	Robot::start_task("STORE", Robot::store);
-	delay(1000);
+	// delay(600);
+	// Robot::quickscore();
+	// Robot::reset_Balls();
+	// Robot::intake(0);
+	// Robot::start_task("STORE", Robot::store);
+	// delay(1000);
 	// std::vector<std::vector<double>> points1{{0, 0}, {850, 850}, {2500, -450}, {2700, 640}};
 	// Robot::move_to_pure_pursuit(points1, true);
 	// std::vector<double> pose {850, 850, -45};

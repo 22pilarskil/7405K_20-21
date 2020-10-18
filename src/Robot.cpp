@@ -25,6 +25,7 @@ ADIEncoder Robot::RE(7, 8, true);
 ADIEncoder Robot::BE(5, 6);
 Imu Robot::IMU(8);
 Vision Robot::vision(21);
+ADIDigitalIn Robot::LM1({{5, 5}});
 ADIUltrasonic Robot::UB(1, 2);
 ADIUltrasonic Robot::UT({{5, 1, 2}});
 PID Robot::power_PID(.2, 0, 1.5, 5);
@@ -155,7 +156,7 @@ void Robot::quickscore(){
 	for (int iter = 0; iter < 350000; iter++)
 	{
 		R2 = 127;
-		if (iter > 250000)
+		if (iter > 150000)
 			R1 = -127;
 	}
 	R1 = R2 = 0;
@@ -180,7 +181,7 @@ void Robot::store(void *ptr)
 		}
 		else if (sensorTop == 1 && sensorBottom == 2)
 		{
-			lcd::print(1, "HERE");
+			//lcd::print(1, "HERE");
 			if (storing_count == 0)
 			{
 				IL = 0;
@@ -350,8 +351,9 @@ void Robot::display(void *ptr)
 	while (true)
 	{
 		master.print(0, 0, "Joystick %d", master.get_analog(ANALOG_LEFT_X));
-		lcd::print(1, "LE: %d - RE: %d", LE.get_value(), RE.get_value());
-		lcd::print(2, "Back Encoder: %d", BE.get_value());
+		//lcd::print(1, "LE: %d - RE: %d", LE.get_value(), RE.get_value());
+		//lcd::print(2, "Back Encoder: %d", BE.get_value());
+		lcd::print(6, "Limit switch %d", LM1.get_value());
 		//lcd::print(3, "IMU value: %f", IMU.get_rotation());
 
 		delay(10);

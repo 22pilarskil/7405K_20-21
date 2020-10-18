@@ -23,6 +23,7 @@ public:
 	static ADIEncoder BE;
 	static Imu IMU;
 	static Vision vision;
+	static ADIDigitalIn LM1;
 	static ADIUltrasonic UB;
 	static ADIUltrasonic UT;
 
