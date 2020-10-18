@@ -84,23 +84,6 @@ void Robot::reset_Balls(int ultrasonic_bottom, int ultrasonic_top)
 	UT_count = ultrasonic_top;
 	UB_count = ultrasonic_bottom;
 	storing_count = 0;
-	kill_task("ADJUST");
-}
-
-void Robot::adjust_ball_positions(void *ptr)
-{
-	for (int i = 0; i < 200000; i++)
-	{
-		if (i > 85000)
-			R2 = 0;
-		else
-			R2 = 80;
-		R1 = -127;
-	}
-	R1 = 0;
-	R2 = 0;
-	IL = 0;
-	IR = 0;
 }
 
 void Robot::drive(void *ptr)
@@ -130,7 +113,7 @@ void Robot::drive(void *ptr)
 		bool just_indexer = master.get_digital(DIGITAL_L2);
 		bool flip = master.get_digital(DIGITAL_L1);
 		bool storingScore = master.get_digital(DIGITAL_RIGHT);
-		bool quickScore = master.get_digital(DIGITAL_A);
+		bool quickScore_ = master.get_digital(DIGITAL_A);
 
 		if (storingScore && !intake_last)
 		{
@@ -143,7 +126,7 @@ void Robot::drive(void *ptr)
 
 		if (intake_state % 2 == 0)
 		{
-			store();
+			// store();
 		}
 		else
 		{
@@ -158,15 +141,9 @@ void Robot::drive(void *ptr)
 				intake(1, flip, "intakes");
 			else if (just_indexer)
 				intake(1, flip, "indexer");
-			else if (quickScore)
+			else if (quickScore_)
 			{
-				for (int iter = 0; iter < 800000; iter++)
-				{
-					R2 = 127;
-					if (iter > 250000)
-						R1 = -127;
-				}
-				R1 = R2 = 0;
+				quickscore();
 			}
 			else
 				intake(motorpwr, flip, "both");
@@ -174,38 +151,66 @@ void Robot::drive(void *ptr)
 	}
 }
 
-void Robot::store()
+void Robot::quickscore(){
+	for (int iter = 0; iter < 350000; iter++)
+	{
+		R2 = 127;
+		if (iter > 250000)
+			R1 = -127;
+	}
+	R1 = R2 = 0;
+}
+
+void Robot::store(void *ptr)
 {
-	int sensorTop = int(UT_count - UT_LastBall);
-	int sensorBottom = int(UB_count - UB_LastBall);
-	lcd::print(1, "%d %d", UB.get_value(), int(UB_count));
-	lcd::print(2, "%d %d", UT.get_value(), int(UT_count));
-	lcd::print(7, "T: %d B: %d", sensorTop, sensorBottom);
+	while(true){
+		int sensorTop = int(UT_count - UT_LastBall);
+		int sensorBottom = int(UB_count - UB_LastBall);
+		lcd::print(1, "%d %d", UB.get_value(), int(UB_count));
+		lcd::print(2, "%d %d", UT.get_value(), int(UT_count));
+		lcd::print(7, "T: %d B: %d", sensorTop, sensorBottom);
 
 
-	if (sensorTop == 1 && sensorBottom == 1)
-	{
-		R1 = -80;
-		R2 = 0;
-		IL = 127;
-		IR = 127;
-	}
-	else if (sensorTop == 1 && sensorBottom == 2)
-	{
-		lcd::print(1, "HERE");
-		if (storing_count == 0)
+		if (sensorTop == 1 && sensorBottom == 1)
 		{
-			start_task("ADJUST", adjust_ball_positions);
+			R1 = -80;
+			R2 = 0;
+			IL = 127;
+			IR = 127;
 		}
-		storing_count++;
+		else if (sensorTop == 1 && sensorBottom == 2)
+		{
+			lcd::print(1, "HERE");
+			if (storing_count == 0)
+			{
+				IL = 0;
+				IR = 0;
+				for (int i = 0; i < 200000; i++)
+				{
+					if (i > 85000)
+						R2 = 0;
+					else
+						R2 = 80;
+					R1 = -127;
+				}
+				R1 = 0;
+				R2 = 0;
+			}
+			break;
+		}
+		else if (sensorTop == 0 && sensorBottom <= 1)
+		{
+			R1 = -80;
+			R2 = 50;
+			IL = 127;
+			IR = 127;
+		}
+		delay(5);
 	}
-	else if (sensorTop == 0 && sensorBottom <= 1)
-	{
-		R1 = -80;
-		R2 = 50;
-		IL = 127;
-		IR = 127;
-	}
+	IL = 0;
+	IR = 0;
+	lcd::print(7, "HERE");
+	kill_task("STORE");
 }
 
 void Robot::flipout()
@@ -305,7 +310,7 @@ void Robot::sensors(void *ptr)
 		if (UB.get_value() < 150)
 		{
 
-			if (UB_reset > 60)
+			if (UB_reset > 10)
 				UB_count++;
 			UB_reset = 0;
 		}
@@ -316,7 +321,7 @@ void Robot::sensors(void *ptr)
 
 		if (UT.get_value() < 150)
 		{
-			if (UT_reset > 60)
+			if (UT_reset > 10)
 				UT_count++;
 			UT_reset = 0;
 		}
@@ -353,7 +358,7 @@ void Robot::display(void *ptr)
 	}
 }
 
-void Robot::move_to(std::vector<double> pose, bool pure_pursuit, bool store_, int coefficient, bool flip, std::string powered)
+void Robot::move_to(std::vector<double> pose, bool pure_pursuit, int coefficient, bool flip, std::string powered)
 {
 	double new_y = pose[0];
 	double new_x = pose[1];
@@ -371,9 +376,6 @@ void Robot::move_to(std::vector<double> pose, bool pure_pursuit, bool store_, in
 
 	while (abs(y_error) > 10 || abs(x_error) > 10 || abs(imu_error) > 1)
 	{ //while both goals are not reached
-		if (store_){
-			store();
-		}
 		double phi = TO_RAD(IMU.get_rotation());
 		double power = power_PID.get_value(y_error * std::cos(phi) + x_error * std::sin(phi));
 		double strafe = strafe_PID.get_value(x_error * std::cos(phi) - y_error * std::sin(phi));
@@ -396,7 +398,7 @@ void Robot::move_to(std::vector<double> pose, bool pure_pursuit, bool store_, in
 	brake("stop");
 }
 
-void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, bool store_, int coefficient, bool flip, std::string powered)
+void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, int coefficient, bool flip, std::string powered)
 {
 
 	std::vector<double> end;
@@ -421,7 +423,7 @@ void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, bool s
 
 			lcd::print(6, "{%f, %f} %f", target[0], target[1], heading);
 			std::vector<double> pose {target[0], target[1], heading};
-			Robot::move_to(pose, true, store_, coefficient, flip, powered);
+			Robot::move_to(pose, true, coefficient, flip, powered);
 			delay(10);
 			cur = {(float)y, (float)x};
 		}

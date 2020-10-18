@@ -15,7 +15,7 @@ lv_style_t myButtonStylePR2;
 int autonSelected = 0;
 int count = 0;
 
-
+ADIUltrasonic side({{5, 3, 4}});
 
 void on_center_button() {
     static bool pressed = false;
@@ -427,9 +427,9 @@ void initialize() {
     myButtonLabel = lv_label_create(myButton, NULL);
     lv_label_set_text(myButtonLabel, "Blue Back");
 
+    //ultrasonic calibrate
 
-
-    //lv_obj_t * logo1 = lv_img_create(lv_scr_act(), NULL); /*Crate an image object*/
+   //lv_obj_t * logo1 = lv_img_create(lv_scr_act(), NULL); /*Crate an image object*/
     //lv_img_set_src(logo1, &logo1);  /*Set the created file as image (a red fl  ower)*/
     //lv_obj_set_pos(logo1, 10, 10);      /*Set the positions*/
     //lv_obj_set_drag(logo1, true);

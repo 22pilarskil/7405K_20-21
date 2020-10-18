@@ -42,13 +42,12 @@ public:
 	static double offset_middle;
 	static double wheel_circumference;
 
-	static void move_to(std::vector<double> pose, bool pure_pursuit = false, bool store_ = false, int coefficient = 0, bool flip = false, std::string powered = "both");
-	static void move_to_pure_pursuit(std::vector<std::vector<double>> points, bool store_ = false, int coefficient = 0, bool flip = false, std::string powered = "both");
+	static void move_to(std::vector<double> pose, bool pure_pursuit = false, int coefficient = 0, bool flip = false, std::string powered = "both");
+	static void move_to_pure_pursuit(std::vector<std::vector<double>> points, int coefficient = 0, bool flip = false, std::string powered = "both");
 	static void brake(std::string mode);
 	static void drive(void *ptr);
 	static void intake(int coefficient, bool flip = false, std::string powered = "both");
 	static void fps(void *ptr);
-	static void adjust_ball_positions(void *ptr);
 	static void sensors(void *ptr);
 	static void vis_sense(void *ptr);
 	static void display(void *ptr);
@@ -56,8 +55,8 @@ public:
 	static void BE_filter(void *ptr);
 	static void LE_filter(void *ptr);
 	static void RE_filter(void *ptr);
-	static void quickScore();
-	static void store();
+	static void quickscore();
+	static void store(void *ptr);
 	static void reset_sensors();
 	static void reset_Balls(int ultrasonic_bottom = 0, int ultrasonic_top = 0);
 	static void reset_PID();
