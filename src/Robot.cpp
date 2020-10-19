@@ -18,7 +18,7 @@ Motor Robot::BL(1);
 Motor Robot::BR(19, true);
 Motor Robot::IL(3);
 Motor Robot::IR(11, true);
-Motor Robot::R1(4);
+Motor Robot::R1(6);
 Motor Robot::R2(18, true);
 ADIEncoder Robot::LE(3, 4);
 ADIEncoder Robot::RE(7, 8, true);
@@ -82,8 +82,8 @@ void Robot::reset_Balls(int ultrasonic_bottom, int ultrasonic_top)
 {
 	UT_LastBall = (int)UT_count;
 	UB_LastBall = (int)UB_count;
-	UT_count = ultrasonic_top;
-	UB_count = ultrasonic_bottom;
+	UT_count = (ultrasonic_top > 0) ? ultrasonic_top : UT_count;
+	UB_count = (ultrasonic_bottom > 0) ? ultrasonic_bottom : UB_count;
 	storing_count = 0;
 }
 
@@ -153,65 +153,63 @@ void Robot::drive(void *ptr)
 }
 
 void Robot::quickscore(){
-	for (int iter = 0; iter < 350000; iter++)
-	{
-		R2 = 127;
-		if (iter > 150000)
-			R1 = -127;
-	}
+	R2 = 127;
+	delay(500);
+	R1 = -127;
+	delay(800);
 	R1 = R2 = 0;
 }
 
 void Robot::store(void *ptr)
 {
+	bool count = false;
+	int counted = 0;
 	while(true){
 		int sensorTop = int(UT_count - UT_LastBall);
 		int sensorBottom = int(UB_count - UB_LastBall);
-		lcd::print(1, "%d %d", UB.get_value(), int(UB_count));
+		lcd::print(1, "%d %d %d %d", UB.get_value(), int(UB_count), count, counted);
 		lcd::print(2, "%d %d", UT.get_value(), int(UT_count));
 		lcd::print(7, "T: %d B: %d", sensorTop, sensorBottom);
-
 
 		if (sensorTop == 1 && sensorBottom == 1)
 		{
 			R1 = -80;
 			R2 = 0;
-			IL = 127;
-			IR = 127;
+			if (LM1.get_value() == 1){
+				count = true;
+				IL = IR = 0;
+			}
 		}
 		else if (sensorTop == 1 && sensorBottom == 2)
 		{
-			//lcd::print(1, "HERE");
-			if (storing_count == 0)
-			{
-				IL = 0;
-				IR = 0;
-				for (int i = 0; i < 200000; i++)
-				{
-					if (i > 85000)
-						R2 = 0;
-					else
-						R2 = 80;
-					R1 = -127;
-				}
-				R1 = 0;
-				R2 = 0;
-			}
+			R1 = -127;
+			R2 = 80;
+			delay(200);
+			R2 = 0;
+			delay(200);
+			R1 = 0;
+			R2 = 0;
 			break;
 		}
 		else if (sensorTop == 0 && sensorBottom <= 1)
 		{
 			R1 = -80;
 			R2 = 50;
-			IL = 127;
+			if (LM1.get_value() == 1 && sensorBottom == 1){
+				count = true;
+				IL = IR = 0;
+			}
+		}
+		if (count){
+			counted++;
+		}
+		if (counted < 10){
 			IR = 127;
+			IL = 127;
 		}
 		delay(5);
 	}
-	IL = 0;
-	IR = 0;
 	lcd::print(7, "HERE");
-	kill_task("STORE");
 }
 
 void Robot::flipout()
