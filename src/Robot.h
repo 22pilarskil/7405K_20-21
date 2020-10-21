@@ -42,12 +42,13 @@ public:
 	static double offset_back;
 	static double offset_middle;
 	static double wheel_circumference;
+	static bool store_complete;
 
 	static void move_to(std::vector<double> pose, bool pure_pursuit = false, int coefficient = 0, bool flip = false, std::string powered = "both");
 	static void move_to_pure_pursuit(std::vector<std::vector<double>> points, int coefficient = 0, bool flip = false, std::string powered = "both");
 	static void brake(std::string mode);
 	static void drive(void *ptr);
-	static void intake(int coefficient, bool flip = false, std::string powered = "both");
+	static void intake(double coefficient, bool flip = false, std::string powered = "both");
 	static void fps(void *ptr);
 	static void sensors(void *ptr);
 	static void vis_sense(void *ptr);
@@ -59,7 +60,7 @@ public:
 	static void quickscore();
 	static void store(void *ptr);
 	static void reset_sensors();
-	static void reset_Balls(int ultrasonic_bottom = 0, int ultrasonic_top = 0);
+	static void reset_Balls(int ultrasonic_bottom = 0, int ultrasonic_top = 0, bool intakes_off = false);
 	static void reset_PID();
 	static void flipout();
 	static void start_tasks();

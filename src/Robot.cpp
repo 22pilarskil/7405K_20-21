@@ -28,9 +28,9 @@ Vision Robot::vision(21);
 ADIDigitalIn Robot::LM1({{5, 5}});
 ADIUltrasonic Robot::UB(1, 2);
 ADIUltrasonic Robot::UT({{5, 1, 2}});
-PID Robot::power_PID(.2, 0, 1.5, 5);
-PID Robot::strafe_PID(.25, 0, 1.5, 2);
-PID Robot::turn_PID(0.85, 0, 0, 5);
+PID Robot::power_PID(.2, 0, 1.5, 10);
+PID Robot::strafe_PID(.25, 0, 1.5, 10);
+PID Robot::turn_PID(0.85, 0, 0, 15);
 
 std::atomic<double> Robot::y = 0;
 std::atomic<double> Robot::x = 0;
@@ -47,9 +47,12 @@ int radius = 300;
 int buffer = 200;
 int UT_LastBall;
 int UB_LastBall;
+int counted;
+bool Robot::store_complete;
 int storing_count;
 int UB_count = 0;
 int UT_count = 0;
+int count_constant = 20;
 std::map<std::string, std::unique_ptr<pros::Task>>
 	Robot::tasks;
 
@@ -78,13 +81,18 @@ void Robot::reset_PID()
 	turn_PID.reset();
 }
 
-void Robot::reset_Balls(int ultrasonic_bottom, int ultrasonic_top)
+void Robot::reset_Balls(int ultrasonic_bottom, int ultrasonic_top, bool intakes_off)
 {
-	UT_LastBall = (int)UT_count;
-	UB_LastBall = (int)UB_count;
-	UT_count = (ultrasonic_top > 0) ? ultrasonic_top : UT_count;
-	UB_count = (ultrasonic_bottom > 0) ? ultrasonic_bottom : UB_count;
+	UT_count = ultrasonic_top;
+	UB_count = ultrasonic_bottom;
+	UT_LastBall = 0;
+	UB_LastBall = 0;
 	storing_count = 0;
+	counted = 0;
+	if (intakes_off){
+		counted = count_constant;
+	}
+	store_complete = false;
 }
 
 void Robot::drive(void *ptr)
@@ -163,7 +171,6 @@ void Robot::quickscore(){
 void Robot::store(void *ptr)
 {
 	bool count = false;
-	int counted = 0;
 	while(true){
 		int sensorTop = int(UT_count - UT_LastBall);
 		int sensorBottom = int(UB_count - UB_LastBall);
@@ -186,9 +193,8 @@ void Robot::store(void *ptr)
 			R2 = 80;
 			delay(200);
 			R2 = 0;
-			delay(200);
+			delay(300);
 			R1 = 0;
-			R2 = 0;
 			break;
 		}
 		else if (sensorTop == 0 && sensorBottom <= 1)
@@ -203,13 +209,14 @@ void Robot::store(void *ptr)
 		if (count){
 			counted++;
 		}
-		if (counted < 10){
+		if (counted < count_constant){
 			IR = 127;
 			IL = 127;
 		}
 		delay(5);
 	}
 	lcd::print(7, "HERE");
+	store_complete = true;
 }
 
 void Robot::flipout()
@@ -220,7 +227,7 @@ void Robot::flipout()
 	R2 = 127;
 }
 
-void Robot::intake(int coefficient, bool flip, std::string powered)
+void Robot::intake(double coefficient, bool flip, std::string powered)
 {
 	if (coefficient == 0)
 	{
@@ -232,8 +239,8 @@ void Robot::intake(int coefficient, bool flip, std::string powered)
 	}
 	if (powered.compare("intakes") == 0 || powered.compare("both") == 0)
 	{
-		IL = coefficient * 127;
-		IR = coefficient * 127;
+		IL = int(coefficient * 127);
+		IR = int(coefficient * 127);
 		if (!powered.compare("both") == 0)
 		{
 			R1 = 0;
@@ -351,7 +358,7 @@ void Robot::display(void *ptr)
 		master.print(0, 0, "Joystick %d", master.get_analog(ANALOG_LEFT_X));
 		//lcd::print(1, "LE: %d - RE: %d", LE.get_value(), RE.get_value());
 		//lcd::print(2, "Back Encoder: %d", BE.get_value());
-		lcd::print(6, "Limit switch %d", LM1.get_value());
+		//lcd::print(6, "Limit switch %d", LM1.get_value());
 		//lcd::print(3, "IMU value: %f", IMU.get_rotation());
 
 		delay(10);
@@ -374,7 +381,7 @@ void Robot::move_to(std::vector<double> pose, bool pure_pursuit, int coefficient
 	heading (i.e. at IMU val 150, travel to 1 deg (|150 - 1| = 149 deg traveled) as opposed to -359 deg
 	(|150 - (-359)| = 509 deg traveled) */
 
-	while (abs(y_error) > 10 || abs(x_error) > 10 || abs(imu_error) > 1)
+	while (abs(y_error) > 30 || abs(x_error) > 30 || abs(imu_error) > 2)
 	{ //while both goals are not reached
 		double phi = TO_RAD(IMU.get_rotation());
 		double power = power_PID.get_value(y_error * std::cos(phi) + x_error * std::sin(phi));
