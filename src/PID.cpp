@@ -2,7 +2,8 @@
 #include "PID.h"
 using namespace pros;
 
-PID::PID(double p, double i, double d, double min, int counter_){
+PID::PID(double p, double i, double d, double min, int counter_)
+{
 	kp = p;
 	ki = i;
 	kd = d;
@@ -16,9 +17,8 @@ PID::PID(double p, double i, double d, double min, int counter_){
 	counter_reset = counter_;
 }
 
-
-double PID::get_value(double error){
-
+double PID::get_value(double error)
+{
 	int time = millis();
 	int delta_time = time - prev_time;
 	//Allow for PID to take into account imperfect loop times- delay(5) does not always delay 5 milliseconds
@@ -36,6 +36,7 @@ double PID::get_value(double error){
 }
 
 
-void PID::reset(){
+void PID::reset()
+{
 	counter = counter_reset;
 }

@@ -9,7 +9,7 @@
 #include <unordered_map>
 using namespace pros;
 
-#define TO_RAD(n) n *M_PI / 180;
+#define TO_RAD(n) n * M_PI / 180;
 
 Controller Robot::master(E_CONTROLLER_MASTER);
 Motor Robot::FL(10, true);
@@ -36,29 +36,26 @@ std::atomic<double> Robot::y = 0;
 std::atomic<double> Robot::x = 0;
 std::atomic<double> Robot::turn_offset_x = 0;
 std::atomic<double> Robot::turn_offset_y = 0;
-std::vector<double> LE_values;
-std::vector<double> RE_values;
-std::vector<double> BE_values;
+std::atomic<int> Robot::UB_count = 0;
+std::atomic<int> Robot::UT_count = 0;
+
 double Robot::offset_back = 4 + 5 / 16;
 double Robot::offset_middle = 5 + 7 / 16;
 double Robot::wheel_circumference = 2.75 * M_PI;
-bool flip = true;
+std::vector<double> LE_values;
+std::vector<double> RE_values;
+std::vector<double> BE_values;
 int radius = 300;
-int buffer = 200;
 int UT_LastBall;
 int UB_LastBall;
 int counted;
 bool Robot::store_complete;
 int storing_count;
-int UB_count = 0;
-int UT_count = 0;
 int count_constant = 20;
-std::map<std::string, std::unique_ptr<pros::Task>>
-	Robot::tasks;
+std::map<std::string, std::unique_ptr<pros::Task>> Robot::tasks;
 
 void Robot::vis_sense(void *ptr)
 {
-
 	vision_signature_s_t red_signature = Vision::signature_from_utility(1, -669, 5305, 2318, -971, 571, -200, 0.700, 0);
 	vision_signature_s_t blue_signature = Vision::signature_from_utility(2, -3277, -2313, -2796, 9039, 13285, 11162, 3.000, 0);
 	vision.set_signature(1, &red_signature);
@@ -73,46 +70,20 @@ void Robot::vis_sense(void *ptr)
 	}
 }
 
-void Robot::reset_PID()
-{
-
-	power_PID.reset();
-	strafe_PID.reset();
-	turn_PID.reset();
-}
-
-void Robot::reset_Balls(int ultrasonic_bottom, int ultrasonic_top, bool intakes_off)
-{
-	UT_count = ultrasonic_top;
-	UB_count = ultrasonic_bottom;
-	UT_LastBall = 0;
-	UB_LastBall = 0;
-	storing_count = 0;
-	counted = 0;
-	if (intakes_off){
-		counted = count_constant;
-	}
-	store_complete = false;
-}
 
 void Robot::drive(void *ptr)
 {
 	delay(300);
-	int fcd_toggle;
 	int intake_state = 1;
 	bool intake_last;
 
 	while (true)
 	{
-
 		int power = master.get_analog(ANALOG_LEFT_Y);
 		int strafe = master.get_analog(ANALOG_LEFT_X);
 		int turn = master.get_analog(ANALOG_RIGHT_X);
 
-		if (master.get_digital(DIGITAL_LEFT)){
-			std::vector<double> pose {0, 0, IMU.get_rotation() / 360 * 360};
-			move_to(pose);
-		}
+		if (master.get_digital(DIGITAL_LEFT)) move_to({0, 0, IMU.get_rotation() / 360 * 360});
 
 		mecanum(power, strafe, turn);
 
@@ -124,43 +95,31 @@ void Robot::drive(void *ptr)
 		bool storingScore = master.get_digital(DIGITAL_RIGHT);
 		bool quickScore_ = master.get_digital(DIGITAL_A);
 
-		if (storingScore && !intake_last)
-		{
+		if (storingScore && !intake_last){
 			intake_state++;
 			intake_last = true;
 			reset_Balls();
 		}
-		else if (!storingScore)
-			intake_last = false;
+		else if (!storingScore)intake_last = false;
 
-		if (intake_state % 2 == 0)
-		{
-			// store();
+		if (intake_state % 2 == 0){
+			store();
 		}
-		else
-		{
-
+		else {
 			double motorpwr = 0;
-
-			if (intake_ || outtake)
-				motorpwr = (intake_) ? 1 : -1;
-			if (just_intake && just_indexer)
-				intake(1, false, "both");
-			else if (just_intake)
-				intake(1, flip, "intakes");
-			else if (just_indexer)
-				intake(1, flip, "indexer");
-			else if (quickScore_)
-			{
-				quickscore();
-			}
-			else
-				intake(motorpwr, flip, "both");
+			if (intake_ || outtake) motorpwr = (intake_) ? 1 : -1;
+			if (just_intake && just_indexer) intake(1, false, "both");
+			else if (just_intake) intake(1, flip, "intakes");
+			else if (just_indexer) intake(1, flip, "indexer");
+			else if (quickScore_) quickscore();
+			else intake(motorpwr, flip, "both");
 		}
 	}
 }
 
-void Robot::quickscore(){
+
+void Robot::quickscore()
+{
 	R2 = 127;
 	delay(500);
 	R1 = -127;
@@ -168,18 +127,19 @@ void Robot::quickscore(){
 	R1 = R2 = 0;
 }
 
+
 void Robot::store(void *ptr)
 {
 	bool count = false;
-	while(true){
+	while(true)
+	{
 		int sensorTop = int(UT_count - UT_LastBall);
 		int sensorBottom = int(UB_count - UB_LastBall);
 		lcd::print(1, "%d %d %d %d", UB.get_value(), int(UB_count), count, counted);
 		lcd::print(2, "%d %d", UT.get_value(), int(UT_count));
 		lcd::print(7, "T: %d B: %d", sensorTop, sensorBottom);
 
-		if (sensorTop == 1 && sensorBottom == 1)
-		{
+		if (sensorTop == 1 && sensorBottom == 1){
 			R1 = -80;
 			R2 = 0;
 			if (LM1.get_value() == 1){
@@ -187,8 +147,15 @@ void Robot::store(void *ptr)
 				IL = IR = 0;
 			}
 		}
-		else if (sensorTop == 1 && sensorBottom == 2)
-		{
+		else if (sensorTop == 0 && sensorBottom <= 1){
+			R1 = -80;
+			R2 = 50;
+			if (LM1.get_value() == 1 && sensorBottom == 1){
+				count = true;
+				IL = IR = 0;
+			}
+		}
+		else if (sensorTop == 1 && sensorBottom == 2){
 			R1 = -127;
 			R2 = 80;
 			delay(200);
@@ -196,15 +163,6 @@ void Robot::store(void *ptr)
 			delay(300);
 			R1 = 0;
 			break;
-		}
-		else if (sensorTop == 0 && sensorBottom <= 1)
-		{
-			R1 = -80;
-			R2 = 50;
-			if (LM1.get_value() == 1 && sensorBottom == 1){
-				count = true;
-				IL = IR = 0;
-			}
 		}
 		if (count){
 			counted++;
@@ -219,6 +177,7 @@ void Robot::store(void *ptr)
 	store_complete = true;
 }
 
+
 void Robot::flipout()
 {
 	IL = -127;
@@ -227,49 +186,36 @@ void Robot::flipout()
 	R2 = 127;
 }
 
+
 void Robot::intake(double coefficient, bool flip, std::string powered)
 {
 	if (coefficient == 0)
 	{
-		IL = 0;
-		IR = 0;
-		R1 = 0;
-		R2 = 0;
+		IL = IR = R1 = R2 = 0;
 		return;
 	}
 	if (powered.compare("intakes") == 0 || powered.compare("both") == 0)
 	{
-		IL = int(coefficient * 127);
-		IR = int(coefficient * 127);
-		if (!powered.compare("both") == 0)
-		{
-			R1 = 0;
-			R2 = 0;
-		}
+		IL = IR = int(coefficient * 127);
+		if (!powered.compare("both") == 0) R1 = R2 = 0;
 	}
 	if (powered.compare("indexer") == 0 || powered.compare("both") == 0)
 	{
 		R1 = -coefficient * 127;
-		if (coefficient < 0)
-			coefficient = 0;
+		coefficient = std::max(0, coefficient);
 		R2 = (!flip) ? coefficient * 127 : -coefficient * 127;
-		if (!powered.compare("both") == 0)
-		{
-			IL = 0;
-			IR = 0;
-		}
+		if (!powered.compare("both") == 0) IL = IR = 0;
 	}
 }
 
+
 void Robot::fps(void *ptr)
 {
-
 	double last_x = 0;
 	double last_y = 0;
 	double last_phi = 0;
 	while (true)
 	{
-
 		double cur_phi = TO_RAD(IMU.get_rotation());
 		double dphi = cur_phi - last_phi;
 
@@ -304,8 +250,9 @@ void Robot::fps(void *ptr)
 		last_phi = cur_phi;
 
 		delay(5);
-	}
+	} 
 }
+
 
 void Robot::sensors(void *ptr)
 {
@@ -313,36 +260,30 @@ void Robot::sensors(void *ptr)
 	int UT_reset = 0;
 	while (true)
 	{
-		if (UB.get_value() < 150)
-		{
-
+		if (UB.get_value() < 150){
 			if (UB_reset > 10)
 				UB_count++;
 			UB_reset = 0;
 		}
-		else if (UB.get_value() > 150 && UB.get_value() < 250)
-		{
+		else if (UB.get_value() > 150 && UB.get_value() < 250){
 			UB_reset += 1;
 		}
 
-		if (UT.get_value() < 150)
-		{
+		if (UT.get_value() < 150){
 			if (UT_reset > 10)
 				UT_count++;
 			UT_reset = 0;
 		}
-		else if (UT.get_value() > 150 && UT.get_value() < 250)
-		{
+		else if (UT.get_value() > 150 && UT.get_value() < 250){
 			UT_reset += 1;
 		}
-
 		delay(5);
 	}
 }
 
+
 void Robot::mecanum(int power, int strafe, int turn)
 {
-
 	FL = power + strafe + turn;
 	FR = power - strafe - turn;
 	BL = power - strafe + turn;
@@ -350,11 +291,10 @@ void Robot::mecanum(int power, int strafe, int turn)
 	delay(5);
 }
 
+
 void Robot::display(void *ptr)
 {
-
-	while (true)
-	{
+	while (true){
 		master.print(0, 0, "Joystick %d", master.get_analog(ANALOG_LEFT_X));
 		//lcd::print(1, "LE: %d - RE: %d", LE.get_value(), RE.get_value());
 		//lcd::print(2, "Back Encoder: %d", BE.get_value());
@@ -364,6 +304,7 @@ void Robot::display(void *ptr)
 		delay(10);
 	}
 }
+
 
 void Robot::move_to(std::vector<double> pose, bool pure_pursuit, int coefficient, bool flip, std::string powered)
 {
@@ -405,6 +346,7 @@ void Robot::move_to(std::vector<double> pose, bool pure_pursuit, int coefficient
 	brake("stop");
 }
 
+
 void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, int coefficient, bool flip, std::string powered)
 {
 
@@ -416,19 +358,12 @@ void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, int co
 
 	for (int index = 0; index < points.size() - 1; index++)
 	{
-
 		start = points[index];
 		end = points[index + 1];
-
 		while (distance(cur, end) > radius)
 		{
-
-			//lcd::print(7, "%f, %d", distance(cur, end), index);
-
 			target = get_intersection(start, end, cur, radius);
 			heading = get_degrees(target, cur);
-
-			lcd::print(6, "{%f, %f} %f", target[0], target[1], heading);
 			std::vector<double> pose {target[0], target[1], heading};
 			Robot::move_to(pose, true, coefficient, flip, powered);
 			delay(10);
@@ -443,8 +378,9 @@ void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, int co
 	brake("stop");
 	reset_PID();
 	lcd::print(6, "DONE");
-	//lcd::print(7, "YE: %d - XE: %d - IE: %d", int(x_error), int(y_error), int(imu_error));
+	lcd::print(7, "YE: %d - XE: %d - IE: %d", int(x_error), int(y_error), int(imu_error));
 }
+
 
 void Robot::brake(std::string mode)
 {
@@ -463,42 +399,60 @@ void Robot::brake(std::string mode)
 		BL.set_brake_mode(E_MOTOR_BRAKE_HOLD);
 		BR.set_brake_mode(E_MOTOR_BRAKE_HOLD);
 	}
-	else
-	{
-		FL = 0;
-		FR = 0;
-		BL = 0;
-		BR = 0;
-	}
+	else FL = FR = BL = BR = 0;
 }
+
+
+void Robot::reset_sensors()
+{
+	IMU.reset();
+}
+
+
+void Robot::reset_PID()
+{
+	power_PID.reset();
+	strafe_PID.reset();
+	turn_PID.reset();
+}
+
+
+void Robot::reset_Balls(int ultrasonic_bottom, int ultrasonic_top, bool intakes_off)
+{
+	UT_count = ultrasonic_top;
+	UB_count = ultrasonic_bottom;
+	UT_LastBall = 0;
+	UB_LastBall = 0;
+	storing_count = 0;
+	counted = 0;
+	if (intakes_off){
+		counted = count_constant;
+	}
+	store_complete = false;
+}
+
 
 void Robot::start_task(std::string name, void (*func)(void *))
 {
-
-	if (!task_exists(name))
-	{
+	if (!task_exists(name)){
 		tasks.insert(std::pair<std::string, std::unique_ptr<pros::Task>>(name, std::move(std::make_unique<pros::Task>(func, &x, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, ""))));
 	}
 }
+
 
 bool Robot::task_exists(std::string name)
 {
 	return tasks.find(name) != tasks.end();
 }
 
-void Robot::kill_task(std::string name) {
-	if (task_exists(name))
-	{
+
+void Robot::kill_task(std::string name)
+{
+	if (task_exists(name)){
 		tasks.erase(name);
 	}
 }
 
-void Robot::reset_sensors()
-{
-	IMU.reset();
-	// LT2.calibrate();
-	// LT1.calibrate();
-}
 
 void Robot::LE_filter(void *ptr)
 {

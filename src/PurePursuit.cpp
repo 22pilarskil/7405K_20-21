@@ -13,11 +13,14 @@ int sign(double x) {
   return 0;
 }
 
-float point_line_distance(std::vector<double> p1, std::vector<double> p2, std::vector<double> p3){
+float point_line_distance(std::vector<double> p1, std::vector<double> p2, std::vector<double> p3)
+{
   double dy = p1[1] - p2[1];
   double dx = p1[0] - p2[0];
-  if(dy == 0) return abs(p1[1] - p3[1]);
-  if(dx == 0) return abs(p1[0] - p3[0]);
+
+  if (dy == 0) return abs(p1[1] - p3[1]);
+  if (dx == 0) return abs(p1[0] - p3[0]);
+
   float slope = dy / dx;
   float a = -slope;
   int b = 1;
@@ -25,7 +28,8 @@ float point_line_distance(std::vector<double> p1, std::vector<double> p2, std::v
   return abs((a * p3[0] + b * p3[1] + c) / sqrt(SQD(a) + SQD(b)));
 }
 
-std::vector<double> get_deviation(std::vector<double> headings, int numb){
+std::vector<double> get_deviation(std::vector<double> headings, int numb)
+{
   int headingsLength = headings.size();
   int prev_heading = 0;
   std::vector<double> all_headings;
@@ -50,22 +54,22 @@ std::vector<double> get_deviation(std::vector<double> headings, int numb){
 }
 
 
-double get_degrees(std::vector<double> p1, std::vector<double> p2) {
+double get_degrees(std::vector<double> p1, std::vector<double> p2)
+{
   double y = p1[0] - p2[0];
   double x = p1[1] - p2[1];
   return atan2(-x, y) * 180 / M_PI;
 }
 
-double distance(std::vector<double> cur, std::vector<double> end){
+double distance(std::vector<double> cur, std::vector<double> end)
+{
   return sqrt(SQD(cur[0] - end[0]) + SQD(cur[1] - end[1]));
 }
 
-std::vector<double> get_intersection(std::vector<double> start, std::vector<double> end, std::vector<double> cur, double radius){
-
+std::vector<double> get_intersection(std::vector<double> start, std::vector<double> end, std::vector<double> cur, double radius)
+{
   std::vector<double> p1 {start[0] - cur[0], start[1] - cur[1]};
   std::vector<double> p2 {end[0] - cur[0], end[1] - cur[1]};
-
-  //lcd::print(6, "{%f, %f}", (float)cur[0], (float)cur[1]);
 
   double dx = p2[0] - p1[0];
   double dy = p2[1] - p1[1];
@@ -89,5 +93,4 @@ std::vector<double> get_intersection(std::vector<double> start, std::vector<doub
 
   if (distance1 < distance2) return calc1;
   if (distance1 > distance2) return calc2;
-
 }

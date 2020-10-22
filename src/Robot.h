@@ -33,11 +33,11 @@ public:
 
 	static std::atomic<double> x;
 	static std::atomic<double> y;
-
-	static std::atomic<int> balls_ejected;
-	static std::atomic<int> balls_intook;
 	static std::atomic<double> turn_offset_x;
 	static std::atomic<double> turn_offset_y;
+	static std::atomic<int> UT_count;
+	static std::atomic<int> UB_count;
+
 	static std::map<std::string, std::unique_ptr<pros::Task>> tasks;
 	static double offset_back;
 	static double offset_middle;
