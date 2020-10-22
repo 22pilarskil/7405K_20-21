@@ -66,7 +66,7 @@ void autonomous()
 	Robot::reset_Balls(1, 0);
 	Robot::start_task("STORE2", Robot::store);
 	Robot::move_to({980, 860, -65});
-	std::vector<std::vector<double>> points2 {{980, 860}, {800, -600}, {2350, -200}};
+	std::vector<std::vector<double>> points2 {{980, 860}, {600, -600}, {2700, -500}, {2700, 690}};
 	Robot::move_to_pure_pursuit(points2);
 }
 
