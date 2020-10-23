@@ -14,59 +14,64 @@ void autonomous()
 
 	//Tower 1
 	std::vector<std::vector<double>> points1 {{0, 0}, {750, 0.1}, {750, 500}, {180, 1000}};
-	Robot::reset_Balls(1);
-	Robot::start_task("STORE", Robot::store);
-	delay(200);
-	Robot::move_to_pure_pursuit(points1);
-	Robot::kill_task("STORE");
-	Robot::intake(1, false, "intakes");
-	while(Robot::LM1.get_value() == 0){
-		delay(1);
-	}
-	Robot::intake(-1, false, "intakes");
-	delay(50);
-	Robot::intake(0);
-	Robot::quickscore();
-	Robot::reset_Balls(1, 1, true);
-	Robot::intake(1);
-	delay(100);
-	if (Robot::LM1.get_value() == 1){
-		while(Robot::LM1.get_value() == 1){
-			delay(1);
-		}
-	}
-	else {
-		while(Robot::LM1.get_value() == 0){
-			delay(1);
-		}
-		while(Robot::LM1.get_value() == 1){
-			delay(1);
-		}
-	}
-	Robot::intake(0);
+	Robot::reset_Balls(1, 0);
 	Robot::start_task("STORE1", Robot::store);
-	while(!Robot::store_complete){
-		delay(1);
-	}
+	delay(300);
+	Robot::move_to_pure_pursuit(points1);
 	Robot::kill_task("STORE1");
 	Robot::intake(1, false, "intakes");
 	while(Robot::LM1.get_value() == 0){
 		delay(1);
 	}
-	Robot::intake(-1, false, "intakes");
-	delay(50);
 	Robot::intake(0);
-	Robot::move_to({600, 550, -160});
-	delay(100);
-	Robot::intake(-0.5);
+	delay(5000);
+	Robot::intake(-1, false, "intakes");
+	delay(200);
+	Robot::intake(0);
+	Robot::quickscore();
+	Robot::reset_Balls();
+	Robot::intake(1);
+	while (Robot::get_data()[0] == 0){
+		delay(1);
+	}
+	Robot::intake(0);
+	Robot::intake(1, false, "intakes");
+	while(Robot::LM1.get_value() == 0){
+		delay(1);
+	}
+	Robot::intake(0);
+	Robot::intake(1, false, "intakes");
+	while(Robot::LM1.get_value() == 0){
+		delay(1);
+	}
+	Robot::intake(0);
+	Robot::move_to({600, 550, -160}, false, 0, false, "both", {10, 10, 10});
+	Robot::intake(-0.8);
 	delay(1000);
 
 	//Tower 2
-	Robot::move_to({900, 650, -65});
-	Robot::reset_Balls(1, 0);
-	Robot::start_task("STORE2", Robot::store);
-	Robot::move_to({980, 860, -65});
-	std::vector<std::vector<double>> points2 {{980, 860}, {600, -600}, {2700, -500}, {2700, 690}};
+	Robot::move_to({900, 650, -65}, false, 0, false, "both", {10, 10, 10});
+	Robot::reset_Balls(0, 0, false, true);
+	Robot::start_task("STORE3", Robot::store);
+	Robot::move_to({900, 800, -65});
+	std::vector<std::vector<double>> points2 {{980, 860}, {1850, -160}, {2690, -300}};
 	Robot::move_to_pure_pursuit(points2);
+	Robot::move_to({2700, -730, -90});
+	Robot::move_to({2760, 660, -90});
+	while(!Robot::store_complete){
+		delay(1);
+	}
+	Robot::kill_task("STORE3");
+	Robot::quickscore();
+	Robot::move_to({2760, 560, -90});
+	Robot::reset_Balls(1, 1);
+	Robot::start_task("STORE4", Robot::store);
+	Robot::move_to({2700, 660, -90});
+	Robot::intake(1, false, "intakes");
+	while(Robot::LM1.get_value() == 0){
+		delay(1);
+	}
+	Robot::intake(0);
+	Robot::quickscore();
 }
 
