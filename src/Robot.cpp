@@ -18,8 +18,8 @@ Motor Robot::BL(1);
 Motor Robot::BR(19, true);
 Motor Robot::IL(3);
 Motor Robot::IR(11, true);
-Motor Robot::R1(16);
-Motor Robot::R2(18, true);
+Motor Robot::R1(15);
+Motor Robot::R2(17, true);
 ADIEncoder Robot::LE(3, 4);
 ADIEncoder Robot::RE(7, 8, true);
 ADIEncoder Robot::BE(5, 6);
@@ -148,14 +148,14 @@ void Robot::store(void *ptr)
 		lcd::print(7, "T: %d B: %d", sensorTop, sensorBottom);
 
 		if (sensorTop == 1 && sensorBottom == 1){
-			R1 = -127;
+			R1 = -90;
 			R2 = 0;
 		}
 		else if (sensorTop == 0 && sensorBottom <= 1){
-			R1 = -127;
+			R1 = -90;
 			R2 = 50;
 		}
-		else if (sensorTop == 1 && sensorBottom == 2){
+		else if (sensorTop >= 1 && sensorBottom >= 2){
 			if (move_up){
 				R1 = -127;
 				R2 = 80;
