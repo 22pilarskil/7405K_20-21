@@ -19,7 +19,7 @@ Motor Robot::BR(19, true);
 Motor Robot::IL(3);
 Motor Robot::IR(11, true);
 Motor Robot::R1(15);
-Motor Robot::R2(17, true);
+Motor Robot::R2(12, true);
 ADIEncoder Robot::LE(3, 4);
 ADIEncoder Robot::RE(7, 8, true);
 ADIEncoder Robot::BE(5, 6);
@@ -148,18 +148,18 @@ void Robot::store(void *ptr)
 		lcd::print(7, "T: %d B: %d", sensorTop, sensorBottom);
 
 		if (sensorTop == 1 && sensorBottom == 1){
-			R1 = -90;
+			R1 = -127;
 			R2 = 0;
 		}
 		else if (sensorTop == 0 && sensorBottom <= 1){
-			R1 = -90;
+			R1 = -127;
 			R2 = 50;
 		}
 		else if (sensorTop >= 1 && sensorBottom >= 2){
 			if (move_up){
 				R1 = -127;
 				R2 = 80;
-				delay(200);
+				delay(100);
 				R2 = 0;
 				delay(300);
 				R1 = 0;
@@ -284,8 +284,7 @@ void Robot::sensors(void *ptr)
 	while (true)
 	{
 		if (UB.get_value() < 150){
-			if (UB_reset > 10)
-				UB_count++;
+			if (UB_reset > 10) UB_count++;
 			UB_reset = 0;
 		}
 		else if (UB.get_value() > 150 && UB.get_value() < 250){
@@ -293,8 +292,7 @@ void Robot::sensors(void *ptr)
 		}
 
 		if (UT.get_value() < 150){
-			if (UT_reset > 10)
-				UT_count++;
+			if (UT_reset > 10) UT_count++;
 			UT_reset = 0;
 		}
 		else if (UT.get_value() > 150 && UT.get_value() < 250){
