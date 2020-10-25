@@ -130,7 +130,7 @@ void Robot::quickscore(int ball_id) //1 for top only, 0 for bottom only, -1 for 
 {
 	R2 = 127;
 	if (ball_id == -1) {
-		delay(800);
+		delay(400);
 		R1 = -127;
 	}
 	else if (ball_id = 0){
@@ -283,10 +283,17 @@ void Robot::sensors(void *ptr)
 {
 	int UB_reset = 0;
 	int UT_reset = 0;
+	int LM_triggered = false;
 	while (true)
 	{
-		if (UB.get_value() < 150){
-			if (UB_reset > 10) UB_count++;
+		if (LM1.get_value() == 1){
+			LM_triggered = true;
+		}
+		if (UB.get_value() < 150 && LM_triggered){
+			if (UB_reset > 10) {
+				UB_count++;
+				LM_triggered = false;
+			}
 			UB_reset = 0;
 		}
 		else if (UB.get_value() > 150 && UB.get_value() < 250){
