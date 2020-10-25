@@ -27,40 +27,6 @@
             "-funwind-tables",
             "--std=gnu++17",
             "-o",
-            "bin/filter.cpp.o",
-            "src/filter.cpp"
-        ],
-        "directory": "/Users/michaelpilarski/Desktop/7405K_20-21",
-        "file": "src/filter.cpp"
-    },
-    {
-        "arguments": [
-            "clang++",
-            "-c",
-            "-target",
-            "armv7ar-none-none-eabi",
-            "-isystem/usr/local/Cellar/arm-gcc-bin/8-2019-q3-update/bin/../lib/gcc/arm-none-eabi/8.3.1/../../../../arm-none-eabi/include/c++/8.3.1",
-            "-isystem/usr/local/Cellar/arm-gcc-bin/8-2019-q3-update/bin/../lib/gcc/arm-none-eabi/8.3.1/../../../../arm-none-eabi/include/c++/8.3.1/arm-none-eabi",
-            "-isystem/usr/local/Cellar/arm-gcc-bin/8-2019-q3-update/bin/../lib/gcc/arm-none-eabi/8.3.1/../../../../arm-none-eabi/include/c++/8.3.1/backward",
-            "-isystem/usr/local/Cellar/arm-gcc-bin/8-2019-q3-update/bin/../lib/gcc/arm-none-eabi/8.3.1/include",
-            "-isystem/usr/local/Cellar/arm-gcc-bin/8-2019-q3-update/bin/../lib/gcc/arm-none-eabi/8.3.1/include-fixed",
-            "-isystem/usr/local/Cellar/arm-gcc-bin/8-2019-q3-update/bin/../lib/gcc/arm-none-eabi/8.3.1/../../../../arm-none-eabi/include",
-            "-iquote./include",
-            "-iquote./include/./",
-            "-mcpu=cortex-a9",
-            "-mfpu=neon-fp16",
-            "-mfloat-abi=softfp",
-            "-Os",
-            "-g",
-            "-D_POSIX_THREADS",
-            "-D_UNIX98_THREAD_MUTEX_ATTRIBUTES",
-            "-Wno-psabi",
-            "-ffunction-sections",
-            "-fdata-sections",
-            "-fdiagnostics-color",
-            "-funwind-tables",
-            "--std=gnu++17",
-            "-o",
             "bin/BallTracker.cpp.o",
             "src/BallTracker.cpp"
         ],
@@ -163,6 +129,40 @@
             "-funwind-tables",
             "--std=gnu++17",
             "-o",
+            "bin/filter.cpp.o",
+            "src/filter.cpp"
+        ],
+        "directory": "/Users/michaelpilarski/Desktop/7405K_20-21",
+        "file": "src/filter.cpp"
+    },
+    {
+        "arguments": [
+            "clang++",
+            "-c",
+            "-target",
+            "armv7ar-none-none-eabi",
+            "-isystem/usr/local/Cellar/arm-gcc-bin/8-2019-q3-update/bin/../lib/gcc/arm-none-eabi/8.3.1/../../../../arm-none-eabi/include/c++/8.3.1",
+            "-isystem/usr/local/Cellar/arm-gcc-bin/8-2019-q3-update/bin/../lib/gcc/arm-none-eabi/8.3.1/../../../../arm-none-eabi/include/c++/8.3.1/arm-none-eabi",
+            "-isystem/usr/local/Cellar/arm-gcc-bin/8-2019-q3-update/bin/../lib/gcc/arm-none-eabi/8.3.1/../../../../arm-none-eabi/include/c++/8.3.1/backward",
+            "-isystem/usr/local/Cellar/arm-gcc-bin/8-2019-q3-update/bin/../lib/gcc/arm-none-eabi/8.3.1/include",
+            "-isystem/usr/local/Cellar/arm-gcc-bin/8-2019-q3-update/bin/../lib/gcc/arm-none-eabi/8.3.1/include-fixed",
+            "-isystem/usr/local/Cellar/arm-gcc-bin/8-2019-q3-update/bin/../lib/gcc/arm-none-eabi/8.3.1/../../../../arm-none-eabi/include",
+            "-iquote./include",
+            "-iquote./include/./",
+            "-mcpu=cortex-a9",
+            "-mfpu=neon-fp16",
+            "-mfloat-abi=softfp",
+            "-Os",
+            "-g",
+            "-D_POSIX_THREADS",
+            "-D_UNIX98_THREAD_MUTEX_ATTRIBUTES",
+            "-Wno-psabi",
+            "-ffunction-sections",
+            "-fdata-sections",
+            "-fdiagnostics-color",
+            "-funwind-tables",
+            "--std=gnu++17",
+            "-o",
             "bin/opcontrol.cpp.o",
             "src/opcontrol.cpp"
         ],
@@ -231,11 +231,11 @@
             "-funwind-tables",
             "--std=gnu++17",
             "-o",
-            "bin/autonomous.cpp.o",
-            "src/autonomous.cpp"
+            "bin/Robot.cpp.o",
+            "src/Robot.cpp"
         ],
         "directory": "/Users/michaelpilarski/Desktop/7405K_20-21",
-        "file": "src/autonomous.cpp"
+        "file": "src/Robot.cpp"
     },
     {
         "arguments": [
@@ -265,10 +265,10 @@
             "-funwind-tables",
             "--std=gnu++17",
             "-o",
-            "bin/Robot.cpp.o",
-            "src/Robot.cpp"
+            "bin/autonomous.cpp.o",
+            "src/autonomous.cpp"
         ],
         "directory": "/Users/michaelpilarski/Desktop/7405K_20-21",
-        "file": "src/Robot.cpp"
+        "file": "src/autonomous.cpp"
     }
 ]
