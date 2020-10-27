@@ -11,7 +11,7 @@ void autonomous()
 	Robot::start_task("SENSORS", Robot::sensors);
 	delay(100);
 
-	//Tower 1
+    //Tower 1
 	 Robot::reset_Balls(1, 0);
 	 Robot::start_task("STORE1", Robot::store);
 	 delay(300);
@@ -71,7 +71,7 @@ void autonomous()
 	Robot::quickscore(false);
 	Robot::move_to({4800, 500, -45});
 	Robot::move_to({5020, 680, 110});
-	
+//
 	//Tower 4
 	Robot::reset_Balls();
 	Robot::start_task("STORE6", Robot::store);
@@ -90,8 +90,8 @@ void autonomous()
 	Robot::quickscore();
 	Robot::move_to({4640, -1620, 0});
 	Robot::move_to({4640, -1620, 90});
-
-	//Tower 5
+//
+//	//Tower 5
 	Robot::reset_Balls(1, 1);
 	Robot::start_task("STORE7", Robot::store);
 	Robot::move_to_pure_pursuit({{4640, -1620}, {4700, -3250}, {5150, -4000}}, {1.2, 1.2, .7});
@@ -125,3 +125,39 @@ void without_pid(){
 	delay(1100);
 	Robot::mecanum(0,0,0);
 }
+
+//	Robot::mecanum(127, 0, 0);
+//	delay(1100);
+//	Robot::mecanum(0, 0, 0);
+//	delay(1000);
+//	Robot::mecanum(0, -127, 0);
+//	delay(2250);
+//	Robot::mecanum(0,0,0);
+//	delay(1000);
+//	Robot::mecanum(-127, 0, 0);
+//	delay(500);
+//	Robot::mecanum(0, 0, 0);
+//	delay(500);
+//    Robot::mecanum(0, 127, 0);
+//    delay(1800);
+//    Robot::mecanum(0, 0, 0);
+//    delay(1000);
+//    Robot::mecanum(0, 0, -127);
+//    delay(300);
+//    Robot::mecanum(0, 0, 0);
+//    delay(400);
+//    Robot::mecanum(0, 0, 127);
+//    delay(500);
+//    Robot::mecanum(0, 0, 0);
+
+
+//	Robot::move_to({4000, 0, 0});
+//    Robot::move_to({4000, 3000, 0});
+//    Robot::move_to({1000, 3000, 0});
+//    Robot::move_to({1000, 0, 0});
+//    Robot::move_to({1000, 0, -90});
+//    Robot::move_to({1000, 0, 0});
+//    std::vector<std::vector<double>> points1 {{0, 0}, {4000, 0}, {4000, 3000}, {1000, 3000}, {1000, 0}};
+//    std::vector<std::vector<double>> points1 {{0, 0}, {3250, 0.1}, {4000, 1500}, {2700, 2500}, {1000, 500}};
+//    Robot::move_to_pure_pursuit(points1, {1.2, 1.2, 1.2}, 1, false, "intakes");
+//    Robot::move_to({0, 0, 0});

@@ -112,9 +112,11 @@ void Robot::drive(void *ptr)
 
 		if (intake_state % 2 == 0){
 			//store();
+            Robot::start_task("STORE", Robot::store);
 		}
 		else {
-			double motorpwr = 0;
+            Robot::kill_task("STORE");
+            double motorpwr = 0;
 			if (intake_ || outtake) motorpwr = (intake_) ? 1 : -1;
 			if (just_intake && just_indexer) intake(1, false, "both");
 			else if (just_intake) intake(1, flip, "intakes");
@@ -130,13 +132,13 @@ void Robot::quickscore(int ball_id) //1 for top only, 0 for bottom only, -1 for 
 {
 	R2 = 127;
 	if (ball_id == -1) {
-		delay(400);
+		delay(600);
 		R1 = -127;
 	}
 	else if (ball_id = 0){
 		R1 = 127;
 	}
-	delay(800);
+	delay(1200);
 	R1 = 0;
 	R2 = 0;
 }
