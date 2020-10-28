@@ -50,7 +50,7 @@ int radius = 300;
 int UT_LastBall;
 int UB_LastBall;
 int storing_count;
-bool intakes_off;
+bool intakes_on;
 bool intake_store = false;
 bool move_up = true;
 int count_constant = 20;
@@ -154,8 +154,10 @@ void Robot::store(void *ptr)
 		lcd::print(1, "%d %d %d %d", UB.get_value(), int(UB_count));
 		lcd::print(2, "%d %d", UT.get_value(), int(UT_count));
 		lcd::print(7, "T: %d B: %d", sensorTop, sensorBottom);
-		IL = 127;
-		IR = 127;
+		if (intakes_on){
+			IL = 127;
+			IR = 127;
+		}
 		if (sensorTop == 1 && sensorBottom == 1){
 			R1 = -127;
 			R2 = 0;
@@ -449,7 +451,7 @@ void Robot::reset_PID()
 }
 
 
-void Robot::reset_Balls(int ultrasonic_bottom, int ultrasonic_top, bool move_up_, bool intake_store_)
+void Robot::reset_Balls(int ultrasonic_bottom, int ultrasonic_top, bool move_up_, bool intake_store_, bool intakes_on_)
 {
 	UT_count = ultrasonic_top;
 	UB_count = ultrasonic_bottom;
@@ -459,6 +461,7 @@ void Robot::reset_Balls(int ultrasonic_bottom, int ultrasonic_top, bool move_up_
 	move_up = move_up_;
 	intake_store = intake_store_;
 	store_complete = false;
+	intakes_on = intakes_on_;
 }
 
 

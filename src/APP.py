@@ -85,8 +85,8 @@ radius = 300
 step = 10
 batch_size = 10
 all_degrees = []
-points = [(0, 0), (900, 800), (980, 860), (1600, -1000), (2800, -500), (2800, 500)]
-stop_points = [(2460, -830), (2750, 130)]
+points = [(0, 0), (900, 600), (1600, -1000), (2800, -500), (2800, 500)]
+#stop_points = [(2460, -830), (2750, 130)]
 
 path = []
 PID = []
@@ -116,7 +116,10 @@ def show_points(points):
     end_point = points[-1]
     plt.plot(*zip(*points), '-o')
     plt.plot(cur[0], cur[1], '-o')
-    plt.scatter(*zip(*stop_points), s=150, color='none', edgecolor='red')
+    try:
+        plt.scatter(*zip(*stop_points), s=150, color='none', edgecolor='red')
+    except NameError:
+        return
 
 
 def show_PID(no_PID, PID):
