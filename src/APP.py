@@ -123,7 +123,7 @@ def show_points(points):
 
 
 def show_PID(no_PID, PID):
-
+    plt.title("Pure Pursuit Path Generation")
     show_points(points)
     plt.plot(*zip(*no_PID), '-o')
     plt.plot(*zip(*PID), '-o')

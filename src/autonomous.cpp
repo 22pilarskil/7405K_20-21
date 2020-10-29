@@ -44,14 +44,14 @@ void autonomous()
 	Robot::move_to({910, 840, -65}, {2, 2, 2}, {.8, .8, .8});
 	Robot::move_to({910, 840, 15});
 	Robot::move_to_pure_pursuit({{910, 840}, {2660, 500}}, {1, 1, .4});
-	Robot::move_to({2680, 500, -90}, {2, 2, 2});
-	Robot::move_to({2680, 715, -90}, {1, 2.5, 2}, {1, 3, 1});
+	Robot::move_to({2640, 500, -90}, {2, 2, 2});
+	Robot::move_to({2640, 745, -90}, {1, 2.5, 2}, {1, 3, 1});
 	Robot::intake(-1, false, "indexer");
 	delay(100);
 	Robot::intake(0);
 	Robot::quickscore(false);
 	Robot::move_to({2620, 300, -90}, {2, 2, 2});
-	Robot::move_to({2620, 300, 0}, {2, 2, 2});
+	Robot::move_to({2620, 300, 0}, {3, 3, 3}, {1, 1, 1.5});
 
 
 	// //Tower 3
@@ -69,7 +69,7 @@ void autonomous()
 	delay(100);
 	Robot::intake(0);
 	Robot::quickscore(false);
-	Robot::move_to({4800, 500, -45});
+	Robot::move_to({482r0, 540, -45});
 	Robot::move_to({5020, 680, 110});
 
 	//Tower 4
@@ -88,8 +88,8 @@ void autonomous()
 	delay(50);
 	Robot::intake(0);
 	Robot::quickscore();
-	Robot::move_to({4640, -1620, 0});
-	Robot::move_to({4640, -1620, 90}, {2, 2, 2});
+	Robot::move_to({4640, -1620, 0}, {2, 2, 2});
+	Robot::move_to({4640, -1620, 90}, {3, 3, 3});
 
 	//Tower 5
 	Robot::reset_Balls(1, 1);
@@ -101,12 +101,12 @@ void autonomous()
 
 	//Tower 6
 	Robot::move_to({4770, -3650, 45});
-	Robot::move_to({4770, -3650, -160});
+	Robot::move_to({4770, -3650, -149});
 	Robot::reset_Balls(1, 0, false, true);
 	Robot::start_task("STORE8", Robot::store);
-	Robot::move_to({2750, -2700, -160}, {2, 2, 2.5}, {1, 1, .4});
+	Robot::move_to({2750, -2550, -149}, {2, 2, 2.5}, {1, 1, .4});
 	Robot::move_to({2750, -2700, 90}, {2, 2, 2});
-	Robot::move_to({2630, -3710, 90});
+	Robot::move_to({2700, -3700, 90});
 	while (!Robot::store_complete){
 		delay(1);
 	}
@@ -117,8 +117,14 @@ void autonomous()
 
 	//Tower 7
 	Robot::reset_Balls(1, 0, true, false, false);
+	Robot::intake(1);
+	delay(50);
+	Robot::intake(0);
 	Robot::start_task("STORE9", Robot::store);
-	Robot::move_to_pure_pursuit({{2650 -3500}, {1050, -3800}, {230, -4020}}, {1, 1, .4});
+	while(!Robot::store_complete){
+		delay(1);
+	}
+	Robot::move_to_pure_pursuit({{2650 -3500}, {820, -3800}, {180, -3990}}, {1, 1, .4});
 	Robot::quickscore(false);
 
 	//Tower 8
@@ -128,8 +134,23 @@ void autonomous()
 	Robot::start_task("STORE10", Robot::store);
 	Robot::move_to({645, -3155, 270});
 	Robot::move_to({660, -1600, 180});
-	Robot::move_to({490, -1660, 180});
+	Robot::move_to({460, -1660, 180});
 	Robot::quickscore(false);
+
+	//Tower 9
+	Robot::move_to({500, -1660, 180});
+	Robot::move_to({500, -1600, 0});
+	Robot::reset_Balls();
+	Robot::start_task("STORE11", Robot::store);
+	Robot::move_to({1950, -1600, 0}, {1, 1, 1}, {.8, .8, .8});
+	while(Robot::get_data()[1] == 0){
+		delay(1);
+	}
+	Robot::quickscore(false);
+	Robot::kill_task("STORE11");
+	Robot::intake(1, true, "indexer");
+	Robot::reset_Balls(1, 1, false, true);
+	Robot::start_task("STORE12", Robot::store);
 
 
 }
