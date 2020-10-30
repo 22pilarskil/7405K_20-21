@@ -68,7 +68,7 @@ bin/Robot.cpp.o: src/Robot.cpp src/Robot.h include/main.h include/api.h \
  include/pros/misc.hpp include/pros/misc.h include/pros/motors.hpp \
  include/pros/motors.h include/pros/rtos.hpp include/pros/rtos.h \
  include/pros/vision.hpp include/pros/vision.h src/PID.h \
- src/PurePursuit.h src/filter.h
+ src/PurePursuit.h
 
 src/Robot.h:
 
@@ -337,5 +337,3 @@ include/pros/vision.h:
 src/PID.h:
 
 src/PurePursuit.h:
-
-src/filter.h:

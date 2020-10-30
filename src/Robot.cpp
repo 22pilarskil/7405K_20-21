@@ -1,6 +1,5 @@
 #include "Robot.h"
 #include "PurePursuit.h"
-#include "filter.h"
 #include <cmath>
 #include <atomic>
 #include <vector>
@@ -11,6 +10,8 @@ using namespace pros;
 
 #define TO_RAD(n) n * M_PI / 180;
 
+
+//Initializing All of our Motors, Sensors, Controllers
 Controller Robot::master(E_CONTROLLER_MASTER);
 Motor Robot::FL(10, true);
 Motor Robot::FR(14);
@@ -28,25 +29,29 @@ Vision Robot::vision(21);
 ADIDigitalIn Robot::LM1({{5, 5}});
 ADIUltrasonic Robot::UB(1, 2);
 ADIUltrasonic Robot::UT({{5, 1, 2}});
+
+//Initializing Our PID Instances
 PID Robot::power_PID(.2, 0, 1.5, 10);
 PID Robot::strafe_PID(.25, 0, 1.5, 10);
 PID Robot::turn_PID(0.85, 0, 0, 15);
 
+//Global Variables Used for Odometry
 std::atomic<double> Robot::y = 0;
 std::atomic<double> Robot::x = 0;
 std::atomic<double> Robot::turn_offset_x = 0;
 std::atomic<double> Robot::turn_offset_y = 0;
-std::atomic<int> Robot::UB_count = 0;
-std::atomic<int> Robot::UT_count = 0;
-
 double Robot::offset_back = 4 + 5 / 16;
 double Robot::offset_middle = 5 + 7 / 16;
 double Robot::wheel_circumference = 2.75 * M_PI;
-bool Robot::store_complete;
 std::vector<double> LE_values;
 std::vector<double> RE_values;
 std::vector<double> BE_values;
 int radius = 300;
+
+//Global Variables Used For Storing
+std::atomic<int> Robot::UB_count = 0;
+std::atomic<int> Robot::UT_count = 0;
+bool Robot::store_complete;
 int UT_LastBall;
 int UB_LastBall;
 int storing_count;
@@ -54,16 +59,20 @@ bool intakes_on;
 bool intake_store = false;
 bool move_up = true;
 int count_constant = 20;
+
+//Initialized Global Map for Our Threads
 std::map<std::string, std::unique_ptr<pros::Task>> Robot::tasks;
 
-void Robot::vis_sense(void *ptr)
-{
+/*
+Boiler Plate code for recognizing balls
+through the use of the VEX vision sensor.
+ */
+void Robot::vis_sense(void *ptr) {
 	vision_signature_s_t red_signature = Vision::signature_from_utility(1, -669, 5305, 2318, -971, 571, -200, 0.700, 0);
 	vision_signature_s_t blue_signature = Vision::signature_from_utility(2, -3277, -2313, -2796, 9039, 13285, 11162, 3.000, 0);
 	vision.set_signature(1, &red_signature);
 	vision.set_signature(2, &blue_signature);
-	while (true)
-	{
+	while (true) {
 		vision_object_s_t red_ball = vision.get_by_sig(0, 1);
 		vision_object_s_t blue_ball = vision.get_by_sig(0, 2);
 		int red_x_coord = red_ball.x_middle_coord;
@@ -72,21 +81,23 @@ void Robot::vis_sense(void *ptr)
 	}
 }
 
-
-std::vector<int> Robot::get_data()
-{
+/**
+ * @desc Uses the global vars UB_count and UT_count
+ * @return The Global vars UB_count and UT_count
+ */
+std::vector<int> Robot::get_data() {
 	return {int(UB_count), int(UT_count)};
 }
 
-
-void Robot::drive(void *ptr)
-{
+/**
+ * @desc This is a thread for our driver program
+ */
+void Robot::drive(void *ptr) {
 	delay(300);
 	int intake_state = 1;
 	bool intake_last;
 
-	while (true)
-	{
+	while (true) {
 		int power = master.get_analog(ANALOG_LEFT_Y);
 		int strafe = master.get_analog(ANALOG_LEFT_X);
 		int turn = master.get_analog(ANALOG_RIGHT_X);
@@ -110,7 +121,7 @@ void Robot::drive(void *ptr)
 		}
 		else if (!storingScore)intake_last = false;
 
-		if (intake_state % 2 == 0){
+		if (intake_state % 2 == 0) {
 			//store();
             Robot::start_task("STORE", Robot::store);
 		}
@@ -127,15 +138,17 @@ void Robot::drive(void *ptr)
 	}
 }
 
-
-void Robot::quickscore(int ball_id) //1 for top only, 0 for bottom only, -1 for both
-{
+/**
+ * @desc Takes in the amount of balls we have to shoot out and shoots them
+ * @param ball_id 1 for top only, 0 for bottom only, -1 for both
+ */
+void Robot::quickscore(int ball_id) { //1 for top only, 0 for bottom only, -1 for both
 	R2 = 127;
 	if (ball_id == -1) {
 		delay(600);
 		R1 = -127;
 	}
-	else if (ball_id = 0){
+	else if (ball_id = 0) {
 		R1 = 127;
 	}
 	delay(1200);
@@ -143,41 +156,41 @@ void Robot::quickscore(int ball_id) //1 for top only, 0 for bottom only, -1 for 
 	R2 = 0;
 }
 
-
-void Robot::store(void *ptr)
-{
+/**
+ * @desc Periodically turns off our rollers and intakes to store 3 balls
+ */
+void Robot::store(void *ptr) {
 	lcd::print(7, "STORE INCOMPLETE");
-	while(true)
-	{
+	while(true) {
 		int sensorTop = int(UT_count - UT_LastBall);
 		int sensorBottom = int(UB_count - UB_LastBall);
 		lcd::print(1, "%d %d %d %d", UB.get_value(), int(UB_count));
 		lcd::print(2, "%d %d", UT.get_value(), int(UT_count));
 		lcd::print(7, "T: %d B: %d", sensorTop, sensorBottom);
-		if (intakes_on){
+		if (intakes_on) {
 			IL = 127;
 			IR = 127;
 		}
-		if (sensorTop == 1 && sensorBottom == 1){
+		if (sensorTop == 1 && sensorBottom == 1) {
 			R1 = -127;
 			R2 = 0;
 		}
-		else if (sensorTop == 0 && sensorBottom <= 1){
+		else if (sensorTop == 0 && sensorBottom <= 1) {
 			R1 = -127;
 			R2 = 50;
 		}
-		else if (sensorTop >= 1 && sensorBottom >= 2){
+		else if (sensorTop >= 1 && sensorBottom >= 2) {
 			R1 = 0;
 			R2 = 0;
-			if (move_up){
+			if (move_up) {
 				R1 = -127;
 				delay(150);
 				R1 = 0;
 				R2 = 0;
 				move_up = false;
 			}
-			if (intake_store){
-				while(LM1.get_value() == 0){
+			if (intake_store) {
+				while(LM1.get_value() == 0) {
 					IR = 127;
 					IL = 127;
 					delay(1);
@@ -196,7 +209,9 @@ void Robot::store(void *ptr)
 	IR = 0;
 }
 
-
+/**
+ * @desc Sets the motors to the correct direction for the robot to  flipout
+ */
 void Robot::flipout()
 {
 	IL = -127;
@@ -205,19 +220,21 @@ void Robot::flipout()
 	R2 = 127;
 }
 
-
-void Robot::intake(double coefficient, bool flip, std::string powered)
-{
-	if (coefficient == 0)
-	{
+/**
+ * @desc Mostly used in driver, it is a function for controlling our intakes and rollers with ease and simplicity
+ * @param coefficient The power of the motor
+ * @param flip The direction of the motor
+ * @param powered Tells which motors to power
+ */
+void Robot::intake(double coefficient, bool flip, std::string powered) {
+	if (coefficient == 0) {
 		IL = 0;
 		IR = 0;
 		R1 = 0;
 		R2 = 0;
 		return;
 	}
-	if (powered.compare("intakes") == 0 || powered.compare("both") == 0)
-	{
+	if (powered.compare("intakes") == 0 || powered.compare("both") == 0) {
 		IL = int(coefficient * 127);
 		IR = int(coefficient * 127);
 		if (!powered.compare("both") == 0) {
@@ -225,8 +242,7 @@ void Robot::intake(double coefficient, bool flip, std::string powered)
 			R2 = 0;
 		}
 	}
-	if (powered.compare("indexer") == 0 || powered.compare("both") == 0)
-	{
+	if (powered.compare("indexer") == 0 || powered.compare("both") == 0) {
 		R1 = -coefficient * 127;
 		coefficient = std::max(0.0, coefficient);
 		R2 = (!flip) ? coefficient * 127 : -coefficient * 127;
@@ -237,14 +253,15 @@ void Robot::intake(double coefficient, bool flip, std::string powered)
 	}
 }
 
-
-void Robot::fps(void *ptr)
-{
+/**
+ * Odometry
+ * @param ptr
+ */
+void Robot::fps(void *ptr) {
 	double last_x = 0;
 	double last_y = 0;
 	double last_phi = 0;
-	while (true)
-	{
+	while (true) {
 		double cur_phi = TO_RAD(IMU.get_rotation());
 		double dphi = cur_phi - last_phi;
 
@@ -280,45 +297,47 @@ void Robot::fps(void *ptr)
 		last_phi = cur_phi;
 
 		delay(5);
-	} 
+	}
 }
 
 
-void Robot::sensors(void *ptr)
-{
+void Robot::sensors(void *ptr) {
 	int UB_reset = 0;
 	int UT_reset = 0;
 	int LM_triggered = false;
-	while (true)
-	{
-		if (LM1.get_value() == 1){
+	while (true) {
+		if (LM1.get_value() == 1) {
 			LM_triggered = true;
 		}
-		if (UB.get_value() < 150 && LM_triggered){
+		if (UB.get_value() < 150 && LM_triggered) {
 			if (UB_reset > 10) {
 				UB_count++;
 				LM_triggered = false;
 			}
 			UB_reset = 0;
 		}
-		else if (UB.get_value() > 150 && UB.get_value() < 250){
+		else if (UB.get_value() > 150 && UB.get_value() < 250) {
 			UB_reset += 1;
 		}
 
-		if (UT.get_value() < 150){
+		if (UT.get_value() < 150) {
 			if (UT_reset > 10) UT_count++;
 			UT_reset = 0;
 		}
-		else if (UT.get_value() > 150 && UT.get_value() < 250){
+		else if (UT.get_value() > 150 && UT.get_value() < 250) {
 			UT_reset += 1;
 		}
 		delay(5);
 	}
 }
 
-
-void Robot::mecanum(int power, int strafe, int turn)
-{
+/**
+ * The mecanum equation for feeding values to our motor
+ * @param power Moving Forward and Backwards
+ * @param strafe Strafing Left and Right
+ * @param turn Turning Left and Right
+ */
+void Robot::mecanum(int power, int strafe, int turn) {
 	FL = power + strafe + turn;
 	FR = power - strafe - turn;
 	BL = power - strafe + turn;
@@ -326,7 +345,10 @@ void Robot::mecanum(int power, int strafe, int turn)
 	delay(5);
 }
 
-
+/**
+ * Thread that displays variables/encoders/motors to the brain.
+ * @param ptr
+ */
 void Robot::display(void *ptr)
 {
 	while (true){
@@ -340,7 +362,16 @@ void Robot::display(void *ptr)
 	}
 }
 
-
+/**
+ * Uees PID as well as odometry to accurately move to differnt position with speed and precision.
+ * @param pose An 3x1 array of {Y, X, heading}.
+ * @param margin Since we are going to have some sort of error each time we our auton, we have to account for it by setting a margin of error.
+ * @param speeds A vector for the speeds at which we should be moving at
+ * @param pure_pursuit If we were to use pure pursuit, we are going to output 0
+ * @param coefficient idk
+ * @param flip idk
+ * @param powered  idk
+ */
 void Robot::move_to(std::vector<double> pose, std::vector<double> margin, std::vector<double> speeds, bool pure_pursuit, int coefficient, bool flip, std::string powered)
 {
 	double new_y = pose[0];
@@ -381,7 +412,14 @@ void Robot::move_to(std::vector<double> pose, std::vector<double> margin, std::v
 	brake("stop");
 }
 
-
+/**
+ * Takes in an array of points and finds the shortest path between them.
+ * @param points An array of points {Y, X} that we want the robot to follow
+ * @param speeds An array of the speed that we want to go between each point
+ * @param coefficient
+ * @param flip
+ * @param powered
+ */
 void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, std::vector<double> speeds, int coefficient, bool flip, std::string powered)
 {
 
@@ -416,7 +454,10 @@ void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, std::v
 	//lcd::print(7, "YE: %d - XE: %d - IE: %d", int(x_error), int(y_error), int(imu_error));
 }
 
-
+/**
+ * A function to stop our drivetrain from moving with ease
+ * @param mode To Hold our drivetrain while braking or to coast
+ */
 void Robot::brake(std::string mode)
 {
 
@@ -437,23 +478,28 @@ void Robot::brake(std::string mode)
 	else FL = FR = BL = BR = 0;
 }
 
-
-void Robot::reset_sensors()
-{
+//Resets IMU
+void Robot::reset_sensors() {
 	IMU.reset();
 }
 
-
-void Robot::reset_PID()
-{
+//Resets PID for all PID Objects
+void Robot::reset_PID() {
 	power_PID.reset();
 	strafe_PID.reset();
 	turn_PID.reset();
 }
 
-
-void Robot::reset_Balls(int ultrasonic_bottom, int ultrasonic_top, bool move_up_, bool intake_store_, bool intakes_on_)
-{
+/**
+ * Resets/Sets all of the global variables that our store function
+ * uses.
+ * @param ultrasonic_bottom
+ * @param ultrasonic_top
+ * @param move_up_
+ * @param intake_store_
+ * @param intakes_on_
+ */
+void Robot::reset_Balls(int ultrasonic_bottom, int ultrasonic_top, bool move_up_, bool intake_store_, bool intakes_on_) {
 	UT_count = ultrasonic_top;
 	UB_count = ultrasonic_bottom;
 	UT_LastBall = 0;
@@ -465,124 +511,32 @@ void Robot::reset_Balls(int ultrasonic_bottom, int ultrasonic_top, bool move_up_
 	intakes_on = intakes_on_;
 }
 
-
-void Robot::start_task(std::string name, void (*func)(void *))
-{
-	if (!task_exists(name)){
+/**
+ * Can Start Tasks
+ * @param name Name of the Task We Start
+ * @param func The Task's Function
+ */
+void Robot::start_task(std::string name, void (*func)(void *)) {
+	if (!task_exists(name)) {
 		tasks.insert(std::pair<std::string, std::unique_ptr<pros::Task>>(name, std::move(std::make_unique<pros::Task>(func, &x, TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, ""))));
 	}
 }
 
-
-bool Robot::task_exists(std::string name)
-{
+/**
+ * Checks if task exists
+ * @param name the name of the task in question
+ * @return a boolean if the task exists or not
+ */
+bool Robot::task_exists(std::string name) {
 	return tasks.find(name) != tasks.end();
 }
 
-
-void Robot::kill_task(std::string name)
-{
-	if (task_exists(name)){
+/**
+ * Kills a task
+ * @param name name of task
+ */
+void Robot::kill_task(std::string name) {
+	if (task_exists(name)) {
 		tasks.erase(name);
-	}
-}
-
-
-void Robot::LE_filter(void *ptr)
-{
-	vector<float> positions = {0};
-	vector<float> distances = {0};
-	while (true)
-	{
-		float position = LE.get_value();
-		positions.push_back(position);
-
-		float distance = position - distances[-1];
-		distances.push_back(distance);
-
-		float meanSensor = accumulate(positions.begin(), positions.end(), 0) / positions.size();
-		vector<double> position_var;
-		for (int post_count; post_count < distances.size(); post_count++)
-		{
-			position_var.push_back(pow(positions[post_count] - meanSensor, 2));
-		}
-		float varSensor = accumulate(position_var.begin(), position_var.end(), 0) / distances.size();
-
-		float meanMove = accumulate(distances.begin(), distances.end(), 0) / distances.size();
-		vector<double> distance_var;
-		for (int dist_count; dist_count < distances.size(); dist_count++)
-		{
-			distance_var.push_back(pow(distances[dist_count] - meanMove, 2));
-		}
-		float varMove = accumulate(distance_var.begin(), distance_var.end(), 0) / distances.size();
-
-		Filter Filter0(0, 0, meanSensor, varSensor, meanMove, varMove, positions, distances);
-		LE_values = Filter0.get_prediction();
-	}
-}
-
-void Robot::RE_filter(void *ptr)
-{
-	vector<float> positions = {0};
-	vector<float> distances = {0};
-	while (true)
-	{
-		float position = RE.get_value();
-		positions.push_back(position);
-
-		float distance = position - distances[-1];
-		distances.push_back(distance);
-
-		float meanSensor = accumulate(positions.begin(), positions.end(), 0) / positions.size();
-		vector<double> position_var;
-		for (int post_count; post_count < distances.size(); post_count++)
-		{
-			position_var.push_back(pow(positions[post_count] - meanSensor, 2));
-		}
-		float varSensor = accumulate(position_var.begin(), position_var.end(), 0) / distances.size();
-
-		float meanMove = accumulate(distances.begin(), distances.end(), 0) / distances.size();
-		vector<double> distance_var;
-		for (int dist_count; dist_count < distances.size(); dist_count++)
-		{
-			distance_var.push_back(pow(distances[dist_count] - meanMove, 2));
-		}
-		float varMove = accumulate(distance_var.begin(), distance_var.end(), 0) / distances.size();
-
-		Filter Filter0(0, 0, meanSensor, varSensor, meanMove, varMove, positions, distances);
-		RE_values = Filter0.get_prediction();
-	}
-}
-
-void Robot::BE_filter(void *ptr)
-{
-	vector<float> positions = {0};
-	vector<float> distances = {0};
-	while (true)
-	{
-		float position = BE.get_value();
-		positions.push_back(position);
-
-		float distance = position - distances[-1];
-		distances.push_back(distance);
-
-		float meanSensor = accumulate(positions.begin(), positions.end(), 0) / positions.size();
-		vector<double> position_var;
-		for (int post_count; post_count < distances.size(); post_count++)
-		{
-			position_var.push_back(pow(positions[post_count] - meanSensor, 2));
-		}
-		float varSensor = accumulate(position_var.begin(), position_var.end(), 0) / distances.size();
-
-		float meanMove = accumulate(distances.begin(), distances.end(), 0) / distances.size();
-		vector<double> distance_var;
-		for (int dist_count; dist_count < distances.size(); dist_count++)
-		{
-			distance_var.push_back(pow(distances[dist_count] - meanMove, 2));
-		}
-		float varMove = accumulate(distance_var.begin(), distance_var.end(), 0) / distances.size();
-
-		Filter Filter0(0, 0, meanSensor, varSensor, meanMove, varMove, positions, distances);
-		BE_values = Filter0.get_prediction();
 	}
 }

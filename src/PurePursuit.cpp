@@ -13,8 +13,7 @@ int sign(double x) {
   return 0;
 }
 
-float point_line_distance(std::vector<double> p1, std::vector<double> p2, std::vector<double> p3)
-{
+float point_line_distance(std::vector<double> p1, std::vector<double> p2, std::vector<double> p3) {
   double dy = p1[1] - p2[1];
   double dx = p1[0] - p2[0];
 
@@ -54,20 +53,17 @@ std::vector<double> get_deviation(std::vector<double> headings, int numb)
 }
 
 
-double get_degrees(std::vector<double> p1, std::vector<double> p2)
-{
+double get_degrees(std::vector<double> p1, std::vector<double> p2) {
   double y = p1[0] - p2[0];
   double x = p1[1] - p2[1];
   return atan2(-x, y) * 180 / M_PI;
 }
 
-double distance(std::vector<double> cur, std::vector<double> end)
-{
+double distance(std::vector<double> cur, std::vector<double> end) {
   return sqrt(SQD(cur[0] - end[0]) + SQD(cur[1] - end[1]));
 }
 
-std::vector<double> get_intersection(std::vector<double> start, std::vector<double> end, std::vector<double> cur, double radius)
-{
+std::vector<double> get_intersection(std::vector<double> start, std::vector<double> end, std::vector<double> cur, double radius) {
   std::vector<double> p1 {start[0] - cur[0], start[1] - cur[1]};
   std::vector<double> p2 {end[0] - cur[0], end[1] - cur[1]};
 
