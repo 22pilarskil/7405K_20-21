@@ -273,7 +273,7 @@ void Robot::fps(void *ptr)
 		lcd::print(3, "IMU value: %f", IMU.get_rotation());
 		lcd::print(4, "Offset: %d - Y: %f", int(turn_offset_y), (float)y);
 		lcd::print(5, "Offset: %d - X: %f", int(turn_offset_x), (float)x);
-		//printf("Y axis encoders: %d - X axis encoders: %d\n",(LE.get_value()+RE.get_value())/2,BE.get_value());
+		printf("Y: %f - X: %f - IMU value: %f\n", (float)y, (float)x, IMU.get_rotation());
 
 		last_y = cur_y;
 		last_x = cur_x;
