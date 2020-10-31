@@ -44,8 +44,8 @@ public:
 	static double wheel_circumference;
 	static bool store_complete;
 
-	static void move_to(std::vector<double> pose, std::vector<double> margins = {1, 1, 1}, std::vector<double> speeds = {1, 1, 1}, bool pure_pursuit = false, int coefficient = 0, bool flip = false, std::string powered = "both");
-	static void move_to_pure_pursuit(std::vector<std::vector<double>> points, std::vector<double> speeds = {1, 1, 1}, int coefficient = 0, bool flip = false, std::string powered = "both");
+	static void move_to(std::vector<double> pose, std::vector<double> margins = {1, 1, 1}, std::vector<double> speeds = {1, 1, 1}, bool pure_pursuit = false);
+	static void move_to_pure_pursuit(std::vector<std::vector<double>> points, std::vector<double> speeds = {1, 1, 1});
 	static void brake(std::string mode);
 	static void drive(void *ptr);
 	static std::vector<int> get_data();
