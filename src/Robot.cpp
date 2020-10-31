@@ -189,10 +189,7 @@ void Robot::move_to(std::vector<double> pose, std::vector<double> margin, std::v
 
 		mecanum(power, strafe, turn);
 
-		if (pure_pursuit)
-		{
-			return;
-		}
+		if (pure_pursuit) return;
 	}
 	reset_PID();
 	lcd::print(6, "DONE");
