@@ -30,10 +30,10 @@ ADIUltrasonic Robot::UB(1, 2);
 ADIUltrasonic Robot::UT({{5, 1, 2}});
 //Initializing motors, sensors, controller
 
-PID Robot::power_PID(.2, 0, 1.5, 10);
-PID Robot::strafe_PID(.25, 0, 1.5, 10);
-PID Robot::turn_PID(0.85, 0, 0, 15);
-//Initializing Our PID Instances
+PD Robot::power_PD(.2, 1.5, 10);
+PD Robot::strafe_PD(.25, 1.5, 10);
+PD Robot::turn_PD(0.85, 0, 15);
+//Initializing Our PD Instances
 
 std::atomic<double> Robot::y = 0;
 std::atomic<double> Robot::x = 0;
@@ -98,7 +98,9 @@ void Robot::kill_task(std::string name) {
 
 /**
  * @desc: Threaded function that performs our odometry calculations at all times, updating Robot::x and Robot::y to
- 	provide us an accurate depiction of our robot's positioning at all times
+ 	provide us an accurate depiction of our robot's positioning at all times. Since Robot::x and Robot::y are static 
+ 	member variables of type atomic (a datatype designed to allow multiple threads to access a variable at once, they 
+ 	can be accessed from anywhere in the code at any time. 
  * @param ptr: Required for compatibility with pros threading
  */
 void Robot::fps(void *ptr) {
@@ -126,7 +128,9 @@ void Robot::fps(void *ptr) {
 
 		double global_dy = dy * std::cos(cur_phi) + dx * std::sin(cur_phi);
 		double global_dx = dx * std::cos(cur_phi) - dy * std::sin(cur_phi);
-		//Apply rotation matrix to dx and dy to calculate dx and dy on the phi = 0 orientation
+		/* Apply rotation matrix to dx and dy to calculate global_dy and global_dx. Is required because if the robot moves
+		on an orientation that is not a multiple of 90 (i.e. 22 degrees), x and y encoder values do not correspond 
+		exclusively to either x or y movement, but rather a little bit of both */
 
 		y = (float)y + global_dy;
 		x = (float)x + global_dx;
@@ -141,11 +145,15 @@ void Robot::fps(void *ptr) {
 		last_phi = cur_phi;
 
 		delay(5);
+		/* All of these calculations assume that the robot is moving in a straight line at all times. However, while this 
+		is not always the case, a delay of 5 milliseconds between each calculation makes dx and dy (distance traveled on 
+		x and y axes) so small that any curvature is insignificant. */
 	}
 }
 
+
 /**
- * @desc: Interfaces with PID classes as well as odometry Robot::x and Robot::y (updated through Robot::fps) to accurately 
+ * @desc: Interfaces with PD classes as well as odometry Robot::x and Robot::y (updated through Robot::fps) to accurately 
  	move to an input position.
  * @param pose: A vector of length three in the format {Y, X, heading} that contains information about the target end state
  	of the robot that we wish to achieve through Robot::move_to
@@ -155,7 +163,7 @@ void Robot::fps(void *ptr) {
  	but faster convergence)
  	within 2 degrees of our target heading, but we can multiply 
  * @param speeds: A vector of length three in the format {Y_speed, X_speed, heading_speed} that allows us to control how
- 	fast our movements should be by acting as coefficients for speeds outputted by our PID objects. 
+ 	fast our movements should be by acting as coefficients for speeds outputted by our PD objects. 
  * @param pure_pursuit: A boolean (true or false) that tells us whether or not we are calling this function in the context
  	of Robot::move_to_pure_pursuit
  */
@@ -178,20 +186,24 @@ void Robot::move_to(std::vector<double> pose, std::vector<double> margin, std::v
 	while (abs(y_error) > 30 * margin[0] || abs(x_error) > 30 * margin[1] || abs(imu_error) > 2 * margin[2])
 	{ //while Robot::y, Robot::x and IMU heading are all more than the specified margin away from the target
 		double phi = TO_RAD(IMU.get_rotation());
-		double power = power_PID.get_value(y_error * std::cos(phi) + x_error * std::sin(phi)) * speeds[0];
-		double strafe = strafe_PID.get_value(x_error * std::cos(phi) - y_error * std::sin(phi)) * speeds[1];
-		double turn = turn_PID.get_value(imu_error) * 1.5 * speeds[2];
-		//Apply rotation matrix to errors as they are derived from calculations using rotation matrices
+		double power = power_PD.get_value(y_error * std::cos(phi) + x_error * std::sin(phi)) * speeds[0];
+		double strafe = strafe_PD.get_value(x_error * std::cos(phi) - y_error * std::sin(phi)) * speeds[1];
+		double turn = turn_PD.get_value(imu_error) * 1.5 * speeds[2];
+		mecanum(power, strafe, turn);
+		/* Using our PD objects we use the error on each of our degrees of freedom (axial, lateral, and turning movement)
+		to obtain speeds to input into Robot::mecanum. We perform a rotation matrix calculation to translate our y and x 
+		error to the same coordinate plane as Robot::y and Robot::x to ensure that the errors we are using are indeed 
+		proportional/compatible with Robot::y and Robot::x */
 
 		imu_error = -(IMU.get_rotation() - heading);
 		y_error = new_y - y;
 		x_error = -(new_x - x);
+		//Recalculating our error by subtracting components of our current position vector from target position vector
 
-		mecanum(power, strafe, turn);
 
 		if (pure_pursuit) return;
 	}
-	reset_PID();
+	reset_PD();
 	lcd::print(6, "DONE");
 	brake("stop");
 }
@@ -209,6 +221,7 @@ void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, std::v
 	std::vector<double> target;
 	std::vector<double> cur{(float)y, (float)x};
 	double heading;
+	//Instantiating filler variables that will be overwritten every iteration, instead of allotting memory to new objects
 
 	for (int index = 0; index < points.size() - 1; index++)
 	{
@@ -222,17 +235,13 @@ void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, std::v
 
 			std::vector<double> pose {target[0], target[1], heading};
 			Robot::move_to(pose, {1, 1, 1}, speeds, true);
-			delay(10);
 			cur = {(float)y, (float)x};
+			delay(5);
 		}
 	}
-
-	double x_error = end[1] - x;
-	double y_error = end[0] - y;
-	double imu_error = IMU.get_rotation() - heading;
-
+	
 	brake("stop");
-	reset_PID();
+	reset_PD();
 	lcd::print(6, "DONE");
 }
 
@@ -283,9 +292,6 @@ void Robot::sensors(void *ptr) {
 void Robot::store(void *ptr) {
 	lcd::print(7, "STORE INCOMPLETE");
 	while(true) {
-		lcd::print(1, "%d %d %d %d", UB.get_value(), int(UB_count));
-		lcd::print(2, "%d %d", UT.get_value(), int(UT_count));
-		lcd::print(7, "T: %d B: %d", int(UT_count), int(UB_count));
 		if (intakes_on) {
 			IL = 127;
 			IR = 127;
@@ -305,7 +311,6 @@ void Robot::store(void *ptr) {
 				R1 = -127;
 				delay(150);
 				R1 = 0;
-				R2 = 0;
 				move_up = false;
 			}
 			if (intake_store) {
@@ -314,8 +319,6 @@ void Robot::store(void *ptr) {
 					IL = 127;
 					delay(1);
 				}
-				IR = 0;
-				IL = 0;
 				break;
 			}
 			else break;
@@ -359,13 +362,17 @@ void Robot::quickscore(int ball_id) {
 
 
 /**
- * Resets/Sets all of the global variables that our store function
- * uses.
- * @param ultrasonic_bottom
- * @param ultrasonic_top
- * @param move_up_
- * @param intake_store_
- * @param intakes_on_
+ * @desc: Resets/Sets all of the global variables that our store function uses.
+ * @param ultrasonic_bottom: Number to reset UB_count to
+ * @param ultrasonic_top: Number to reset UT_count to
+ * @param move_up_: Boolean (true or false) to tell whether or not we should move our balls further up in our intakes 
+ 	after storing- designed to counter the problem that our balls often store too low in our robot due to imperfect 
+ 	geometry
+ * @param intake_store_: Boolean (true or false) that tells us whether we want a third ball to be stored in between our
+ 	intakes
+ * @param intakes_on_: Boolean (true or false) that tells us whether our intakes should be running during store (designed
+ 	for when we know that the ball(s) we want to store are both already contacting one of the indexer rollers, meaning 
+ 	our intakes are not needed to bring the balls further into the bot)
  */
 void Robot::reset_Balls(int ultrasonic_bottom, int ultrasonic_top, bool move_up_, bool intake_store_, bool intakes_on_) {
 	UT_count = ultrasonic_top;
@@ -377,17 +384,18 @@ void Robot::reset_Balls(int ultrasonic_bottom, int ultrasonic_top, bool move_up_
 }
 
 /**
- * Thread that displays variables/encoders/motors to the brain.
- * @param ptr
+ * @desc: Thread that displays important information to the brain.
+ * @param ptr: Required for compatibility with pros threading
  */
 void Robot::display(void *ptr)
 {
 	while (true){
+
 		master.print(0, 0, "Joystick %d", master.get_analog(ANALOG_LEFT_X));
-		//lcd::print(1, "LE: %d - RE: %d", LE.get_value(), RE.get_value());
-		//lcd::print(2, "Back Encoder: %d", BE.get_value());
+		lcd::print(1, "LE: %d - RE: %d", LE.get_value(), RE.get_value());
+		lcd::print(2, "Back Encoder: %d", BE.get_value());
 		lcd::print(6, "Limit switch %d", LM1.get_value());
-		//lcd::print(3, "IMU value: %f", IMU.get_rotation());
+		lcd::print(3, "IMU value: %f", IMU.get_rotation());
 
 		delay(10);
 	}
@@ -531,6 +539,7 @@ void Robot::flipout()
 
 /**
  * @desc: Boiler plate code for recognizing balls through the use of the VEX vision sensor.
+ * @param ptr: Required for compatibility with pros threading
  */
 void Robot::vis_sense(void *ptr) {
 	vision_signature_s_t red_signature = Vision::signature_from_utility(1, -669, 5305, 2318, -971, 571, -200, 0.700, 0);
@@ -551,10 +560,10 @@ void Robot::reset_sensors() {
 	IMU.reset();
 }
 
-//Resets PID for all PID Objects
-void Robot::reset_PID() {
-	power_PID.reset();
-	strafe_PID.reset();
-	turn_PID.reset();
+//Resets all PD Objects
+void Robot::reset_PD() {
+	power_PD.reset();
+	strafe_PD.reset();
+	turn_PD.reset();
 }
 
