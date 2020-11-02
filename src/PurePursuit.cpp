@@ -18,10 +18,8 @@ int sign(double x) {
 }
 
 /**
- * @desc: Since we can already spin strafe, PurePursuit would be useless except for the fact that it allows our robot to 
-  face forward at all times, allowing our intakes to be in position to intake any balls we might hit along our movement. 
-  get_degrees calculates the angle between two consectutive points along our generated path to allow us to know what 
-  heading our robot must be facing in order to approach the latter point head on
+ * @desc: Calculates the heading required for our robot to continuously face forward while moving from @param p1 to @param 
+  p2. This is important because it allows our intakes to face any balls we might run into instead of knocking them aside
  * @param p1: A vector of length two in the format {Y, X} that contains Robot::y and Robot::x
  * @param p2: A vector of length two in the format {Y, X} that contains the Y and X coordinate of the target point
  * @return: Returns the slope between two points in degrees, which can be translated easily into robot heading. 
@@ -42,16 +40,17 @@ double distance(std::vector<double> p1, std::vector<double> p2) {
 }
 
 /**
-  * @desc: Taking in 
+  * @desc: Calculates the next step of our pure pursuit mvoement given a segment of the waypoint path and our current
+    position
   * @param start: A vector of length two in the format {Y, X} containing the first point of a two-point segment of the 
     waypoint path
-  * @param end: A vector of length two in the format {Y, X} containing the s two econd point of a two-point segment of the 
+  * @param end: A vector of length two in the format {Y, X} containing the second point of a two-point segment of the 
     waypoint path
   * @param cur: A vector of length two in the format {Y, X} that contains Robot::y and Robot::x
   * @param radius: A scalar representing how far our lookahead distance should be- in other words, how early we should start 
     turning in anticipation of a change in direction
  * @return: The intersection between a circle centered on our robot's current position with radius @param radius and the 
-    segment of the waypoint path in between @param start and @param end
+    line formed between @param start and @param end
  */
   std::vector<double> get_intersection(std::vector<double> start, std::vector<double> end, std::vector<double> cur, double radius) {
   std::vector<double> p1 {start[0] - cur[0], start[1] - cur[1]};

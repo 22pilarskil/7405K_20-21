@@ -44,22 +44,22 @@ std::atomic<double> Robot::turn_offset_y = 0;
 double Robot::offset_back = 4 + 5 / 16;
 double Robot::offset_middle = 5 + 7 / 16;
 double Robot::wheel_circumference = 2.75 * M_PI;
-int radius = 300;
+int Robot::radius = 300;
 //Presets for odometry and pure pursuit calculations
 
 std::atomic<int> Robot::UB_count = 0;
 std::atomic<int> Robot::UT_count = 0;
+bool Robot::store_complete;
 /* Static member variables used to store information about location and number of balls being stored by our bot obtained 
 Robot::sensors */
 
-bool Robot::store_complete;
 bool intakes_on;
 bool intake_store;
 bool move_up;
 //Parameters passed into Robot::store
 
-//Mapping of tasks instantiated during the program
 std::map<std::string, std::unique_ptr<pros::Task>> Robot::tasks;
+// Mapping of tasks instantiated during the program
 
 /* Note: tasks are the pros version of threads, or a method for having independent subroutines run at the same time. Using
 threading allows us to have different functions run simultaneously, which helps us save time and increase versatility in
@@ -69,7 +69,7 @@ our code */
 /**
  * @desc: Starts a task and pairs it with a unique task ID to allow us to keep track of its status
  * @param name: An arbitrary name we give to the task for organization purposes
- * @param func: The function in question that we would like to put into a new task
+ * @param func: Pointer of the function in question that we would like to put into a new task
  */
 void Robot::start_task(std::string name, void (*func)(void *)) {
 	if (!task_exists(name)) {
@@ -153,14 +153,13 @@ void Robot::fps(void *ptr) {
 
 
 /**
- * @desc: Interfaces with PD classes as well as odometry Robot::x and Robot::y (updated through Robot::fps) to accurately 
+ * @desc: Interfaces with PD classes as well as Robot::x and Robot::y (updated using odometry in Robot::fps) to accurately 
  	move to an input position.
  * @param pose: A vector of length three in the format {Y, X, heading} that contains information about the target end state
  	of the robot that we wish to achieve through Robot::move_to
  * @param margin: A vector of length three in the format {Y_margin, X_margin, heading_margin} that allows us to control how 
- 	accurate our movements should be by acting as coefficients for tolerances- in other words, we can change how close our 
- 	robot actually needs to be to the target in order for Robot::move_to to be complete (Higher margins = less accurate 
- 	but faster convergence)
+ 	accurate our movements should be by acting as coefficients for tolerances, or how close our robot actually needs to be 
+ 	to the target in order for Robot::move_to to be complete (Higher margins = less accurate but faster convergence)
  	within 2 degrees of our target heading, but we can multiply 
  * @param speeds: A vector of length three in the format {Y_speed, X_speed, heading_speed} that allows us to control how
  	fast our movements should be by acting as coefficients for speeds outputted by our PD objects. 
@@ -179,9 +178,9 @@ void Robot::move_to(std::vector<double> pose, std::vector<double> margin, std::v
 	double heading2 = (heading < 0) ? heading + 360 : heading - 360;
 	heading = (abs(IMU.get_rotation() - heading) < abs(IMU.get_rotation() - heading2)) ? heading : heading2;
 	double imu_error = -(IMU.get_rotation() - heading);
-	/* Calculate inverse headings (i.e. 1 deg = -359 deg), then find which heading is closer to current
-	heading (i.e. at IMU val 150, travel to 1 deg (|150 - 1| = 149 deg traveled) as opposed to -359 deg
-	(|150 - (-359)| = 509 deg traveled) */
+	/* Calculate inverse headings (i.e. 1 deg = -359 deg), then find which heading is closer to current heading. For 
+	example, moving to -358 deg would require almost a full 360 degree turn from 1 degree, but from its equivalent of -359
+	deg, it only takes a minor shift in position */
 
 	while (abs(y_error) > 30 * margin[0] || abs(x_error) > 30 * margin[1] || abs(imu_error) > 2 * margin[2])
 	{ //while Robot::y, Robot::x and IMU heading are all more than the specified margin away from the target
@@ -210,8 +209,9 @@ void Robot::move_to(std::vector<double> pose, std::vector<double> margin, std::v
 
 /**
  * @desc: Interfaces with PurePursuit.cpp to follow a smooth path generated from input points
- * @param points: An array of points in the form {{Y_1, X_1}..{Y_n, X_n}} that we want the robot to follow
- * @param speeds: Same format as @param speeds from Robot::move_to, see above
+ * @param points: An array of points in the form {{Y_1, X_1}..{Y_n, X_n}} whose direct pathing (i.e. what would result if 
+ 	a straight line was drawn between each consecutive pair of points) serves as the model for our curved, generated path 
+ * @param speeds: Same function and format as @param speeds from Robot::move_to, see above
  */
 void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, std::vector<double> speeds)
 {
@@ -221,7 +221,7 @@ void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, std::v
 	std::vector<double> target;
 	std::vector<double> cur{(float)y, (float)x};
 	double heading;
-	//Instantiating filler variables that will be overwritten every iteration, instead of allotting memory to new objects
+	//Instantiating filler variables that will be overwritten every iteration, instead of allocating memory to new objects
 
 	for (int index = 0; index < points.size() - 1; index++)
 	{
@@ -246,8 +246,10 @@ void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, std::v
 }
 
 /**
- * @desc: Threaded function that updates UB_count and UT_count to reflect how many balls are currently stored in our robot
- 	using data from our two ultrasonic sensors and single limit switch
+ * @desc: Threaded function that updates UB_count and UT_count to reflect how many balls are currently stored in our robot。
+ 	Using two ultrasonics strategically placed on our robot's superstructure, we can deduce a whether or not balls are at
+ 	certain locations on our robot using ultrasonic readings (i.e. a low value output, which means an object is in close 
+ 	proximity to the ultrasonic, would imply a ball is directly in front of the ultrasonic being measured)
  * @param ptr: Required for compatibility with pros threading
  */
 
@@ -296,6 +298,7 @@ void Robot::store(void *ptr) {
 			IL = 127;
 			IR = 127;
 		}
+
 		if (int(UT_count) == 1 && int(UB_count) == 1) {
 			R1 = -127;
 			R2 = 0;
@@ -323,6 +326,7 @@ void Robot::store(void *ptr) {
 			}
 			else break;
 		}
+		// For each possible scenario of ball storage, we program different indexer sequences
 		delay(5);
 	}
 	lcd::print(7, "STORE COMPLETE");
@@ -403,7 +407,7 @@ void Robot::display(void *ptr)
 
 
 /**
- * @desc This is a thread for our driver program
+ * @desc:
  * @param ptr: Required for compatibility with pros threading
  */
 void Robot::drive(void *ptr) {
@@ -436,7 +440,6 @@ void Robot::drive(void *ptr) {
 		else if (!storingScore)intake_last = false;
 
 		if (intake_state % 2 == 0) {
-			//store();
             Robot::start_task("STORE", Robot::store);
 		}
 		else {
@@ -453,10 +456,11 @@ void Robot::drive(void *ptr) {
 }
 
 /**
- * The mecanum equation for feeding values to our motor
- * @param power Moving Forward and Backwards
- * @param strafe Strafing Left and Right
- * @param turn Turning Left and Right
+ * @desc: The equation for holonomic driving (feeding values to our drivtrain motors to allow us to move axially, laterally, 
+	or turn)
+ * @param power: Degree of axial movement
+ * @param strafe: Degree of strafing movement
+ * @param turn: Degree of turning movement
  */
 void Robot::mecanum(int power, int strafe, int turn) {
 	FL = power + strafe + turn;
@@ -500,7 +504,7 @@ void Robot::intake(double coefficient, bool flip, std::string powered) {
 }
 
 /**
- * @desc: A function to stop our drivetrain from moving with ease
+ * @desc: Causes our robot's drivetrain to stop
  * @param mode: The type of break to perform (coast, hold, or neither)
  */
 void Robot::brake(std::string mode)
@@ -555,12 +559,16 @@ void Robot::vis_sense(void *ptr) {
 	}
 }
 
-//Resets IMU
+/**
+ * @desc: Resets IMU. Must be called in initialize.cpp and given at least 3 seconds to complete to allow IMU to calibrate
+ */
 void Robot::reset_sensors() {
 	IMU.reset();
 }
 
-//Resets all PD Objects
+/**
+ * @desc: Resets all PD objects
+ */
 void Robot::reset_PD() {
 	power_PD.reset();
 	strafe_PD.reset();
