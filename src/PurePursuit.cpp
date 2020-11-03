@@ -8,6 +8,14 @@ using namespace pros;
 #define SQD(n) pow(n, 2)
 
 
+/* Pure Pursuit is an algorithm designed to find a path with a smooth and continuous curvature that approaches a series of 
+input points. The waypoint path, or the one that connects consecutive input points with straight lines, has corners that
+we want to get rid of in order to make our path as efficient and smooth as possible. We do this by following not the 
+path itself as we move, but rather the intersection between this path and a circle with radius r centered on our robot's 
+current position. Intuitively, you can imagine that the robot will already have started changing direction before it 
+meets a vertex in the waypoint path, as by that point the intersection-based path will have already redirected the robot 
+to some point ahead on the next segment of the waypoint path. */
+
 /**
  * @return: An integer value (1, -1 or 0) that represents the sign of the input x
  */
