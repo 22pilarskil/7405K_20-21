@@ -41,7 +41,7 @@ PD::PD(double p, double d, double min, int counter_) {
 double PD::get_value(double error) {
 	int time = millis();
 	int delta_time = time - prev_time;
-	//Allow for PID to take into account imperfect loop times- delay(5) does not always delay 5 milliseconds
+	/* Allow for PID to take into account imperfect loop times- delay(5) does not always delay 5 milliseconds */
 
 	derivate_of_error = (error - prev_error) / delta_time;
 

@@ -3,6 +3,8 @@
 #include "PurePursuit.h"
 using namespace pros;
 
+/* Creates all tasks required for our Robot's driver control period */
+
 void opcontrol() {
 	lcd::initialize();
 	delay(100);
@@ -10,5 +12,4 @@ void opcontrol() {
 	Robot::start_task("DRIVE", Robot::drive);
 	Robot::start_task("FPS", Robot::fps);
 	Robot::start_task("SENSORS", Robot::sensors);
-  	Robot::start_task("VISION", Robot::vis_sense);
 }

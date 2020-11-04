@@ -28,24 +28,24 @@ Vision Robot::vision(21);
 ADIDigitalIn Robot::LM1({{5, 5}});
 ADIUltrasonic Robot::UB(1, 2);
 ADIUltrasonic Robot::UT({{5, 1, 2}});
-//Initializing motors, sensors, controller
+/* Initializing motors, sensors, controller */
 
 PD Robot::power_PD(.2, 1.5, 10);
 PD Robot::strafe_PD(.25, 1.5, 10);
 PD Robot::turn_PD(0.85, 0, 15);
-//Initializing Our PD Instances
+/* Initializing Our PD Instances */
 
 std::atomic<double> Robot::y = 0;
 std::atomic<double> Robot::x = 0;
 std::atomic<double> Robot::turn_offset_x = 0;
 std::atomic<double> Robot::turn_offset_y = 0;
-//Static member variables used to store information about positioning obtained from Robot::fps (our odometry function)
+/* Static member variables used to store information about positioning obtained from Robot::fps (our odometry function) */
 
 double Robot::offset_back = 4 + 5 / 16;
 double Robot::offset_middle = 5 + 7 / 16;
 double Robot::wheel_circumference = 2.75 * M_PI;
 int Robot::radius = 300;
-//Presets for odometry and pure pursuit calculations
+/* Presets for odometry and pure pursuit calculations */
 
 std::atomic<int> Robot::UB_count = 0;
 std::atomic<int> Robot::UT_count = 0;
@@ -56,10 +56,10 @@ Robot::sensors */
 bool intakes_on;
 bool intake_store;
 bool move_up;
-//Parameters passed into Robot::store
+/* Parameters passed into Robot::store */
 
 std::map<std::string, std::unique_ptr<pros::Task>> Robot::tasks;
-// Mapping of tasks instantiated during the program
+/* Mapping of tasks instantiated during the program */
 
 /* Note: tasks are the pros version of threads, or a method for having independent subroutines run at the same time. Using
 threading allows us to have different functions run simultaneously, which helps us save time and increase versatility in
@@ -183,7 +183,7 @@ void Robot::move_to(std::vector<double> pose, std::vector<double> margin, std::v
 	deg, it only takes a minor shift in position */
 
 	while (abs(y_error) > 30 * margin[0] || abs(x_error) > 30 * margin[1] || abs(imu_error) > 2 * margin[2])
-	{ //while Robot::y, Robot::x and IMU heading are all more than the specified margin away from the target
+	{ /* while Robot::y, Robot::x and IMU heading are all more than the specified margin away from the target */
 		double phi = TO_RAD(IMU.get_rotation());
 		double power = power_PD.get_value(y_error * std::cos(phi) + x_error * std::sin(phi)) * speeds[0];
 		double strafe = strafe_PD.get_value(x_error * std::cos(phi) - y_error * std::sin(phi)) * speeds[1];
@@ -197,7 +197,7 @@ void Robot::move_to(std::vector<double> pose, std::vector<double> margin, std::v
 		imu_error = -(IMU.get_rotation() - heading);
 		y_error = new_y - y;
 		x_error = -(new_x - x);
-		//Recalculating our error by subtracting components of our current position vector from target position vector
+		/* Recalculating our error by subtracting components of our current position vector from target position vector */
 
 
 		if (pure_pursuit) return;
@@ -221,7 +221,8 @@ void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, std::v
 	std::vector<double> target;
 	std::vector<double> cur{(float)y, (float)x};
 	double heading;
-	//Instantiating filler variables that will be overwritten every iteration, instead of allocating memory to new objects
+	/* Instantiating filler variables that will be overwritten every iteration, instead of allocating memory to new 
+	objects */
 
 	for (int index = 0; index < points.size() - 1; index++)
 	{
@@ -231,7 +232,7 @@ void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, std::v
 		{
 			target = get_intersection(start, end, cur, radius);
 			heading = get_degrees(target, cur);
-			//Obtain pathing information through functions from PurePursuit.cpp
+			/* Obtain pathing information through functions from PurePursuit.cpp */
 
 			std::vector<double> pose {target[0], target[1], heading};
 			Robot::move_to(pose, {1, 1, 1}, speeds, true);
@@ -326,7 +327,7 @@ void Robot::store(void *ptr) {
 			}
 			else break;
 		}
-		// For each possible scenario of ball storage, we program different indexer sequences
+		/* For each possible scenario of ball storage, we program different indexer sequences */
 		delay(5);
 	}
 	lcd::print(7, "STORE COMPLETE");

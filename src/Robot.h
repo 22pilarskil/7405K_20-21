@@ -27,24 +27,25 @@ public:
 	static ADIDigitalIn LM1;
 	static ADIUltrasonic UB;
 	static ADIUltrasonic UT;
-	//Initializing motors, sensors, controller
+	/* Initializing motors, sensors, controller */
 
 	static PID power_PID;
 	static PID strafe_PID;
 	static PID turn_PID;
-	//Initializing Our PD Instances
+	/* Initializing Our PD Instances */
 
 	static std::atomic<double> x;
 	static std::atomic<double> y;
 	static std::atomic<double> turn_offset_x;
 	static std::atomic<double> turn_offset_y;
-	//Static member variables used to store information about positioning obtained from Robot::fps (our odometry function)
+	/* Static member variables used to store information about positioning obtained from Robot::fps (our odometry 
+	function) */
 
 	static double offset_back;
 	static double offset_middle;
 	static double wheel_circumference;
 	static int radius;
-	//Presets for odometry and pure pursuit calculations
+	/* Presets for odometry and pure pursuit calculations */
 
 	static std::atomic<int> UT_count;
 	static std::atomic<int> UB_count;
@@ -53,24 +54,24 @@ public:
 	Robot::sensors */
 
 	static std::map<std::string, std::unique_ptr<pros::Task>> tasks;
-	// Mapping of tasks instantiated during the program
+	/* Mapping of tasks instantiated during the program */
 
 	static void start_task(std::string name, void (*func)(void *));
 	static bool task_exists(std::string name);
 	static void kill_task(std::string name);
-	// Threading functions
+	/* Threading functions */
 
 	static void fps(void *ptr);
 	static void move_to(std::vector<double> pose, std::vector<double> margins = {1, 1, 1}, std::vector<double> speeds = {1, 1, 1}, bool pure_pursuit = false);
 	static void move_to_pure_pursuit(std::vector<std::vector<double>> points, std::vector<double> speeds = {1, 1, 1});
-	// Autonomous movement and positioning functions
+	/* Autonomous movement and positioning functions */
 
 	static void sensors(void *ptr);
 	static void store(void *ptr);
 	static std::vector<int> get_data();
 	static void quickscore(int ball_id = -1);
 	static void reset_Balls(int ultrasonic_bottom = 0, int ultrasonic_top = 0, bool move_up_ = true, bool intake_store_ = false, bool intakes_on_ = true);
-	// Ball storing functions
+	/* Ball storing functions */
 
 	static void display(void *ptr);
 	static void drive(void *ptr);
@@ -80,5 +81,5 @@ public:
 	static void flipout();
 	static void vis_sense(void *ptr);
 	static void reset_sensors();
-	// Driver control functions
+	/* Driver control functions */
 };

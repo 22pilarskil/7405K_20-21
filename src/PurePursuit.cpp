@@ -11,9 +11,9 @@ using namespace pros;
 /* Pure Pursuit is an algorithm designed to find a path with a smooth and continuous curvature that approaches a series of 
 input points. The waypoint path, or the one that connects consecutive input points with straight lines, has corners that
 we want to get rid of in order to make our path as efficient and smooth as possible. We do this by following not the 
-path itself as we move, but rather the intersection between this path and a circle with radius r centered on our robot's 
-current position. Intuitively, you can imagine that the robot will already have started changing direction before it 
-meets a vertex in the waypoint path, as by that point the intersection-based path will have already redirected the robot 
+path itself as we move, but rather the intersection between this path and a circle with radius r centered on our Robot's 
+current position. Intuitively, you can imagine that the Robot will already have started changing direction before it 
+meets a vertex in the waypoint path, as by that point the intersection-based path will have already redirected the Robot 
 to some point ahead on the next segment of the waypoint path. */
 
 /**
@@ -26,11 +26,11 @@ int sign(double x) {
 }
 
 /**
- * @desc: Calculates the heading required for our robot to continuously face forward while moving from @param p1 to @param 
+ * @desc: Calculates the heading required for our Robot to continuously face forward while moving from @param p1 to @param 
   p2. This is important because it allows our intakes to face any balls we might run into instead of knocking them aside
  * @param p1: A vector of length two in the format {Y, X} that contains Robot::y and Robot::x
  * @param p2: A vector of length two in the format {Y, X} that contains the Y and X coordinate of the target point
- * @return: Returns the slope between two points in degrees, which can be translated easily into robot heading. 
+ * @return: Returns the slope between two points in degrees, which can be translated easily into Robot heading. 
  */
 double get_degrees(std::vector<double> p1, std::vector<double> p2) {
   double y = p1[0] - p2[0];
@@ -57,7 +57,7 @@ double distance(std::vector<double> p1, std::vector<double> p2) {
   * @param cur: A vector of length two in the format {Y, X} that contains Robot::y and Robot::x
   * @param radius: A scalar representing how far our lookahead distance should be- in other words, how early we should start 
     turning in anticipation of a change in direction
- * @return: The intersection between a circle centered on our robot's current position with radius @param radius and the 
+ * @return: The intersection between a circle centered on our Robot's current position with radius @param radius and the 
     line formed between @param start and @param end
  */
   std::vector<double> get_intersection(std::vector<double> start, std::vector<double> end, std::vector<double> cur, double radius) {
@@ -74,7 +74,7 @@ double distance(std::vector<double> p1, std::vector<double> p2) {
   float y1 = (-D * dx + abs(dy) * sqrt(discriminant)) / SQD(d);
   float x2 = (D * dy - sign(dy) * dx * sqrt(discriminant)) / SQD(d);
   float y2 = (-D * dx - abs(dy) * sqrt(discriminant)) / SQD(d);
-  //Above calculations can be explained and proven here: https://mathworld.wolfram.com/Circle-LineIntersection.html
+  /* Above calculations can be explained and proven here: https://mathworld.wolfram.com/Circle-LineIntersection.html */
 
   std::vector<double> intersection1 {x1, y1};
   std::vector<double> intersection2 {x2, y2};
