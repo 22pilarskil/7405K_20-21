@@ -9,7 +9,7 @@
 using namespace pros;
 
 #define TO_RAD(n) n * M_PI / 180;
-
+/* Lambda function to convert number in degrees to radians */
 
 Controller Robot::master(E_CONTROLLER_MASTER);
 Motor Robot::FL(10, true);
