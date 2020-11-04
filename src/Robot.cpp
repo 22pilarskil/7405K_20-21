@@ -128,7 +128,7 @@ void Robot::fps(void *ptr) {
 
 		double global_dy = dy * std::cos(cur_phi) + dx * std::sin(cur_phi);
 		double global_dx = dx * std::cos(cur_phi) - dy * std::sin(cur_phi);
-		/* Apply rotation matrix to dx and dy to calculate global_dy and global_dx. Is required because if the robot moves
+		/* Apply rotation matrix to dx and dy to calculate global_dy and global_dx. Is required because if the Robot moves
 		on an orientation that is not a multiple of 90 (i.e. 22 degrees), x and y encoder values do not correspond 
 		exclusively to either x or y movement, but rather a little bit of both */
 
@@ -145,7 +145,7 @@ void Robot::fps(void *ptr) {
 		last_phi = cur_phi;
 
 		delay(5);
-		/* All of these calculations assume that the robot is moving in a straight line at all times. However, while this 
+		/* All of these calculations assume that the Robot is moving in a straight line at all times. However, while this 
 		is not always the case, a delay of 5 milliseconds between each calculation makes dx and dy (distance traveled on 
 		x and y axes) so small that any curvature is insignificant. */
 	}
