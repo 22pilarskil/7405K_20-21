@@ -1,5 +1,5 @@
 #include "main.h"
-#include "PID.h"
+#include "PD.h"
 #include <map>
 #include <memory>
 #include <string>
@@ -29,9 +29,9 @@ public:
 	static ADIUltrasonic UT;
 	/* Initializing motors, sensors, controller */
 
-	static PID power_PID;
-	static PID strafe_PID;
-	static PID turn_PID;
+	static PD power_PD;
+	static PD strafe_PD;
+	static PD turn_PD;
 	/* Initializing Our PD Instances */
 
 	static std::atomic<double> x;
@@ -81,5 +81,6 @@ public:
 	static void flipout();
 	static void vis_sense(void *ptr);
 	static void reset_sensors();
+	static void reset_PD();
 	/* Driver control functions */
 };

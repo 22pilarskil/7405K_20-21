@@ -25,7 +25,7 @@ void autonomous()
 	Robot::start_task("STORE1", Robot::store);
 	delay(300);
 	std::vector<std::vector<double>> points1 {{0, 0}, {750, 0.1}, {750, 500}, {220, 960}};
-	Robot::move_to_pure_pursuit(points1, {1.2, 1.2, 1.2}, 1, false, "intakes");
+	Robot::move_to_pure_pursuit(points1, {1.2, 1.2, 1.2});
 	Robot::kill_task("STORE1");
 	Robot::brake("hold");
 	Robot::intake(0);

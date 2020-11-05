@@ -72,7 +72,7 @@ bin/opcontrol.cpp.o: src/opcontrol.cpp include/main.h include/api.h \
  include/pros/optical.hpp include/pros/optical.h \
  include/pros/rotation.hpp include/pros/rotation.h include/pros/rtos.hpp \
  include/pros/rtos.h include/pros/vision.hpp include/pros/vision.h \
- src/Robot.h src/PID.h src/PurePursuit.h
+ src/Robot.h src/PD.h src/PurePursuit.h
 
 include/main.h:
 
@@ -358,6 +358,6 @@ include/pros/vision.h:
 
 src/Robot.h:
 
-src/PID.h:
+src/PD.h:
 
 src/PurePursuit.h:

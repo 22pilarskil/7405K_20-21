@@ -43,7 +43,7 @@ double PD::get_value(double error) {
 	int delta_time = time - prev_time;
 	/* Allow for PID to take into account imperfect loop times- delay(5) does not always delay 5 milliseconds */
 
-	derivate_of_error = (error - prev_error) / delta_time;
+    double derivative_of_error = (error - prev_error) / delta_time;
 
 	prev_error = error;
 	prev_time = time;
@@ -57,6 +57,6 @@ double PD::get_value(double error) {
 /**
  * @desc: Resets counter back to counter_reset after each time we use PID in order to reset acceleration curve 
  */
-void PID::reset() {
+void PD::reset() {
 	counter = counter_reset;
 }
