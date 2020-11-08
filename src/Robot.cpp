@@ -289,7 +289,19 @@ void Robot::sensors(void *ptr) {
 }
 
 /**
- * @desc: Using data obtained from Robot::sensors to update motor power in order to store balls effectively
+ * @desc: Using data obtained from Robot::sensors to update motor power in order to store balls effectively in one of
+ 	three positions- top (regulated by our top ultrasonic sensor), middle (regulated by our bottom ultrasonic sensor) 
+ 	or bottom (regulated by our limit switch located right behind our intakes). This process is also threaded, but unlike
+ 	our other threaded processes, it is called multiple times during our autonomous program. Only once the storing is 
+ 	complete (once our Robot detects balls in each stored position we tell it to store in) does the process end, at 
+ 	which point we terminate the thread. Every time we need to store balls, we instantiate a new task that executes
+ 	Robot::store once more. Specific parameter inputs to control behavior of Robot::store are set by Robot::reset_balls, 
+ 	which is run prior to each task's initiallization, i.e.
+
+ 		Robot::reset_balls();
+ 		Robot::start_task("STORE", Robot::store);
+
+ 	would run Robot::store with default parameters
  * @param ptr: Required for compatibility with pros threading
  */
 void Robot::store(void *ptr) {
@@ -317,6 +329,10 @@ void Robot::store(void *ptr) {
 				R1 = 0;
 				move_up = false;
 			}
+			/* move_up is a variable set in Robot::reset_balls. It tells us whether or not to move stored balls higher up
+			inside of our Robot by activating indexer rollers for a split second. This was required because when shooting 
+			two balls at once, we found that scoring was more consistent when we ran Robot::quickscore with the balls 
+			higher up in the robot */
 			if (intake_store) {
 				while(LM1.get_value() == 0) {
 					IR = 127;
@@ -325,6 +341,9 @@ void Robot::store(void *ptr) {
 				}
 				break;
 			}
+			/* intake_store is a variable set in Robot::reset_balls. It tells whether or not we want to store a third ball
+			in between our intakes on top of the default storage of two balls in the top and middle positions. If so, the
+			process does not end until our limit switch outputs a positive value, corresponding to activation by a ball */
 			else break;
 		}
 		/* For each possible scenario of ball storage, we program different indexer sequences */
@@ -371,7 +390,7 @@ void Robot::quickscore(int ball_id) {
  * @param ultrasonic_bottom: Number to reset UB_count to
  * @param ultrasonic_top: Number to reset UT_count to
  * @param move_up_: Boolean (true or false) to tell whether or not we should move our balls further up in our intakes 
- 	after storing- designed to counter the problem that our balls often store too low in our robot due to imperfect 
+ 	after storing- designed to counter the problem that our balls often store too low in our Robot due to imperfect 
  	geometry
  * @param intake_store_: Boolean (true or false) that tells us whether we want a third ball to be stored in between our
  	intakes
@@ -379,7 +398,7 @@ void Robot::quickscore(int ball_id) {
  	for when we know that the ball(s) we want to store are both already contacting one of the indexer rollers, meaning 
  	our intakes are not needed to bring the balls further into the bot)
  */
-void Robot::reset_Balls(int ultrasonic_bottom, int ultrasonic_top, bool move_up_, bool intake_store_, bool intakes_on_) {
+void Robot::reset_balls(int ultrasonic_bottom, int ultrasonic_top, bool move_up_, bool intake_store_, bool intakes_on_) {
 	UT_count = ultrasonic_top;
 	UB_count = ultrasonic_bottom;
 	move_up = move_up_;
@@ -432,13 +451,14 @@ void Robot::drive(void *ptr) {
 		bool flip = master.get_digital(DIGITAL_L1);
 		bool storingScore = master.get_digital(DIGITAL_RIGHT);
 		bool quickScore_ = master.get_digital(DIGITAL_A);
+		bool flipout_ = master.get_digital(DIGITAL_Y);
 
 		if (storingScore && !intake_last){
 			intake_state++;
 			intake_last = true;
-			reset_Balls();
+			reset_balls();
 		}
-		else if (!storingScore)intake_last = false;
+		else if (!storingScore) intake_last = false;
 
 		if (intake_state % 2 == 0) {
             Robot::start_task("STORE", Robot::store);

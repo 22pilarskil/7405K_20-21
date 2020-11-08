@@ -12,4 +12,5 @@ void opcontrol() {
 	Robot::start_task("DRIVE", Robot::drive);
 	Robot::start_task("FPS", Robot::fps);
 	Robot::start_task("SENSORS", Robot::sensors);
+	Robot::flipout();
 }

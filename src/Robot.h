@@ -70,7 +70,7 @@ public:
 	static void store(void *ptr);
 	static std::vector<int> get_data();
 	static void quickscore(int ball_id = -1);
-	static void reset_Balls(int ultrasonic_bottom = 0, int ultrasonic_top = 0, bool move_up_ = true, bool intake_store_ = false, bool intakes_on_ = true);
+	static void reset_balls(int ultrasonic_bottom = 0, int ultrasonic_top = 0, bool move_up_ = true, bool intake_store_ = false, bool intakes_on_ = true);
 	/* Ball storing functions */
 
 	static void display(void *ptr);
