@@ -98,7 +98,7 @@ void Robot::kill_task(std::string name) {
 
 /**
  * @desc: Threaded function that performs our odometry calculations at all times, updating Robot::x and Robot::y to
- 	provide us an accurate depiction of our robot's positioning at all times. Since Robot::x and Robot::y are static 
+ 	provide us an accurate depiction of our robot's real time positioning. Since Robot::x and Robot::y are static 
  	member variables of type atomic (a datatype designed to allow multiple threads to access a variable at once, they 
  	can be accessed from anywhere in the code at any time. 
  * @param ptr: Required for compatibility with pros threading
