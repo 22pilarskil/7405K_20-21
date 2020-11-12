@@ -56,6 +56,7 @@ Robot::sensors */
 bool intakes_on;
 bool intake_store;
 bool move_up;
+bool store_off;
 /* Parameters passed into Robot::store */
 
 std::map<std::string, std::unique_ptr<pros::Task>> Robot::tasks;
@@ -307,6 +308,9 @@ void Robot::sensors(void *ptr) {
 void Robot::store(void *ptr) {
 	lcd::print(7, "STORE INCOMPLETE");
 	while(true) {
+	    if(store_off) {
+	        break;
+	    }
 		if (intakes_on) {
 			IL = 127;
 			IR = 127;
@@ -351,8 +355,7 @@ void Robot::store(void *ptr) {
 	}
 	lcd::print(7, "STORE COMPLETE");
 	store_complete = true;
-	IL = 0;
-	IR = 0;
+	IL = IR = R1 = R2 = 0;
 }
 
 
@@ -462,9 +465,14 @@ void Robot::drive(void *ptr) {
 
 		if (intake_state % 2 == 0) {
             Robot::start_task("STORE", Robot::store);
-		}
+            store_off=false;
+            lcd::print(1, "%d", 1);
+        }
 		else {
             Robot::kill_task("STORE");
+            store_off=true;
+            lcd::print(1, "%d", 0);
+            lcd::print(1, "%d", Robot::task_exists("STORE"));
             double motorpwr = 0;
 			if (intake_ || outtake) motorpwr = (intake_) ? 1 : -1;
 			if (just_intake && just_indexer) intake(1, false, "both");
