@@ -2,8 +2,8 @@
 #include "Robot.h"
 using namespace pros;
 
-/* Below is our programming skills path in its entirety. It uses the Robot::move_to, Robot::move_to_pure_pursuit, and 
-Robot::store functions to move to preset positions on the field and intake balls that we know to be there. It is 
+/* Below is our programming skills path in its entirety. It takes advantage of the Robot::move_to, Robot::move_to_pure_pursuit,
+and Robot::store functions to move to preset positions on the field and intake balls that we know to be there. It is
 important to note that while in our programming skills video (https://www.youtube.com/watch?v=_H-iJ-kX9H8) it appears
 that our robot is detecting and chasing down balls on the field, this is not the case. Since the field is set up the 
 same way every time, we simply use odometry to find the points on the field where balls are located, and initiate a

@@ -68,7 +68,7 @@ our code */
 
 /**
  * @desc: Starts a task and pairs it with a unique task ID to allow us to keep track of its status
- * @param name: An arbitrary name we give to the task for organization purposes
+ * @param name: An specific name we give to the task for organization purposes
  * @param func: Pointer of the function in question that we would like to put into a new task
  */
 void Robot::start_task(std::string name, void (*func)(void *)) {
@@ -249,7 +249,7 @@ void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, std::v
 /**
  * @desc: Threaded function that updates UB_count and UT_count to reflect how many balls are currently stored in our robot。
  	Using two ultrasonics strategically placed on our robot's superstructure, we can deduce a whether or not balls are at
- 	certain locations on our robot using ultrasonic readings (i.e. a low value output, which means an object is in close 
+ 	certain locations on our robot based on ultrasonic readings (i.e. a low value output, which means an object is in close
  	proximity to the ultrasonic, would imply a ball is directly in front of the ultrasonic being measured)
  * @param ptr: Required for compatibility with pros threading
  */

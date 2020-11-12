@@ -2,7 +2,7 @@
 #include "PD.h"
 using namespace pros;
 
-/* PD control is an algorithm designed to help our Robot make controlled stops. Since VEX robots are made of metal, they 
+/* PD control is an algorithm designed to help our Robot make controlled stops. Since VEX robots have a large mass, they
 carry a lot of momentum and stopping too suddenly can cause our Robot to jerk off course or overshoot its target position.
 As a result, we want to disperse this momentum as we approach our target. We do this by using our error, or distance from
 our current position to our target, to control our speed as a sum of two terms. The first term is directly proportional to
