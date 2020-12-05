@@ -12,14 +12,14 @@ using namespace pros;
 /* Lambda function to convert number in degrees to radians. */
 
 Controller Robot::master(E_CONTROLLER_MASTER);
-Motor Robot::FL(10, true);
-Motor Robot::FR(14);
-Motor Robot::BL(1);
+Motor Robot::FL(2);
+Motor Robot::FR(10, true);
+Motor Robot::BL(12);
 Motor Robot::BR(19, true);
 Motor Robot::IL(4);
 Motor Robot::IR(11, true);
-Motor Robot::R1(16);
-Motor Robot::R2(12, true);
+Motor Robot::R1(7);
+Motor Robot::R2(6, true);
 ADIEncoder Robot::LE(3, 4);
 ADIEncoder Robot::RE(7, 8, true);
 ADIEncoder Robot::BE(5, 6);
@@ -433,11 +433,12 @@ void Robot::display(void *ptr)
  * @desc:
  * @param ptr: Required for compatibility with pros threading
  */
+
 void Robot::drive(void *ptr) {
 	delay(300);
 	int intake_state = 1;
 	bool intake_last;
-
+    double powerRollers=0;
 	while (true) {
 		int power = master.get_analog(ANALOG_LEFT_Y);
 		int strafe = master.get_analog(ANALOG_LEFT_X);
@@ -449,38 +450,53 @@ void Robot::drive(void *ptr) {
 
 		bool intake_ = master.get_digital(DIGITAL_R2);
 		bool outtake = master.get_digital(DIGITAL_X);
-		bool just_intake = master.get_digital(DIGITAL_R1);
-		bool just_indexer = master.get_digital(DIGITAL_L2);
-		bool flip = master.get_digital(DIGITAL_L1);
-		bool storingScore = master.get_digital(DIGITAL_RIGHT);
-		bool quickScore_ = master.get_digital(DIGITAL_A);
-		bool flipout_ = master.get_digital(DIGITAL_Y);
 
-		if (storingScore && !intake_last){
-			intake_state++;
-			intake_last = true;
-			reset_balls();
+		if(intake_) {
+		    R1=127;
+            powerRollers+=3;
+		} else if (outtake) {
+		    R1=127;
+            powerRollers-=3;
+		} else {
+		    R1=0;
+            powerRollers=0;
 		}
-		else if (!storingScore) intake_last = false;
+        lcd::print(6, "Cock: %d", powerRollers);
 
-		if (intake_state % 2 == 0) {
-            Robot::start_task("STORE", Robot::store);
-            store_off=false;
-            lcd::print(1, "%d", 1);
-        }
-		else {
-            Robot::kill_task("STORE");
-            store_off=true;
-            lcd::print(1, "%d", 0);
-            lcd::print(1, "%d", Robot::task_exists("STORE"));
-            double motorpwr = 0;
-			if (intake_ || outtake) motorpwr = (intake_) ? 1 : -1;
-			if (just_intake && just_indexer) intake(1, false, "both");
-			else if (just_intake) intake(1, flip, "intakes");
-			else if (just_indexer) intake(1, flip, "indexer");
-			else if (quickScore_) quickscore();
-			else intake(motorpwr, flip, "both");
-		}
+		R2 = powerRollers;
+
+//		bool just_intake = master.get_digital(DIGITAL_R1);
+//		bool just_indexer = master.get_digital(DIGITAL_L2);
+//		bool flip = master.get_digital(DIGITAL_L1);
+//		bool storingScore = master.get_digital(DIGITAL_RIGHT);
+//		bool quickScore_ = master.get_digital(DIGITAL_A);
+//		bool flipout_ = master.get_digital(DIGITAL_Y);
+//
+//		if (storingScore && !intake_last){
+//			intake_state++;
+//			intake_last = true;
+//			reset_balls();
+//		}
+//		else if (!storingScore) intake_last = false;
+//
+//		if (intake_state % 2 == 0) {
+//            Robot::start_task("STORE", Robot::store);
+//            store_off=false;
+//            lcd::print(1, "%d", 1);
+//        }
+//		else {
+//            Robot::kill_task("STORE");
+//            store_off=true;
+//            lcd::print(1, "%d", 0);
+//            lcd::print(1, "%d", Robot::task_exists("STORE"));
+//            double motorpwr = 0;
+//			if (intake_ || outtake) motorpwr = (intake_) ? 1 : -1;
+//			if (just_intake && just_indexer) intake(1, false, "both");
+//			else if (just_intake) intake(1, flip, "intakes");
+//			else if (just_indexer) intake(1, flip, "indexer");
+//			else if (quickScore_) quickscore();
+//			else intake(motorpwr, flip, "both");
+//		}
 	}
 }
 
