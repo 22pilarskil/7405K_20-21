@@ -18,12 +18,13 @@ Motor Robot::BL(12);
 Motor Robot::BR(19, true);
 Motor Robot::IL(5, true);
 Motor Robot::IR(21);
-Motor Robot::R1(7, true);
-Motor Robot::R2(6, true);
-ADIEncoder Robot::LE(5, 6);
-ADIEncoder Robot::RE(1, 2, true);
-ADIEncoder Robot::BE(3, 4);
-Imu Robot::IMU(4);
+Motor Robot::R1(7);
+Motor Robot::R2(8, true);
+ADIEncoder Robot::LE(3, 4);
+ADIEncoder Robot::RE(7, 8, true);
+ADIEncoder Robot::BE(5, 6);
+Imu Robot::IMU(8);
+Vision Robot::vision(1);
 ADIDigitalIn Robot::LM1({{5, 5}});
 ADIUltrasonic Robot::UB(1, 2);
 ADIUltrasonic Robot::UT({{5, 1, 2}});
@@ -40,8 +41,8 @@ std::atomic<double> Robot::turn_offset_x = 0;
 std::atomic<double> Robot::turn_offset_y = 0;
 /* Static member variables used to store information about positioning obtained from Robot::fps (our odometry function) */
 
-double Robot::offset_back = 7;
-double Robot::offset_middle = 7;
+double Robot::offset_back = 4 + 5 / 16;
+double Robot::offset_middle = 5 + 7 / 16;
 double Robot::wheel_circumference = 2.75 * M_PI;
 int Robot::radius = 300;
 /* Presets for odometry and pure pursuit calculations */
@@ -49,7 +50,7 @@ int Robot::radius = 300;
 std::atomic<int> Robot::UB_count = 0;
 std::atomic<int> Robot::UT_count = 0;
 bool Robot::store_complete;
-/* Static member variables used to store information about location and number of balls being stored by our bot obtained
+/* Static member variables used to store information about location and number of balls being stored by our bot obtained 
 Robot::sensors */
 
 bool intakes_on;
@@ -57,9 +58,6 @@ bool intake_store;
 bool move_up;
 bool store_off;
 /* Parameters passed into Robot::store */
-
-double power_rollers = 0;
-double power_rollers_increment = .07;
 
 std::map<std::string, std::unique_ptr<pros::Task>> Robot::tasks;
 /* Mapping of tasks instantiated during the program */
@@ -101,9 +99,9 @@ void Robot::kill_task(std::string name) {
 
 /**
  * @desc: Threaded function that performs our odometry calculations at all times, updating Robot::x and Robot::y to
- 	provide us an accurate depiction of our robot's real time positioning. Since Robot::x and Robot::y are static
- 	member variables of type atomic (a datatype designed to allow multiple threads to access a variable at once, they
- 	can be accessed from anywhere in the code at any time.
+ 	provide us an accurate depiction of our robot's real time positioning. Since Robot::x and Robot::y are static 
+ 	member variables of type atomic (a datatype designed to allow multiple threads to access a variable at once, they 
+ 	can be accessed from anywhere in the code at any time. 
  * @param ptr: Required for compatibility with pros threading
  */
 void Robot::fps(void *ptr) {
@@ -132,7 +130,7 @@ void Robot::fps(void *ptr) {
 		double global_dy = dy * std::cos(cur_phi) + dx * std::sin(cur_phi);
 		double global_dx = dx * std::cos(cur_phi) - dy * std::sin(cur_phi);
 		/* Apply rotation matrix to dx and dy to calculate global_dy and global_dx. Is required because if the Robot moves
-		on an orientation that is not a multiple of 90 (i.e. 22 degrees), x and y encoder values do not correspond
+		on an orientation that is not a multiple of 90 (i.e. 22 degrees), x and y encoder values do not correspond 
 		exclusively to either x or y movement, but rather a little bit of both */
 
 		y = (float)y + global_dy;
@@ -148,24 +146,24 @@ void Robot::fps(void *ptr) {
 		last_phi = cur_phi;
 
 		delay(5);
-		/* All of these calculations assume that the Robot is moving in a straight line at all times. However, while this
-		is not always the case, a delay of 5 milliseconds between each calculation makes dx and dy (distance traveled on
+		/* All of these calculations assume that the Robot is moving in a straight line at all times. However, while this 
+		is not always the case, a delay of 5 milliseconds between each calculation makes dx and dy (distance traveled on 
 		x and y axes) so small that any curvature is insignificant. */
 	}
 }
 
 
 /**
- * @desc: Interfaces with PD classes as well as Robot::x and Robot::y (updated using odometry in Robot::fps) to accurately
+ * @desc: Interfaces with PD classes as well as Robot::x and Robot::y (updated using odometry in Robot::fps) to accurately 
  	move to an input position.
  * @param pose: A vector of length three in the format {Y, X, heading} that contains information about the target end state
  	of the robot that we wish to achieve through Robot::move_to
- * @param margin: A vector of length three in the format {Y_margin, X_margin, heading_margin} that allows us to control how
- 	accurate our movements should be by acting as coefficients for tolerances, or how close our robot actually needs to be
+ * @param margin: A vector of length three in the format {Y_margin, X_margin, heading_margin} that allows us to control how 
+ 	accurate our movements should be by acting as coefficients for tolerances, or how close our robot actually needs to be 
  	to the target in order for Robot::move_to to be complete (Higher margins = less accurate but faster convergence)
- 	within 2 degrees of our target heading, but we can multiply
+ 	within 2 degrees of our target heading, but we can multiply 
  * @param speeds: A vector of length three in the format {Y_speed, X_speed, heading_speed} that allows us to control how
- 	fast our movements should be by acting as coefficients for speeds outputted by our PD objects.
+ 	fast our movements should be by acting as coefficients for speeds outputted by our PD objects. 
  * @param pure_pursuit: A boolean (true or false) that tells us whether or not we are calling this function in the context
  	of Robot::move_to_pure_pursuit
  */
@@ -181,7 +179,7 @@ void Robot::move_to(std::vector<double> pose, std::vector<double> margin, std::v
 	double heading2 = (heading < 0) ? heading + 360 : heading - 360;
 	heading = (abs(IMU.get_rotation() - heading) < abs(IMU.get_rotation() - heading2)) ? heading : heading2;
 	double imu_error = -(IMU.get_rotation() - heading);
-	/* Calculate inverse headings (i.e. 1 deg = -359 deg), then find which heading is closer to current heading. For
+	/* Calculate inverse headings (i.e. 1 deg = -359 deg), then find which heading is closer to current heading. For 
 	example, moving to -358 deg would require almost a full 360 degree turn from 1 degree, but from its equivalent of -359
 	deg, it only takes a minor shift in position */
 
@@ -193,8 +191,8 @@ void Robot::move_to(std::vector<double> pose, std::vector<double> margin, std::v
 		double turn = turn_PD.get_value(imu_error) * 1.5 * speeds[2];
 		mecanum(power, strafe, turn);
 		/* Using our PD objects we use the error on each of our degrees of freedom (axial, lateral, and turning movement)
-		to obtain speeds to input into Robot::mecanum. We perform a rotation matrix calculation to translate our y and x
-		error to the same coordinate plane as Robot::y and Robot::x to ensure that the errors we are using are indeed
+		to obtain speeds to input into Robot::mecanum. We perform a rotation matrix calculation to translate our y and x 
+		error to the same coordinate plane as Robot::y and Robot::x to ensure that the errors we are using are indeed 
 		proportional/compatible with Robot::y and Robot::x */
 
 		imu_error = -(IMU.get_rotation() - heading);
@@ -212,8 +210,8 @@ void Robot::move_to(std::vector<double> pose, std::vector<double> margin, std::v
 
 /**
  * @desc: Interfaces with PurePursuit.cpp to follow a smooth path generated from input points
- * @param points: An array of points in the form {{Y_1, X_1}..{Y_n, X_n}} whose direct pathing (i.e. what would result if
- 	a straight line was drawn between each consecutive pair of points) serves as the model for our curved, generated path
+ * @param points: An array of points in the form {{Y_1, X_1}..{Y_n, X_n}} whose direct pathing (i.e. what would result if 
+ 	a straight line was drawn between each consecutive pair of points) serves as the model for our curved, generated path 
  * @param speeds: Same function and format as @param speeds from Robot::move_to, see above
  */
 void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, std::vector<double> speeds)
@@ -224,7 +222,7 @@ void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, std::v
 	std::vector<double> target;
 	std::vector<double> cur{(float)y, (float)x};
 	double heading;
-	/* Instantiating filler variables that will be overwritten every iteration, instead of allocating memory to new
+	/* Instantiating filler variables that will be overwritten every iteration, instead of allocating memory to new 
 	objects */
 
 	for (int index = 0; index < points.size() - 1; index++)
@@ -243,7 +241,7 @@ void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, std::v
 			delay(5);
 		}
 	}
-
+	
 	brake("stop");
 	reset_PD();
 	lcd::print(6, "DONE");
@@ -263,7 +261,7 @@ void Robot::sensors(void *ptr) {
 	int LM_triggered = false;
 	while (true) {
 		/* To eliminate false positives, we only increment our ball counts following 10 consecutive positive readings,
-		and only consider readings within a certain range (150 mm to 250 mm). This is because the spherical shape of the
+		and only consider readings within a certain range (150 mm to 250 mm). This is because the spherical shape of the 
 		ball can cause interference with the ultrasonic readings, so we account for this by treating all values outside
 		of this range as erroneous */
 		if (LM1.get_value() == 1) {
@@ -293,12 +291,12 @@ void Robot::sensors(void *ptr) {
 
 /**
  * @desc: Using data obtained from Robot::sensors to update motor power in order to store balls effectively in one of
- 	three positions- top (regulated by our top ultrasonic sensor), middle (regulated by our bottom ultrasonic sensor)
+ 	three positions- top (regulated by our top ultrasonic sensor), middle (regulated by our bottom ultrasonic sensor) 
  	or bottom (regulated by our limit switch located right behind our intakes). This process is also threaded, but unlike
- 	our other threaded processes, it is called multiple times during our autonomous program. Only once the storing is
- 	complete (once our Robot detects balls in each stored position we tell it to store in) does the process end, at
+ 	our other threaded processes, it is called multiple times during our autonomous program. Only once the storing is 
+ 	complete (once our Robot detects balls in each stored position we tell it to store in) does the process end, at 
  	which point we terminate the thread. Every time we need to store balls, we instantiate a new task that executes
- 	Robot::store once more. Specific parameter inputs to control behavior of Robot::store are set by Robot::reset_balls,
+ 	Robot::store once more. Specific parameter inputs to control behavior of Robot::store are set by Robot::reset_balls, 
  	which is run prior to each task's initiallization, i.e.
 
  		Robot::reset_balls();
@@ -336,8 +334,8 @@ void Robot::store(void *ptr) {
 				move_up = false;
 			}
 			/* move_up is a variable set in Robot::reset_balls. It tells us whether or not to move stored balls higher up
-			inside of our Robot by activating indexer rollers for a split second. This was required because when shooting
-			two balls at once, we found that scoring was more consistent when we ran Robot::quickscore with the balls
+			inside of our Robot by activating indexer rollers for a split second. This was required because when shooting 
+			two balls at once, we found that scoring was more consistent when we ran Robot::quickscore with the balls 
 			higher up in the robot */
 			if (intake_store) {
 				while(LM1.get_value() == 0) {
@@ -363,7 +361,7 @@ void Robot::store(void *ptr) {
 
 
 /**
- * @desc: Allows us to access ball counts generated by Robot::sensors for increased versatility (very rarely used, as
+ * @desc: Allows us to access ball counts generated by Robot::sensors for increased versatility (very rarely used, as 
  Robot::store already interfaces with ball counts)
  * @return: Global vars UB_count and UT_count
  */
@@ -394,13 +392,13 @@ void Robot::quickscore(int ball_id) {
  * @desc: Resets/Sets all of the global variables that our store function uses.
  * @param ultrasonic_bottom: Number to reset UB_count to
  * @param ultrasonic_top: Number to reset UT_count to
- * @param move_up_: Boolean (true or false) to tell whether or not we should move our balls further up in our intakes
- 	after storing- designed to counter the problem that our balls often store too low in our Robot due to imperfect
+ * @param move_up_: Boolean (true or false) to tell whether or not we should move our balls further up in our intakes 
+ 	after storing- designed to counter the problem that our balls often store too low in our Robot due to imperfect 
  	geometry
  * @param intake_store_: Boolean (true or false) that tells us whether we want a third ball to be stored in between our
  	intakes
  * @param intakes_on_: Boolean (true or false) that tells us whether our intakes should be running during store (designed
- 	for when we know that the ball(s) we want to store are both already contacting one of the indexer rollers, meaning
+ 	for when we know that the ball(s) we want to store are both already contacting one of the indexer rollers, meaning 
  	our intakes are not needed to bring the balls further into the bot)
  */
 void Robot::reset_balls(int ultrasonic_bottom, int ultrasonic_top, bool move_up_, bool intake_store_, bool intakes_on_) {
@@ -440,7 +438,7 @@ void Robot::drive(void *ptr) {
 	delay(300);
 	int intake_state = 1;
 	bool intake_last;
-    double powerRollers=0;
+    int powerRollers=0;
 	while (true) {
 		int power = master.get_analog(ANALOG_LEFT_Y);
 		int strafe = master.get_analog(ANALOG_LEFT_X);
@@ -452,44 +450,78 @@ void Robot::drive(void *ptr) {
 
 		bool intake_ = master.get_digital(DIGITAL_R2);
 		bool outtake = master.get_digital(DIGITAL_X);
+        bool just_intakes = master.get_digital(DIGITAL_R1);
+        bool get_to_start = master.get_digital(DIGITAL_A);
 
-		bool just_intake = master.get_digital(DIGITAL_R1);
-		bool just_indexer = master.get_digital(DIGITAL_L2);
-		bool flip = master.get_digital(DIGITAL_L1);
-		bool storingScore = master.get_digital(DIGITAL_RIGHT);
-		bool quickScore_ = master.get_digital(DIGITAL_A);
-		bool flipout_ = master.get_digital(DIGITAL_Y);
 
-		if (storingScore && !intake_last){
-			intake_state++;
-			intake_last = true;
-			reset_balls();
+        if(get_to_start) move_to({0,0,0});
+
+		if(intake_) {
+            powerRollers+=3;
+            if(powerRollers > 127) powerRollers = 127;
+            R1=127;
+		} else if (outtake) {
+            powerRollers-=3;
+            if(powerRollers < -127) powerRollers = -127;
+            R1=-127;
+		} else {
+            powerRollers=0;
+            R1=0;
 		}
-		else if (!storingScore) intake_last = false;
 
-		if (intake_state % 2 == 0) {
-           Robot::start_task("STORE", Robot::store);
-           store_off=false;
-           lcd::print(1, "%d", 1);
-       }
-		else {
-           Robot::kill_task("STORE");
-           store_off=true;
-           lcd::print(1, "%d", 0);
-           lcd::print(1, "%d", Robot::task_exists("STORE"));
-           double motorpwr = 0;
-			if (intake_ || outtake) motorpwr = (intake_) ? 1 : -.3;
-			if (just_intake && just_indexer) intake(1, false, "both");
-			else if (just_intake) intake(1, flip, "intakes");
-			else if (just_indexer) intake(1, flip, "indexer");
-			else if (quickScore_) quickscore();
-			else intake(motorpwr, flip, "both");
+		if(just_intakes) {
+            IL = 127;
+            IR = 127;
+		} else {
+            IL = 0;
+            IR = 0;
 		}
+
+        R2 = powerRollers;
+
+
+
+
+        lcd::print(6, "Cock: %d", powerRollers);
+
+
+//		bool just_intake = master.get_digital(DIGITAL_R1);
+//		bool just_indexer = master.get_digital(DIGITAL_L2);
+//		bool flip = master.get_digital(DIGITAL_L1);
+//		bool storingScore = master.get_digital(DIGITAL_RIGHT);
+//		bool quickScore_ = master.get_digital(DIGITAL_A);
+//		bool flipout_ = master.get_digital(DIGITAL_Y);
+//
+//		if (storingScore && !intake_last){
+//			intake_state++;
+//			intake_last = true;
+//			reset_balls();
+//		}
+//		else if (!storingScore) intake_last = false;
+//
+//		if (intake_state % 2 == 0) {
+//            Robot::start_task("STORE", Robot::store);
+//            store_off=false;
+//            lcd::print(1, "%d", 1);
+//        }
+//		else {
+//            Robot::kill_task("STORE");
+//            store_off=true;
+//            lcd::print(1, "%d", 0);
+//            lcd::print(1, "%d", Robot::task_exists("STORE"));
+//            double motorpwr = 0;
+//			if (intake_ || outtake) motorpwr = (intake_) ? 1 : -1;
+//			if (just_intake && just_indexer) intake(1, false, "both");
+//			else if (just_intake) intake(1, flip, "intakes");
+//			else if (just_indexer) intake(1, flip, "indexer");
+//			else if (quickScore_) quickscore();
+//			else intake(motorpwr, flip, "both");
+//		}
 	}
 }
 
 /**
- * @desc: The equation for holonomic driving (feeding values to our drivtrain motors to allow us to move axially, laterally,
+ * @desc: The equation for holonomic driving (feeding values to our drivtrain motors to allow us to move axially, laterally, 
 	or turn)
  * @param power: Degree of axial movement
  * @param strafe: Degree of strafing movement
@@ -510,9 +542,7 @@ void Robot::mecanum(int power, int strafe, int turn) {
  * @param powered: Tells which motors to power (intakes only, indexer only, or both)
  */
 void Robot::intake(double coefficient, bool flip, std::string powered) {
-	if (power_rollers <= 1) power_rollers += power_rollers_increment;
 	if (coefficient == 0) {
-		power_rollers = 0;
 		IL = 0;
 		IR = 0;
 		R1 = 0;
@@ -530,7 +560,7 @@ void Robot::intake(double coefficient, bool flip, std::string powered) {
 	if (powered.compare("indexer") == 0 || powered.compare("both") == 0) {
 		R1 = -coefficient * 127;
 		coefficient = std::max(0.0, coefficient);
-		R2 = power_rollers * ((!flip) ? coefficient * 127 : -coefficient * 127);
+		R2 = (!flip) ? coefficient * 127 : -coefficient * 127;
 		if (!powered.compare("both") == 0) {
 			IL = 0;
 			IR = 0;
@@ -564,7 +594,7 @@ void Robot::brake(std::string mode)
 
 
 /**
- * @desc: Sets the motors to the correct power in order to allow our robot to flip out, or in other words automatically
+ * @desc: Sets the motors to the correct power in order to allow our robot to flip out, or in other words automatically 
  expand from within the 18" size limit to our functional size (intakes and deflector shield are both out of size, must
  flip out to be legal)
  */
@@ -609,3 +639,4 @@ void Robot::reset_PD() {
 	strafe_PD.reset();
 	turn_PD.reset();
 }
+
