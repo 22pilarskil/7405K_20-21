@@ -24,9 +24,6 @@ public:
 	static ADIEncoder BE;
 	static Imu IMU;
 	static Vision vision;
-	static ADIDigitalIn LM1;
-	static ADIUltrasonic UB;
-	static ADIUltrasonic UT;
 	/* Initializing motors, sensors, controller */
 
 	static PD power_PD;
@@ -69,14 +66,14 @@ public:
 	static void sensors(void *ptr);
 	static void store(void *ptr);
 	static std::vector<int> get_data();
-	static void quickscore(int ball_id = -1);
+	static void quickscore(int num_balls = 1);
 	static void reset_balls(int ultrasonic_bottom = 0, int ultrasonic_top = 0, bool move_up_ = true, bool intake_store_ = false, bool intakes_on_ = true);
 	/* Ball storing functions */
 
 	static void display(void *ptr);
 	static void drive(void *ptr);
 	static void mecanum(int power, int strafe, int turn);
-	static void intake(double coefficient, bool flip = false, std::string powered = "both");
+	static void intake(double coefficient, std::string powered = "both", bool fly_off = false, bool flip = false);
 	static void brake(std::string mode);
 	static void flipout();
 	static void vis_sense(void *ptr);

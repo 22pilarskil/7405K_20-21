@@ -18,16 +18,12 @@ Motor Robot::BL(12);
 Motor Robot::BR(19, true);
 Motor Robot::IL(5, true);
 Motor Robot::IR(21);
-Motor Robot::R1(7);
+Motor Robot::R1(7, true);
 Motor Robot::R2(8, true);
-ADIEncoder Robot::LE(3, 4);
-ADIEncoder Robot::RE(7, 8, true);
-ADIEncoder Robot::BE(5, 6);
-Imu Robot::IMU(8);
-Vision Robot::vision(1);
-ADIDigitalIn Robot::LM1({{5, 5}});
-ADIUltrasonic Robot::UB(1, 2);
-ADIUltrasonic Robot::UT({{5, 1, 2}});
+ADIEncoder Robot::LE(5, 6);
+ADIEncoder Robot::RE(1, 2, true);
+ADIEncoder Robot::BE(3, 4);
+Imu Robot::IMU(4);
 /* Initializing motors, sensors, controller */
 
 PD Robot::power_PD(.2, 1.5, 10);
@@ -41,8 +37,8 @@ std::atomic<double> Robot::turn_offset_x = 0;
 std::atomic<double> Robot::turn_offset_y = 0;
 /* Static member variables used to store information about positioning obtained from Robot::fps (our odometry function) */
 
-double Robot::offset_back = 4 + 5 / 16;
-double Robot::offset_middle = 5 + 7 / 16;
+double Robot::offset_back = 7;
+double Robot::offset_middle = 7;
 double Robot::wheel_circumference = 2.75 * M_PI;
 int Robot::radius = 300;
 /* Presets for odometry and pure pursuit calculations */
@@ -58,6 +54,10 @@ bool intake_store;
 bool move_up;
 bool store_off;
 /* Parameters passed into Robot::store */
+
+double fly_power = 0;
+double increment = .07;
+double fly_cap = 1;
 
 std::map<std::string, std::unique_ptr<pros::Task>> Robot::tasks;
 /* Mapping of tasks instantiated during the program */
@@ -247,118 +247,6 @@ void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, std::v
 	lcd::print(6, "DONE");
 }
 
-/**
- * @desc: Threaded function that updates UB_count and UT_count to reflect how many balls are currently stored in our robot。
- 	Using two ultrasonics strategically placed on our robot's superstructure, we can deduce a whether or not balls are at
- 	certain locations on our robot based on ultrasonic readings (i.e. a low value output, which means an object is in close
- 	proximity to the ultrasonic, would imply a ball is directly in front of the ultrasonic being measured)
- * @param ptr: Required for compatibility with pros threading
- */
-
-void Robot::sensors(void *ptr) {
-	int UB_reset = 0;
-	int UT_reset = 0;
-	int LM_triggered = false;
-	while (true) {
-		/* To eliminate false positives, we only increment our ball counts following 10 consecutive positive readings,
-		and only consider readings within a certain range (150 mm to 250 mm). This is because the spherical shape of the 
-		ball can cause interference with the ultrasonic readings, so we account for this by treating all values outside
-		of this range as erroneous */
-		if (LM1.get_value() == 1) {
-			LM_triggered = true;
-		}
-		if (UB.get_value() < 150 && LM_triggered) {
-			if (UB_reset > 10) {
-				UB_count++;
-				LM_triggered = false;
-			}
-			UB_reset = 0;
-		}
-		else if (UB.get_value() > 150 && UB.get_value() < 250) {
-			UB_reset += 1;
-		}
-
-		if (UT.get_value() < 150) {
-			if (UT_reset > 10) UT_count++;
-			UT_reset = 0;
-		}
-		else if (UT.get_value() > 150 && UT.get_value() < 250) {
-			UT_reset += 1;
-		}
-		delay(5);
-	}
-}
-
-/**
- * @desc: Using data obtained from Robot::sensors to update motor power in order to store balls effectively in one of
- 	three positions- top (regulated by our top ultrasonic sensor), middle (regulated by our bottom ultrasonic sensor) 
- 	or bottom (regulated by our limit switch located right behind our intakes). This process is also threaded, but unlike
- 	our other threaded processes, it is called multiple times during our autonomous program. Only once the storing is 
- 	complete (once our Robot detects balls in each stored position we tell it to store in) does the process end, at 
- 	which point we terminate the thread. Every time we need to store balls, we instantiate a new task that executes
- 	Robot::store once more. Specific parameter inputs to control behavior of Robot::store are set by Robot::reset_balls, 
- 	which is run prior to each task's initiallization, i.e.
-
- 		Robot::reset_balls();
- 		Robot::start_task("STORE", Robot::store);
-
- 	would run Robot::store with default parameters
- * @param ptr: Required for compatibility with pros threading
- */
-void Robot::store(void *ptr) {
-	lcd::print(7, "STORE INCOMPLETE");
-	while(true) {
-	    if(store_off) {
-	        break;
-	    }
-		if (intakes_on) {
-			IL = 127;
-			IR = 127;
-		}
-
-		if (int(UT_count) == 1 && int(UB_count) == 1) {
-			R1 = -127;
-			R2 = 0;
-		}
-		else if (int(UT_count) == 0 && int(UB_count) <= 1) {
-			R1 = -127;
-			R2 = 50;
-		}
-		else if (int(UT_count) >= 1 && int(UB_count) >= 2) {
-			R1 = 0;
-			R2 = 0;
-			if (move_up) {
-				R1 = -127;
-				delay(150);
-				R1 = 0;
-				move_up = false;
-			}
-			/* move_up is a variable set in Robot::reset_balls. It tells us whether or not to move stored balls higher up
-			inside of our Robot by activating indexer rollers for a split second. This was required because when shooting 
-			two balls at once, we found that scoring was more consistent when we ran Robot::quickscore with the balls 
-			higher up in the robot */
-			if (intake_store) {
-				while(LM1.get_value() == 0) {
-					IR = 127;
-					IL = 127;
-					delay(1);
-				}
-				break;
-			}
-			/* intake_store is a variable set in Robot::reset_balls. It tells whether or not we want to store a third ball
-			in between our intakes on top of the default storage of two balls in the top and middle positions. If so, the
-			process does not end until our limit switch outputs a positive value, corresponding to activation by a ball */
-			else break;
-		}
-		/* For each possible scenario of ball storage, we program different indexer sequences */
-		delay(5);
-	}
-	lcd::print(7, "STORE COMPLETE");
-	store_complete = true;
-	IL = IR = R1 = R2 = 0;
-}
-
-
 
 /**
  * @desc: Allows us to access ball counts generated by Robot::sensors for increased versatility (very rarely used, as 
@@ -373,18 +261,23 @@ std::vector<int> Robot::get_data() {
  * @desc Takes in information about where balls are as well as how many there are to shoot them in quick succession
  * @param ball_id: 1 to shoot from top stored position only, 0 to shoot a ball from bottom store, -1 to shoot from both
  */
-void Robot::quickscore(int ball_id) {
-	R2 = 127;
-	if (ball_id == -1) {
-		delay(600);
-		R1 = -127;
+void Robot::quickscore(int num_balls) {
+	int count = 0;
+	while (count < 1000){
+		intake(1, "indexer");
+		delay(1);
+		count++;
 	}
-	else if (ball_id = 0) {
-		R1 = 127;
+	intake(0);
+	if (num_balls == 1) return;
+	delay(300);
+	count = 0;
+	while (count < 600){
+		intake(1, "indexer");
+		delay(1);
+		count++;
 	}
-	delay(1200);
-	R1 = 0;
-	R2 = 0;
+
 }
 
 
@@ -421,7 +314,6 @@ void Robot::display(void *ptr)
 		master.print(0, 0, "Joystick %d", master.get_analog(ANALOG_LEFT_X));
 		lcd::print(1, "LE: %d - RE: %d", LE.get_value(), RE.get_value());
 		lcd::print(2, "Back Encoder: %d", BE.get_value());
-		lcd::print(6, "Limit switch %d", LM1.get_value());
 		lcd::print(3, "IMU value: %f", IMU.get_rotation());
 
 		delay(10);
@@ -436,9 +328,7 @@ void Robot::display(void *ptr)
 
 void Robot::drive(void *ptr) {
 	delay(300);
-	int intake_state = 1;
-	bool intake_last;
-    int powerRollers=0;
+
 	while (true) {
 		int power = master.get_analog(ANALOG_LEFT_Y);
 		int strafe = master.get_analog(ANALOG_LEFT_X);
@@ -448,75 +338,33 @@ void Robot::drive(void *ptr) {
 
 		mecanum(power, strafe, turn);
 
-		bool intake_ = master.get_digital(DIGITAL_R2);
-		bool outtake = master.get_digital(DIGITAL_X);
-        bool just_intakes = master.get_digital(DIGITAL_R1);
-        bool get_to_start = master.get_digital(DIGITAL_A);
+		//Intakes/Outtakes
+		bool outtake = master.get_digital(DIGITAL_L1);
+        bool just_intakes_indexer = master.get_digital(DIGITAL_R1);
 
+        //Indexer/Flywheel
+		bool just_indexer = master.get_digital(DIGITAL_X);
+		bool just_indexer_fly = master.get_digital(DIGITAL_R2) || master.get_digital(DIGITAL_Y);
+		fly_cap = 1;
+		if (master.get_digital(DIGITAL_Y)) fly_cap = .8;
 
-        if(get_to_start) move_to({0,0,0});
+        bool quickscore_ = master.get_digital(DIGITAL_A);
+        if (quickscore_) quickscore();
 
-		if(intake_) {
-            powerRollers+=3;
-            if(powerRollers > 127) powerRollers = 127;
-            R1=127;
-		} else if (outtake) {
-            powerRollers-=3;
-            if(powerRollers < -127) powerRollers = -127;
-            R1=-127;
-		} else {
-            powerRollers=0;
-            R1=0;
+        //flip
+		bool flip = master.get_digital(DIGITAL_L2);
+
+	    double motorpwr = 0;
+		if (just_intakes_indexer || outtake) {
+			motorpwr = (just_intakes_indexer) ? 1 : -1;
+			if (just_intakes_indexer) intake(motorpwr, "both", !just_indexer_fly, false);
+			if (outtake) intake(motorpwr, "intakes", !just_indexer_fly, false);
 		}
+		else if (flip) intake(1, "indexer", false, true);
+		else if (just_indexer_fly) intake(1, "indexer", false, false);
+		else if (just_indexer) intake(1, "indexer", true, false);
+		else intake(0);
 
-		if(just_intakes) {
-            IL = 127;
-            IR = 127;
-		} else {
-            IL = 0;
-            IR = 0;
-		}
-
-        R2 = powerRollers;
-
-
-
-
-        lcd::print(6, "Cock: %d", powerRollers);
-
-
-//		bool just_intake = master.get_digital(DIGITAL_R1);
-//		bool just_indexer = master.get_digital(DIGITAL_L2);
-//		bool flip = master.get_digital(DIGITAL_L1);
-//		bool storingScore = master.get_digital(DIGITAL_RIGHT);
-//		bool quickScore_ = master.get_digital(DIGITAL_A);
-//		bool flipout_ = master.get_digital(DIGITAL_Y);
-//
-//		if (storingScore && !intake_last){
-//			intake_state++;
-//			intake_last = true;
-//			reset_balls();
-//		}
-//		else if (!storingScore) intake_last = false;
-//
-//		if (intake_state % 2 == 0) {
-//            Robot::start_task("STORE", Robot::store);
-//            store_off=false;
-//            lcd::print(1, "%d", 1);
-//        }
-//		else {
-//            Robot::kill_task("STORE");
-//            store_off=true;
-//            lcd::print(1, "%d", 0);
-//            lcd::print(1, "%d", Robot::task_exists("STORE"));
-//            double motorpwr = 0;
-//			if (intake_ || outtake) motorpwr = (intake_) ? 1 : -1;
-//			if (just_intake && just_indexer) intake(1, false, "both");
-//			else if (just_intake) intake(1, flip, "intakes");
-//			else if (just_indexer) intake(1, flip, "indexer");
-//			else if (quickScore_) quickscore();
-//			else intake(motorpwr, flip, "both");
-//		}
 	}
 }
 
@@ -541,8 +389,10 @@ void Robot::mecanum(int power, int strafe, int turn) {
  * @param flip: The direction of our ejector motor, either in ejection mode or intake mode.
  * @param powered: Tells which motors to power (intakes only, indexer only, or both)
  */
-void Robot::intake(double coefficient, bool flip, std::string powered) {
+void Robot::intake(double coefficient, std::string powered, bool fly_off,  bool flip) {
+	if (fly_power < fly_cap) fly_power += increment;
 	if (coefficient == 0) {
+		fly_power = 0;
 		IL = 0;
 		IR = 0;
 		R1 = 0;
@@ -550,8 +400,9 @@ void Robot::intake(double coefficient, bool flip, std::string powered) {
 		return;
 	}
 	if (powered.compare("intakes") == 0 || powered.compare("both") == 0) {
-		IL = int(coefficient * 127);
-		IR = int(coefficient * 127);
+		double revised = (coefficient > 0) ? coefficient : coefficient * .3;
+		IL = int(revised * 127);
+		IR = int(revised * 127);
 		if (!powered.compare("both") == 0) {
 			R1 = 0;
 			R2 = 0;
@@ -560,12 +411,14 @@ void Robot::intake(double coefficient, bool flip, std::string powered) {
 	if (powered.compare("indexer") == 0 || powered.compare("both") == 0) {
 		R1 = -coefficient * 127;
 		coefficient = std::max(0.0, coefficient);
-		R2 = (!flip) ? coefficient * 127 : -coefficient * 127;
+		if (fly_off) R2 = 0;
+		else R2 = fly_power * ((!flip) ? coefficient * 127 : -coefficient * 127);;
 		if (!powered.compare("both") == 0) {
 			IL = 0;
 			IR = 0;
 		}
 	}
+	//if (coefficient < 0) coefficient *= .1;
 }
 
 /**
