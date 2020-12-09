@@ -26,9 +26,9 @@ ADIEncoder Robot::BE(3, 4);
 Imu Robot::IMU(4);
 /* Initializing motors, sensors, controller */
 
-PD Robot::power_PD(.2, 1.5, 10);
-PD Robot::strafe_PD(.25, 1.5, 10);
-PD Robot::turn_PD(0.85, 0, 15);
+PD Robot::power_PD(.24, 1.2, 5);
+PD Robot::strafe_PD(.24, .6, 4);
+PD Robot::turn_PD(1.5, 0, 10);
 /* Initializing Our PD Instances */
 
 std::atomic<double> Robot::y = 0;

@@ -11,4 +11,5 @@ void opcontrol() {
 	Robot::start_task("DISPLAY", Robot::display);
 	Robot::start_task("DRIVE", Robot::drive);
 	Robot::start_task("FPS", Robot::fps);
+	delay(100);
 }

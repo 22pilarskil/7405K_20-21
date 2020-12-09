@@ -12,35 +12,122 @@ or right by a significant margin) the odometry points will not work, and our ski
 
 void autonomous()
 {
-
 	lcd::initialize();
 	delay(100);
 	Robot::start_task("FPS", Robot::fps);
 	Robot::start_task("DISPLAY", Robot::display);
 	delay(100);
 
-	Robot::move_to({500, 0, 0});
-	Robot::move_to({0, 0, 0});
-	Robot::move_to({1000, 0, 0});
-	Robot::move_to({0, 0, 0});
+	//Tower 1
+	Robot::intake(1, "both");
+	delay(600);
+	Robot::intake(0);
+	Robot::move_to({560, 0, 0});
+	Robot::move_to({840, 340, -135});
+	Robot::move_to({250, 840, -135});
+	Robot::quickscore();
 
-	// Robot::intake(1, "both");
-	// delay(600);
-	// Robot::intake(0);
-	// Robot::move_to({560, 0, 0});
-	// Robot::move_to({840, 340, -135});
-	// Robot::move_to({250, 840, -135});
-	// Robot::quickscore();
-	// Robot::move_to({600, 525, -135});
-	// Robot::move_to({600, 525, 0});
-	// Robot::intake(-1, "intakes");
-	// Robot::move_to({2200, 530, 0});
-	// Robot::intake(1, "both");
-	// delay(800);
-	// Robot::intake(0);
-	// Robot::move_to({2600, 470, 0});
-	// Robot::move_to({2600, 470, -90});
-	// Robot::move_to({2600, 750, -90});
-	// Robot::quickscore();
+	//Tower 2
+	Robot::move_to({600, 525, -135});
+	Robot::move_to({600, 525, 0});
+	Robot::intake(-1, "intakes");
+	Robot::move_to({2200, 570, -10});
+	Robot::intake(1, "both");
+	delay(800);
+	Robot::intake(0);
+	Robot::move_to({2580, 470, -90});
+	Robot::move_to({2580, 740, -90}, {1.8, 1.8, 1.8});
+	Robot::quickscore();
 
+	//Tower 3
+	Robot::move_to({2580, 460, -90});
+	Robot::move_to({2600, 460, 9});
+	Robot::intake(-1, "intakes");
+	Robot::move_to({4070, 175, 9});
+	Robot::intake(1, "both", true);
+	delay(1000);
+	Robot::intake(0);
+	Robot::move_to({4070, 175, -45});
+	Robot::move_to({4820, 900, -45});
+	Robot::quickscore();
+
+	//Tower 4
+	Robot::move_to({4540, 615, -45});
+	Robot::move_to({4540, 615, 114});
+	Robot::intake(-1, "intakes");
+	Robot::move_to({3800, -1030, 114});
+	Robot::intake(1, "both", true);
+	delay(1000);
+	Robot::intake(0);
+	Robot::move_to({3800, -1440, 0});
+	Robot::move_to({4830, -1440, 0}, {1, 1, 1}, {1, .8, .7});
+	Robot::quickscore();
+
+	//Tower 5
+	Robot::move_to({4430, -1420, 0});
+	Robot::intake(-1, "intakes");
+	Robot::move_to({4430, -1420, 74});
+	Robot::move_to({4610, -2420, 74});
+	Robot::intake(1, "both", true);
+	delay(1000);
+	Robot::intake(0);
+	Robot::move_to({5060, -3675, 45});
+	Robot::quickscore();
+
+	//Tower 6
+	Robot::move_to({4850, -3400, 45});
+	Robot::move_to({4850, -3400, 176});
+	Robot::intake(-1, "intakes");
+	Robot::move_to({3165, -3370, 176});
+	Robot::intake(1, "both", true);
+	delay(1000);
+	Robot::intake(0);
+	Robot::move_to({2680, -3320, 89});
+	Robot::move_to({2680, -3620, 89});
+	Robot::quickscore();
+
+	//Tower 7
+	Robot::move_to({2630, -3350, 89}, {2, 2, 2});
+	Robot::intake(-1, "intakes");
+	Robot::move_to({1230, -3350, 89}, {2, 2, 2});
+	Robot::move_to({1230, -3870, 89});
+	Robot::intake(1, "both");
+	delay(1000);
+	Robot::intake(0);
+	Robot::move_to({1230, -3950, 135});
+	Robot::move_to({560, -3810, 135});
+	Robot::move_to({410, -3850, 135});
+	Robot::quickscore();
+
+
+	//Tower 8
+	Robot::move_to({740, -3910, 135});
+	Robot::intake(-1, "intakes");
+	Robot::move_to({715, -3880, 262}, {2, 2, 2});
+	Robot::move_to({690, -3520, 262}, {2, 2, 2});
+	Robot::intake(1, "both");
+	delay(1000);
+	Robot::intake(0);
+	Robot::move_to({460, -1620, 180});
+	Robot::quickscore();
+
+	//Tower 9
+	Robot::move_to({460, -1500, 0});
+	Robot::intake(-1, "intakes");
+	delay(400);
+	Robot::move_to({1170, -1500, 0});
+	Robot::intake(1, "both");
+	delay(1000);
+	Robot::intake(-1, "intakes");
+	delay(1000);
+	Robot::move_to({2060, -1500, 0}, {1, 1, 1}, {.8, 1, 1});
+	Robot::intake(1, "intakes");
+	delay(1000);
+	Robot::quickscore();
+	Robot::intake(1, "both", false, true);
+	delay(1000);
+	Robot::intake(-1, "intakes");
+	delay(500);
+	Robot::intake(0);
+	Robot::move_to({1800, -1500, 0});
 }
