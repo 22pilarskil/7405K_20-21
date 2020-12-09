@@ -213,7 +213,7 @@ void Robot::move_to(std::vector<double> pose, std::vector<double> margin, std::v
  	a straight line was drawn between each consecutive pair of points) serves as the model for our curved, generated path 
  * @param speeds: Same function and format as @param speeds from Robot::move_to, see above
  */
-void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, std::vector<double> speeds, int radius)
+void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, std::vector<double> speeds, int radius, int heading)
 {
 
 	std::vector<double> end;
@@ -236,6 +236,11 @@ void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, std::v
 				if (end[2] == 1) heading += 180;
 			}
 			catch (...){}
+			try {
+				heading = end[3];
+			}
+			catch (...){}
+
 			/* Obtain pathing information through functions from PurePursuit.cpp */
 
 			Robot::move_to({target[0], target[1], heading}, {1, 1, 1}, speeds, true);
