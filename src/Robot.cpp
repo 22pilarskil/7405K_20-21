@@ -40,8 +40,7 @@ std::atomic<double> Robot::turn_offset_y = 0;
 double Robot::offset_back = 7;
 double Robot::offset_middle = 7;
 double Robot::wheel_circumference = 2.75 * M_PI;
-int Robot::radius = 300;
-/* Presets for odometry and pure pursuit calculations */
+/* Presets for odometry calculations */
 
 std::atomic<int> Robot::UB_count = 0;
 std::atomic<int> Robot::UT_count = 0;
@@ -214,7 +213,7 @@ void Robot::move_to(std::vector<double> pose, std::vector<double> margin, std::v
  	a straight line was drawn between each consecutive pair of points) serves as the model for our curved, generated path 
  * @param speeds: Same function and format as @param speeds from Robot::move_to, see above
  */
-void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, std::vector<double> speeds)
+void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, std::vector<double> speeds, int radius)
 {
 
 	std::vector<double> end;
