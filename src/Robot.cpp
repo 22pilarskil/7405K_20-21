@@ -232,7 +232,10 @@ void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, std::v
 		{
 			target = get_intersection(start, end, cur, radius);
 			heading = get_degrees(target, cur);
-			if (end[2] == 1) heading += 180;
+			try {
+				if (end[2] == 1) heading += 180;
+			}
+			catch (...){}
 			/* Obtain pathing information through functions from PurePursuit.cpp */
 
 			Robot::move_to({target[0], target[1], heading}, {1, 1, 1}, speeds, true);

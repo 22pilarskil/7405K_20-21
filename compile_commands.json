@@ -95,11 +95,11 @@
             "-funwind-tables",
             "--std=gnu++17",
             "-o",
-            "bin/initialize.cpp.o",
-            "src/initialize.cpp"
+            "bin/Robot.cpp.o",
+            "src/Robot.cpp"
         ],
         "directory": "/Users/michaelpilarski/Desktop/7405K_20-21",
-        "file": "src/initialize.cpp"
+        "file": "src/Robot.cpp"
     },
     {
         "arguments": [
@@ -129,11 +129,11 @@
             "-funwind-tables",
             "--std=gnu++17",
             "-o",
-            "bin/Robot.cpp.o",
-            "src/Robot.cpp"
+            "bin/initialize.cpp.o",
+            "src/initialize.cpp"
         ],
         "directory": "/Users/michaelpilarski/Desktop/7405K_20-21",
-        "file": "src/Robot.cpp"
+        "file": "src/initialize.cpp"
     },
     {
         "arguments": [
