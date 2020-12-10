@@ -40,7 +40,8 @@ std::atomic<double> Robot::turn_offset_y = 0;
 double Robot::offset_back = 7;
 double Robot::offset_middle = 7;
 double Robot::wheel_circumference = 2.75 * M_PI;
-/* Presets for odometry calculations */
+int Robot::radius = 300;
+/* Presets for odometry and pure pursuit calculations */
 
 std::atomic<int> Robot::UB_count = 0;
 std::atomic<int> Robot::UT_count = 0;
@@ -213,7 +214,7 @@ void Robot::move_to(std::vector<double> pose, std::vector<double> margin, std::v
  	a straight line was drawn between each consecutive pair of points) serves as the model for our curved, generated path 
  * @param speeds: Same function and format as @param speeds from Robot::move_to, see above
  */
-void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, std::vector<double> speeds, int radius)
+void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, std::vector<double> speeds)
 {
 
 	std::vector<double> end;
@@ -232,18 +233,10 @@ void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, std::v
 		{
 			target = get_intersection(start, end, cur, radius);
 			heading = get_degrees(target, cur);
-			try {
-				if (end[2] == 1) heading += 180;
-			}
-			catch (...){}
-			try {
-				heading = end[3];
-			}
-			catch (...){}
-
 			/* Obtain pathing information through functions from PurePursuit.cpp */
 
-			Robot::move_to({target[0], target[1], heading}, {1, 1, 1}, speeds, true);
+			std::vector<double> pose {target[0], target[1], heading};
+			Robot::move_to(pose, {1, 1, 1}, speeds, true);
 			cur = {(float)y, (float)x};
 			delay(5);
 		}
@@ -499,4 +492,3 @@ void Robot::reset_PD() {
 	strafe_PD.reset();
 	turn_PD.reset();
 }
-
