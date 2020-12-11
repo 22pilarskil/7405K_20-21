@@ -25,6 +25,7 @@ public:
 	static Imu IMU;
 	static Vision vision;
 	static ADIUltrasonic UT;
+	static ADIDigitalIn FB;
 	/* Initializing motors, sensors, controller */
 
 	static PD power_PD;

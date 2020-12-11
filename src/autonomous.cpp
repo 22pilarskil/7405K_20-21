@@ -75,7 +75,7 @@ void autonomous()
 	Robot::move_to({250, 4930, 312});
 	Robot::quickscore();
 
-	//Tower 8 
+	//Tower 8
 	Robot::move_to({40, 3380, 445}, {1, 1, 1}, {1, 1, 1}, 700);
 	Robot::move_to({20, 3100, 445});
 	Robot::intake(1, "both");

@@ -25,6 +25,7 @@ ADIEncoder Robot::RE(1, 2, true);
 ADIEncoder Robot::BE(3, 4);
 Imu Robot::IMU(4);
 ADIUltrasonic Robot::UT(7, 8);
+ADIDigitalIn Robot::FB({{6, 1}});
 /* Initializing motors, sensors, controller */
 
 PD Robot::power_PD(.24, 1.2, 5);
@@ -352,6 +353,7 @@ void Robot::drive(void *ptr) {
 		bool just_indexer_fly = master.get_digital(DIGITAL_R2) || master.get_digital(DIGITAL_Y);
 		fly_cap = 1;
 		if (master.get_digital(DIGITAL_Y)) fly_cap = .8;
+        lcd::print(6, "Button Presses: %d", FB.get_value());
 
         bool quickscore_ = master.get_digital(DIGITAL_A);
         if (quickscore_) quickscore();
@@ -424,6 +426,7 @@ void Robot::intake(double coefficient, std::string powered, bool fly_off,  bool 
 	}
 	//if (coefficient < 0) coefficient *= .1;
 }
+
 
 /**
  * @desc: Causes our robot's drivetrain to stop
