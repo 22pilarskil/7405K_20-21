@@ -19,115 +19,192 @@ void autonomous()
 	delay(100);
 
 	//Tower 1
-	Robot::intake(1, "both");
-	delay(600);
-	Robot::intake(0);
-	Robot::move_to({560, 0, 0});
-	Robot::move_to({840, 340, -135});
-	Robot::move_to({250, 840, -135});
+	Robot::move_to({78, 221, 27});
 	Robot::quickscore();
 
 	//Tower 2
-	Robot::move_to({600, 525, -135});
-	Robot::move_to({600, 525, 0});
-	Robot::intake(-1, "intakes");
-	Robot::move_to({2200, 570, -10});
+	Robot::move_to({-23, 483, 190});
 	Robot::intake(1, "both");
-	delay(800);
+	delay(1000);
 	Robot::intake(0);
-	Robot::move_to({2580, 470, -90});
-	Robot::move_to({2580, 740, -90}, {1.8, 1.8, 1.8});
+	Robot::move_to({-2020, 410, 93});
 	Robot::quickscore();
 
 	//Tower 3
-	Robot::move_to({2580, 460, -90});
-	Robot::move_to({2600, 460, 9});
-	Robot::intake(-1, "intakes");
-	Robot::move_to({4070, 175, 9});
-	Robot::intake(1, "both", true);
-	delay(1000);
+	Robot::move_to({-2020, 600, 93});
+	Robot::move_to({-2900, 580, 180}, {2, 2, 2}, {1, 1, 1}, 700);
+	Robot::move_to({-3050, 580, 180}, {2, 2, 2});
+	Robot::intake(1, "both");
+	delay(600);
 	Robot::intake(0);
-	Robot::move_to({4070, 175, -45});
-	Robot::move_to({4820, 900, -45});
+	Robot::move_to({-4250, 300, 135});
 	Robot::quickscore();
 
 	//Tower 4
-	Robot::move_to({4540, 615, -45});
-	Robot::move_to({4540, 615, 114});
-	Robot::intake(-1, "intakes");
-	Robot::move_to({3800, -1030, 114});
-	Robot::intake(1, "both", true);
-	delay(1000);
+	Robot::move_to({-4050, 500, 270});
+	Robot::move_to({-3980, 1870, 270}, {1, 1, 1}, {1, 1, 1}, 700);
+	Robot::move_to({-3980, 2180, 270});
+	Robot::intake(1, "both");
+	delay(600);
 	Robot::intake(0);
-	Robot::move_to({3800, -1440, 0});
-	Robot::move_to({4830, -1440, 0}, {1, 1, 1}, {1, .8, .7});
+	Robot::move_to({-4100, 2615, 180});
 	Robot::quickscore();
 
 	//Tower 5
-	Robot::move_to({4430, -1420, 0});
-	Robot::intake(-1, "intakes");
-	Robot::move_to({4430, -1420, 74});
-	Robot::move_to({4610, -2420, 74});
-	Robot::intake(1, "both", true);
+	Robot::move_to({-3620, 3856, 280}, {2, 2, 2}, {1, 1, 1}, 700);
+	Robot::move_to({-3600, 4180, 280}, {2, 2, 2});
+	Robot::intake(1, "both");
 	delay(1000);
-	Robot::intake(0);
-	Robot::move_to({5060, -3675, 45});
+	Robot::move_to({-4225, 4900, 221});
 	Robot::quickscore();
 
 	//Tower 6
-	Robot::move_to({4850, -3400, 45});
-	Robot::move_to({4850, -3400, 176});
-	Robot::intake(-1, "intakes");
-	Robot::move_to({3165, -3370, 176});
-	Robot::intake(1, "both", true);
+	Robot::move_to({-2625, 3940, 389}, {1, 1, 1}, {1, 1, 1}, 700);
+	Robot::move_to({-2300, 3820, 389}, {2, 2, 2});
+	Robot::intake(1, "both");
 	delay(1000);
-	Robot::intake(0);
-	Robot::move_to({2680, -3320, 89});
-	Robot::move_to({2680, -3620, 89});
+	Robot::move_to({-1990, 4733, 265});
 	Robot::quickscore();
 
 	//Tower 7
-	Robot::move_to({2630, -3350, 89}, {2, 2, 2});
-	Robot::intake(-1, "intakes");
-	Robot::move_to({1230, -3350, 89}, {2, 2, 2});
-	Robot::move_to({1230, -3870, 89});
+	Robot::move_to({-1990, 4500, 265}, {2, 2, 2});
+	Robot::move_to({-1135, 4630, 360}, {1, 1, 1}, {1, 1, 1}, 700);
+	Robot::move_to({-857, 4632, 360});
 	Robot::intake(1, "both");
 	delay(1000);
-	Robot::intake(0);
-	Robot::move_to({1230, -3950, 135});
-	Robot::move_to({560, -3810, 135});
-	Robot::move_to({410, -3850, 135});
+	Robot::move_to({250, 4930, 312});
 	Robot::quickscore();
 
-
-	//Tower 8
-	Robot::move_to({740, -3910, 135});
-	Robot::intake(-1, "intakes");
-	Robot::move_to({715, -3880, 262}, {2, 2, 2});
-	Robot::move_to({690, -3520, 262}, {2, 2, 2});
+	//Tower 8 
+	Robot::move_to({40, 3380, 445}, {1, 1, 1}, {1, 1, 1}, 700);
+	Robot::move_to({20, 3100, 445});
 	Robot::intake(1, "both");
 	delay(1000);
-	Robot::intake(0);
-	Robot::move_to({460, -1620, 180});
+	Robot::move_to({102, 2650, 358});
 	Robot::quickscore();
 
 	//Tower 9
-	Robot::move_to({460, -1500, 0});
-	Robot::intake(-1, "intakes");
-	delay(400);
-	Robot::move_to({1170, -1500, 0});
+	Robot::move_to({-111, 2620, 532}, {1, 1, 1}, {1, 1, 1}, 700);
+	Robot::move_to({-466, 2590, 532});
 	Robot::intake(1, "both");
 	delay(1000);
-	Robot::intake(-1, "intakes");
-	delay(1000);
-	Robot::move_to({2060, -1500, 0}, {1, 1, 1}, {.8, 1, 1});
+	Robot::move_to({-1477, 2617, 532}, {1, 1, 1}, {1, 1, 1}, 700);
 	Robot::intake(1, "intakes");
-	delay(1000);
+	delay(400);
 	Robot::quickscore();
-	Robot::intake(1, "both", false, true);
-	delay(1000);
-	Robot::intake(-1, "intakes");
-	delay(500);
-	Robot::intake(0);
-	Robot::move_to({1800, -1500, 0});
+
+
+
+	// //Tower 1
+	// Robot::intake(1, "both");
+	// delay(600);
+	// Robot::intake(0);
+	// Robot::move_to({560, 0, 0});
+	// Robot::move_to({840, 340, -135});
+	// Robot::move_to({250, 840, -135});
+	// Robot::quickscore();
+
+	// //Tower 2
+	// Robot::move_to({600, 525, -135});
+	// Robot::move_to({600, 525, 0});
+	// Robot::intake(-1, "intakes");
+	// Robot::move_to({2200, 570, -10});
+	// Robot::intake(1, "both");
+	// delay(800);
+	// Robot::intake(0);
+	// Robot::move_to({2580, 470, -90});
+	// Robot::move_to({2580, 740, -90}, {1.8, 1.8, 1.8});
+	// Robot::quickscore();
+
+	// //Tower 3
+	// Robot::move_to({2580, 460, -90});
+	// Robot::move_to({2600, 460, 9});
+	// Robot::intake(-1, "intakes");
+	// Robot::move_to({4070, 175, 9});
+	// Robot::intake(1, "both", true);
+	// delay(1000);
+	// Robot::intake(0);
+	// Robot::move_to({4070, 175, -45});
+	// Robot::move_to({4820, 900, -45});
+	// Robot::quickscore();
+
+	// //Tower 4
+	// Robot::move_to({4540, 615, -45});
+	// Robot::move_to({4540, 615, 114});
+	// Robot::intake(-1, "intakes");
+	// Robot::move_to({3800, -1030, 114});
+	// Robot::intake(1, "both", true);
+	// delay(1000);
+	// Robot::intake(0);
+	// Robot::move_to({3800, -1440, 0});
+	// Robot::move_to({4830, -1440, 0}, {1, 1, 1}, {1, .8, .7});
+	// Robot::quickscore();
+
+	// //Tower 5
+	// Robot::move_to({4430, -1420, 0});
+	// Robot::intake(-1, "intakes");
+	// Robot::move_to({4430, -1420, 74});
+	// Robot::move_to({4610, -2420, 74});
+	// Robot::intake(1, "both", true);
+	// delay(1000);
+	// Robot::intake(0);
+	// Robot::move_to({5060, -3675, 45});
+	// Robot::quickscore();
+
+	// //Tower 6
+	// Robot::move_to({4850, -3400, 45});
+	// Robot::move_to({4850, -3400, 176});
+	// Robot::intake(-1, "intakes");
+	// Robot::move_to({3165, -3370, 176});
+	// Robot::intake(1, "both", true);
+	// delay(1000);
+	// Robot::intake(0);
+	// Robot::move_to({2680, -3320, 89});
+	// Robot::move_to({2680, -3620, 89});
+	// Robot::quickscore();
+
+	// //Tower 7
+	// Robot::move_to({2630, -3350, 89}, {2, 2, 2});
+	// Robot::intake(-1, "intakes");
+	// Robot::move_to({1230, -3350, 89}, {2, 2, 2});
+	// Robot::move_to({1230, -3870, 89});
+	// Robot::intake(1, "both");
+	// delay(1000);
+	// Robot::intake(0);
+	// Robot::move_to({1230, -3950, 135});
+	// Robot::move_to({560, -3810, 135});
+	// Robot::move_to({410, -3850, 135});
+	// Robot::quickscore();
+
+
+	// //Tower 8
+	// Robot::move_to({740, -3910, 135});
+	// Robot::intake(-1, "intakes");
+	// Robot::move_to({715, -3880, 262}, {2, 2, 2});
+	// Robot::move_to({690, -3520, 262}, {2, 2, 2});
+	// Robot::intake(1, "both");
+	// delay(1000);
+	// Robot::intake(0);
+	// Robot::move_to({460, -1620, 180});
+	// Robot::quickscore();
+
+	// //Tower 9
+	// Robot::move_to({460, -1500, 0});
+	// Robot::intake(-1, "intakes");
+	// delay(400);
+	// Robot::move_to({1170, -1500, 0});
+	// Robot::intake(1, "both");
+	// delay(1000);
+	// Robot::intake(-1, "intakes");
+	// delay(1000);
+	// Robot::move_to({2060, -1500, 0}, {1, 1, 1}, {.8, 1, 1});
+	// Robot::intake(1, "intakes");
+	// delay(1000);
+	// Robot::quickscore();
+	// Robot::intake(1, "both", false, true);
+	// delay(1000);
+	// Robot::intake(-1, "intakes");
+	// delay(500);
+	// Robot::intake(0);
+	// Robot::move_to({1800, -1500, 0});
 }

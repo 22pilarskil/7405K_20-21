@@ -24,6 +24,7 @@ ADIEncoder Robot::LE(5, 6);
 ADIEncoder Robot::RE(1, 2, true);
 ADIEncoder Robot::BE(3, 4);
 Imu Robot::IMU(4);
+ADIUltrasonic Robot::UT(7, 8);
 /* Initializing motors, sensors, controller */
 
 PD Robot::power_PD(.24, 1.2, 5);
@@ -56,7 +57,7 @@ bool store_off;
 /* Parameters passed into Robot::store */
 
 double fly_power = 0;
-double increment = .07;
+double increment = 1;
 double fly_cap = 1;
 
 std::map<std::string, std::unique_ptr<pros::Task>> Robot::tasks;
@@ -167,7 +168,7 @@ void Robot::fps(void *ptr) {
  * @param pure_pursuit: A boolean (true or false) that tells us whether or not we are calling this function in the context
  	of Robot::move_to_pure_pursuit
  */
-void Robot::move_to(std::vector<double> pose, std::vector<double> margin, std::vector<double> speeds, bool pure_pursuit)
+void Robot::move_to(std::vector<double> pose, std::vector<double> margin, std::vector<double> speeds, int seconds, bool pure_pursuit)
 {
 	double new_y = pose[0];
 	double new_x = pose[1];
@@ -175,6 +176,8 @@ void Robot::move_to(std::vector<double> pose, std::vector<double> margin, std::v
 
 	double y_error = new_y - y;
 	double x_error = -(new_x - x);
+
+	int time = 0;
 
 	double heading2 = (heading < 0) ? heading + 360 : heading - 360;
 	heading = (abs(IMU.get_rotation() - heading) < abs(IMU.get_rotation() - heading2)) ? heading : heading2;
@@ -185,6 +188,8 @@ void Robot::move_to(std::vector<double> pose, std::vector<double> margin, std::v
 
 	while (abs(y_error) > 30 * margin[0] || abs(x_error) > 30 * margin[1] || abs(imu_error) > 2 * margin[2])
 	{ /* while Robot::y, Robot::x and IMU heading are all more than the specified margin away from the target */
+		if (time < seconds) intake(-1, "intakes");
+		else intake(0);
 		double phi = TO_RAD(IMU.get_rotation());
 		double power = power_PD.get_value(y_error * std::cos(phi) + x_error * std::sin(phi)) * speeds[0];
 		double strafe = strafe_PD.get_value(x_error * std::cos(phi) - y_error * std::sin(phi)) * speeds[1];
@@ -202,7 +207,11 @@ void Robot::move_to(std::vector<double> pose, std::vector<double> margin, std::v
 
 
 		if (pure_pursuit) return;
+
+		delay(5);
+		time += 5;
 	}
+	intake(0);
 	reset_PD();
 	lcd::print(6, "DONE");
 	brake("stop");
@@ -262,21 +271,16 @@ std::vector<int> Robot::get_data() {
  * @param ball_id: 1 to shoot from top stored position only, 0 to shoot a ball from bottom store, -1 to shoot from both
  */
 void Robot::quickscore(int num_balls) {
-	int count = 0;
-	while (count < 1000){
+	while(UT.get_value() > 300){
 		intake(1, "indexer");
-		delay(1);
-		count++;
 	}
+	delay(100);
 	intake(0);
 	if (num_balls == 1) return;
-	delay(300);
-	count = 0;
-	while (count < 600){
+	while(UT.get_value() > 300){
 		intake(1, "indexer");
-		delay(1);
-		count++;
 	}
+	intake(0);
 
 }
 
@@ -315,6 +319,7 @@ void Robot::display(void *ptr)
 		lcd::print(1, "LE: %d - RE: %d", LE.get_value(), RE.get_value());
 		lcd::print(2, "Back Encoder: %d", BE.get_value());
 		lcd::print(3, "IMU value: %f", IMU.get_rotation());
+		lcd::print(7, "Ultrasonic: %d", UT.get_value());
 
 		delay(10);
 	}
@@ -364,7 +369,7 @@ void Robot::drive(void *ptr) {
 		else if (just_indexer_fly) intake(1, "indexer", false, false);
 		else if (just_indexer) intake(1, "indexer", true, false);
 		else intake(0);
-
+		delay(5);
 	}
 }
 
@@ -380,7 +385,6 @@ void Robot::mecanum(int power, int strafe, int turn) {
 	FR = power - strafe - turn;
 	BL = power - strafe + turn;
 	BR = power + strafe - turn;
-	delay(5);
 }
 
 /**
@@ -400,7 +404,7 @@ void Robot::intake(double coefficient, std::string powered, bool fly_off,  bool 
 		return;
 	}
 	if (powered.compare("intakes") == 0 || powered.compare("both") == 0) {
-		double revised = (coefficient > 0) ? coefficient : coefficient * .3;
+		double revised = (coefficient > 0) ? coefficient : coefficient * .4;
 		IL = int(revised * 127);
 		IR = int(revised * 127);
 		if (!powered.compare("both") == 0) {

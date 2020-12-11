@@ -24,6 +24,7 @@ public:
 	static ADIEncoder BE;
 	static Imu IMU;
 	static Vision vision;
+	static ADIUltrasonic UT;
 	/* Initializing motors, sensors, controller */
 
 	static PD power_PD;
@@ -59,7 +60,7 @@ public:
 	/* Threading functions */
 
 	static void fps(void *ptr);
-	static void move_to(std::vector<double> pose, std::vector<double> margins = {1, 1, 1}, std::vector<double> speeds = {1, 1, 1}, bool pure_pursuit = false);
+	static void move_to(std::vector<double> pose, std::vector<double> margins = {1, 1, 1}, std::vector<double> speeds = {1, 1, 1}, int seconds = 0, bool pure_pursuit = false);
 	static void move_to_pure_pursuit(std::vector<std::vector<double>> points, std::vector<double> speeds = {1, 1, 1});
 	/* Autonomous movement and positioning functions */
 
@@ -73,7 +74,7 @@ public:
 	static void display(void *ptr);
 	static void drive(void *ptr);
 	static void mecanum(int power, int strafe, int turn);
-	static void intake(double coefficient, std::string powered = "both", bool fly_off = false, bool flip = false);
+	static void intake(double coefficient, std::string powered = "both", bool fly_off = true, bool flip = false);
 	static void brake(std::string mode);
 	static void flipout();
 	static void vis_sense(void *ptr);
