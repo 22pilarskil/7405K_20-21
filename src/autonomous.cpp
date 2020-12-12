@@ -20,17 +20,17 @@ void autonomous()
 
 
 	//Tower 1
-	Robot::move_to({78, 221, 27}, {2, 2, 2}, {1.5, 1.5, 1.5});
+	Robot::move_to({110, 250, 27}, {2, 2, 2}, {1.5, 1.5, 1.5});
 	Robot::quickscore();
 
 	//Tower 2
 	Robot::move_to({300, 600, 179}, {2, 2, 2});
-	Robot::intake(1, "intakes");
-	delay(800);
+	Robot::intake(.6, "intakes");
+	delay(1200);
 	Robot::intake(-1, "intakes");
 	delay(700);
 	Robot::intake(0);
-	Robot::move_to({-100, 600, 179}, {2, 2, 2});		
+	Robot::move_to({-100, 600, 179}, {2.5, 2.5, 2.5});		
 	Robot::intake(1, "both");
 	while(!Robot::FB.get_value()) delay(1);
 	delay(400);
@@ -77,7 +77,7 @@ void autonomous()
 	Robot::move_to({-2300, 3820, 389}, {2, 2, 2});
 	Robot::intake(1, "both");
 	while(!Robot::FB.get_value()) delay(1);
-	delay(800);
+	delay(400);
 	Robot::intake(0);
 	Robot::move_to({-1990, 4733, 265});
 	Robot::quickscore();
@@ -94,6 +94,7 @@ void autonomous()
 	Robot::quickscore();
 
 	//Tower 8
+	Robot::move_to({27, 4800, 315});
 	Robot::move_to({40, 3380, 445}, {1, 1, 1}, {1, 1, 1}, 700);
 	Robot::move_to({20, 3100, 445});
 	Robot::intake(1, "both");
@@ -109,18 +110,16 @@ void autonomous()
 	Robot::move_to({-500, 2590, 532}, {2, 2, 2});
 	Robot::intake(1, "both");
 	while(!Robot::FB.get_value()) delay(1);
-	delay(400);
+	delay(800);
 	Robot::intake(0);
 	Robot::move_to({-1387, 2580, 532}, {1, 1, 1}, {1, 1, 1}, 700);
-	Robot::intake(1, "intakes");
-	while(!Robot::FB.get_value()) delay(1);
-	Robot::set_fly_cap(.5);
-	Robot::quickscore();
 	Robot::intake(1, "both");
 	while(!Robot::FB.get_value()) delay(1);
-	delay(400);
-	while(!Robot::FB.get_value()) delay(1);
-	Robot::intake(0);
+	Robot::intake(-1, "intakes");
+	delay(700);
+	Robot::move_to({-1487, 2580, 532}, {2, 2, 2});
+	Robot::quickscore();
+
 
 
 

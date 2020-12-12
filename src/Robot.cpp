@@ -281,15 +281,15 @@ std::vector<int> Robot::get_data() {
  * @desc Takes in information about where balls are as well as how many there are to shoot them in quick succession
  * @param ball_id: 1 to shoot from top stored position only, 0 to shoot a ball from bottom store, -1 to shoot from both
  */
-void Robot::quickscore(int num_balls) {
+void Robot::quickscore(int num_balls, int speed) {
 	while(UT.get_value() > 300){
-		intake(1, "indexer", false);
+		intake(speed, "indexer", false);
 	}
 	delay(100);
 	intake(0);
 	if (num_balls == 1) return;
 	while(UT.get_value() > 300){
-		intake(1, "indexer", false);
+		intake(speed, "indexer", false);
 	}
 	intake(0);
 }

@@ -129,11 +129,11 @@
             "-funwind-tables",
             "--std=gnu++17",
             "-o",
-            "bin/Robot.cpp.o",
-            "src/Robot.cpp"
+            "bin/opcontrol.cpp.o",
+            "src/opcontrol.cpp"
         ],
         "directory": "/Users/michaelpilarski/Desktop/7405K_20-21",
-        "file": "src/Robot.cpp"
+        "file": "src/opcontrol.cpp"
     },
     {
         "arguments": [
@@ -163,11 +163,11 @@
             "-funwind-tables",
             "--std=gnu++17",
             "-o",
-            "bin/opcontrol.cpp.o",
-            "src/opcontrol.cpp"
+            "bin/Robot.cpp.o",
+            "src/Robot.cpp"
         ],
         "directory": "/Users/michaelpilarski/Desktop/7405K_20-21",
-        "file": "src/opcontrol.cpp"
+        "file": "src/Robot.cpp"
     },
     {
         "arguments": [
