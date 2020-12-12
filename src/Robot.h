@@ -49,6 +49,7 @@ public:
 	static std::atomic<int> UT_count;
 	static std::atomic<int> UB_count;
 	static bool store_complete;
+	static double fly_cap;
 	/* Static member variables used to store information about location and number of balls being stored by our bot obtained 
 	Robot::sensors */
 
@@ -69,13 +70,14 @@ public:
 	static void store(void *ptr);
 	static std::vector<int> get_data();
 	static void quickscore(int num_balls = 1);
+	static void set_fly_cap(double cap = 1);
 	static void reset_balls(int ultrasonic_bottom = 0, int ultrasonic_top = 0, bool move_up_ = true, bool intake_store_ = false, bool intakes_on_ = true);
 	/* Ball storing functions */
 
 	static void display(void *ptr);
 	static void drive(void *ptr);
 	static void mecanum(int power, int strafe, int turn);
-	static void intake(double coefficient, std::string powered = "both", bool fly_off = true, bool flip = false);
+	static void intake(double coefficient, std::string powered = "both", bool fly_off = true, bool flip = false, bool macro = false);
 	static void brake(std::string mode);
 	static void flipout();
 	static void vis_sense(void *ptr);

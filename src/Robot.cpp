@@ -59,7 +59,7 @@ bool store_off;
 
 double fly_power = 0;
 double increment = 1;
-double fly_cap = 1;
+double Robot::fly_cap = 1;
 
 std::map<std::string, std::unique_ptr<pros::Task>> Robot::tasks;
 /* Mapping of tasks instantiated during the program */
@@ -177,6 +177,16 @@ void Robot::move_to(std::vector<double> pose, std::vector<double> margin, std::v
 
 	double y_error = new_y - y;
 	double x_error = -(new_x - x);
+	int coefficient = 0;
+	std::string powered = "intakes";
+
+	if (seconds > 0) coefficient = -1;
+	else if (seconds < 0){
+		coefficient = 1;
+		powered = "both";
+	}
+
+	seconds = abs(seconds);
 
 	int time = 0;
 
@@ -189,7 +199,7 @@ void Robot::move_to(std::vector<double> pose, std::vector<double> margin, std::v
 
 	while (abs(y_error) > 30 * margin[0] || abs(x_error) > 30 * margin[1] || abs(imu_error) > 2 * margin[2])
 	{ /* while Robot::y, Robot::x and IMU heading are all more than the specified margin away from the target */
-		if (time < seconds) intake(-1, "intakes");
+		if (time < seconds) intake(coefficient, powered);
 		else intake(0);
 		double phi = TO_RAD(IMU.get_rotation());
 		double power = power_PD.get_value(y_error * std::cos(phi) + x_error * std::sin(phi)) * speeds[0];
@@ -273,16 +283,20 @@ std::vector<int> Robot::get_data() {
  */
 void Robot::quickscore(int num_balls) {
 	while(UT.get_value() > 300){
-		intake(1, "indexer");
+		intake(1, "indexer", false);
 	}
 	delay(100);
 	intake(0);
 	if (num_balls == 1) return;
 	while(UT.get_value() > 300){
-		intake(1, "indexer");
+		intake(1, "indexer", false);
 	}
 	intake(0);
+}
 
+
+void Robot::set_fly_cap(double cap){
+	fly_cap = cap;
 }
 
 
@@ -320,7 +334,7 @@ void Robot::display(void *ptr)
 		lcd::print(1, "LE: %d - RE: %d", LE.get_value(), RE.get_value());
 		lcd::print(2, "Back Encoder: %d", BE.get_value());
 		lcd::print(3, "IMU value: %f", IMU.get_rotation());
-		lcd::print(7, "Ultrasonic: %d", UT.get_value());
+		//lcd::print(7, "Ultrasonic: %d", UT.get_value());
 
 		delay(10);
 	}
@@ -335,6 +349,15 @@ void Robot::display(void *ptr)
 void Robot::drive(void *ptr) {
 	delay(300);
 
+	int motorpwr = 0;
+	std::string powered = "indexer";
+	bool fly_off = false;
+	bool flip = false;
+
+	int ejector_count=1;
+	int ejector_state=false;
+
+
 	while (true) {
 		int power = master.get_analog(ANALOG_LEFT_Y);
 		int strafe = master.get_analog(ANALOG_LEFT_X);
@@ -344,36 +367,68 @@ void Robot::drive(void *ptr) {
 
 		mecanum(power, strafe, turn);
 
+
+		bool quickscore_ = master.get_digital(DIGITAL_A);
+        if (quickscore_) quickscore();
+
+
+
 		//Intakes/Outtakes
 		bool outtake = master.get_digital(DIGITAL_L1);
         bool just_intakes_indexer = master.get_digital(DIGITAL_R1);
+        bool intake_ = master.get_digital(DIGITAL_X);
 
         //Indexer/Flywheel
 		bool just_indexer = master.get_digital(DIGITAL_X);
 		bool just_indexer_fly = master.get_digital(DIGITAL_R2) || master.get_digital(DIGITAL_Y);
+		
+		//Slower shoot
 		fly_cap = 1;
 		if (master.get_digital(DIGITAL_Y)) fly_cap = .8;
-        lcd::print(6, "Button Presses: %d", FB.get_value());
-
-        bool quickscore_ = master.get_digital(DIGITAL_A);
-        if (quickscore_) quickscore();
 
         //flip
-		bool flip = master.get_digital(DIGITAL_L2);
+		bool poop = master.get_digital(DIGITAL_L2);
+		if (poop) flip = true;
 
-	    double motorpwr = 0;
-		if (just_intakes_indexer || outtake) {
-			motorpwr = (just_intakes_indexer) ? 1 : -1;
-			if (just_intakes_indexer) intake(motorpwr, "both", !just_indexer_fly, false);
-			if (outtake) intake(motorpwr, "intakes", !just_indexer_fly, false);
+		if (poop || just_indexer || just_indexer_fly || just_intakes_indexer) motorpwr = 1;
+		else if (outtake) motorpwr = -1;
+
+		if (poop) flip = true;
+
+
+
+		if((poop || just_intakes_indexer) && !ejector_state) {
+			ejector_state=true;
+			if(ejector_count%2 != 0 && just_intakes_indexer) ejector_count=ejector_count;
+			else ejector_count++;
+		} else if (!poop) ejector_state=false;
+
+		if (just_intakes_indexer) 
+
+		lcd::print(7, "ejector count %d", ejector_count);
+
+		if (ejector_count % 2 == 0 && !just_intakes_indexer){
+			bool macro = false;
+			if (outtake) macro = true;
+			intake(1, "indexer", false, true, macro);
 		}
-		else if (flip) intake(1, "indexer", false, true);
-		else if (just_indexer_fly) intake(1, "indexer", false, false);
-		else if (just_indexer) intake(1, "indexer", true, false);
-		else intake(0);
+		else {
+
+			if (just_intakes_indexer || outtake) {
+				motorpwr = (just_intakes_indexer) ? 1 : -1;
+				if (just_intakes_indexer) intake(motorpwr, "both", !just_indexer_fly, false);
+				if (outtake) intake(motorpwr, "intakes", !just_indexer_fly, false);
+			}
+			else if (intake_) intake(1, "intakes");
+			else if (poop) intake(1, "indexer", false, true);
+			else if (just_indexer_fly) intake(1, "indexer", false, false);
+			else if (just_indexer) intake(1, "indexer", true, false);
+			else intake(0);
+		}
 		delay(5);
 	}
 }
+
 
 /**
  * @desc: The equation for holonomic driving (feeding values to our drivtrain motors to allow us to move axially, laterally, 
@@ -395,7 +450,7 @@ void Robot::mecanum(int power, int strafe, int turn) {
  * @param flip: The direction of our ejector motor, either in ejection mode or intake mode.
  * @param powered: Tells which motors to power (intakes only, indexer only, or both)
  */
-void Robot::intake(double coefficient, std::string powered, bool fly_off,  bool flip) {
+void Robot::intake(double coefficient, std::string powered, bool fly_off,  bool flip, bool macro) {
 	if (fly_power < fly_cap) fly_power += increment;
 	if (coefficient == 0) {
 		fly_power = 0;
@@ -405,23 +460,35 @@ void Robot::intake(double coefficient, std::string powered, bool fly_off,  bool 
 		R2 = 0;
 		return;
 	}
-	if (powered.compare("intakes") == 0 || powered.compare("both") == 0) {
-		double revised = (coefficient > 0) ? coefficient : coefficient * .4;
-		IL = int(revised * 127);
-		IR = int(revised * 127);
-		if (!powered.compare("both") == 0) {
-			R1 = 0;
-			R2 = 0;
-		}
-	}
-	if (powered.compare("indexer") == 0 || powered.compare("both") == 0) {
+	if (macro){
 		R1 = -coefficient * 127;
 		coefficient = std::max(0.0, coefficient);
 		if (fly_off) R2 = 0;
-		else R2 = fly_power * ((!flip) ? coefficient * 127 : -coefficient * 127);;
-		if (!powered.compare("both") == 0) {
-			IL = 0;
-			IR = 0;
+		else R2 = fly_power * ((!flip) ? coefficient * 127 : -coefficient * 127);
+		double revised = -.4;
+		IL = int(revised * 127);
+		IR = int(revised * 127);
+
+	}
+	else {
+		if (powered.compare("intakes") == 0 || powered.compare("both") == 0) {
+			double revised = (coefficient > 0) ? coefficient : coefficient * .4;
+			IL = int(revised * 127);
+			IR = int(revised * 127);
+			if (!powered.compare("both") == 0 && !macro) {
+				R1 = 0;
+				R2 = 0;
+			}
+		}
+		if (powered.compare("indexer") == 0 || powered.compare("both") == 0) {
+			R1 = -coefficient * 127;
+			coefficient = std::max(0.0, coefficient);
+			if (fly_off) R2 = 0;
+			else R2 = fly_power * ((!flip) ? coefficient * 127 : -coefficient * 127);;
+			if (!powered.compare("both") == 0 && !macro) {
+				IL = 0;
+				IR = 0;
+			}
 		}
 	}
 	//if (coefficient < 0) coefficient *= .1;

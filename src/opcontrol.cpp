@@ -11,11 +11,5 @@ void opcontrol() {
 	Robot::start_task("DISPLAY", Robot::display);
 	Robot::start_task("DRIVE", Robot::drive);
 	Robot::start_task("FPS", Robot::fps);
-	delay(100);
 
-	// Robot::intake(1, "indexer", false);
-	// delay(100);
-	// Robot::intake(1, "intakes");
-	// delay(800);
-	// Robot::intake(0);
 }
