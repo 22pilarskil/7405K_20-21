@@ -582,12 +582,10 @@ void Robot::collectData(void *ptr) {
 	std::deque<std::string> pastValues;
 
 	while(true) {
-		if(LabelBumper.get_value()) {
-			std::string data = "";
-			for(int i = 0; i<pastValues.size(); i++) data += pastValues[i] + " ";
-			data+="\n";
-			fputs(const_cast<char*>(data.c_str()), data_store);
-		}
+		std::string data = "";
+		for(int i = 0; i<pastValues.size(); i++) data += pastValues[i] + " ";
+		data+=LabelBumper.get_value()+"\n";
+		fputs(const_cast<char*>(data.c_str()), data_store);
 
 		int BallsFrontLength = pastValues.size();
 		pastValues.push_back(std::to_string((LB1.get_value()+LB2.get_value())/2));
