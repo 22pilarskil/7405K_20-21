@@ -75,6 +75,8 @@ public:
 	static void quickscore(int num_balls = 1, int speed = 1);
 	static void set_fly_cap(double cap = 1);
 	static void reset_balls(int ultrasonic_bottom = 0, int ultrasonic_top = 0, bool move_up_ = true, bool intake_store_ = false, bool intakes_on_ = true);
+	static void BallsUpdating(void *ptr);
+	static bool BallsChecking(double coefficient);
 	/* Ball storing functions */
 
 	static void display(void *ptr);
@@ -86,8 +88,5 @@ public:
 	static void vis_sense(void *ptr);
 	static void reset_sensors();
 	static void reset_PD();
-	static void BallsUpdating(void *ptr);
-	static bool BallsChecking(double coefficient);
-
 	/* Driver control functions */
 };

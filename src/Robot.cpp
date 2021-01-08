@@ -50,6 +50,7 @@ int Robot::radius = 300;
 std::atomic<int> Robot::UB_count = 0;
 std::atomic<int> Robot::UT_count = 0;
 bool Robot::store_complete;
+std::atomic<double> BallsFrontAverage = 0;
 /* Static member variables used to store information about location and number of balls being stored by our bot obtained 
 Robot::sensors */
 
@@ -64,7 +65,6 @@ double increment = 1;
 double Robot::fly_cap = 1;
 
 std::map<std::string, std::unique_ptr<pros::Task>> Robot::tasks;
-std::atomic<double> BallsFrontAverage = 0;
 /* Mapping of tasks instantiated during the program */
 
 /* Note: tasks are the pros version of threads, or a method for having independent subroutines run at the same time. Using
@@ -558,7 +558,7 @@ void Robot::vis_sense(void *ptr) {
 
 
 void Robot::BallsUpdating(void *ptr) {
-	std::vector<double> BallsFront;
+	std::deque<double> BallsFront;
 	while(true) {
 		int BallsFrontLength = (int) BallsFront.size();
 		BallsFront.push_back(LB1.get_value()+LB2.get_value());
