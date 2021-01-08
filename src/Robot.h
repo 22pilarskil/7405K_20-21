@@ -83,7 +83,7 @@ public:
 	static void display(void *ptr);
 	static void drive(void *ptr);
 	static void mecanum(int power, int strafe, int turn);
-	static void intake(double coefficient, std::string powered = "both", bool fly_off = true, bool flip = false, bool macro = false);
+	static void intake(double coefficient, std::string powered = "both", bool fly_off = true, bool flip = false, bool macro = false, bool fast_fly = false);
 	static void brake(std::string mode);
 	static void flipout();
 	static void vis_sense(void *ptr);

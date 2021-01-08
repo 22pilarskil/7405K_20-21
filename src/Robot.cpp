@@ -26,6 +26,7 @@ ADIEncoder Robot::RE(1, 2, true);
 ADIEncoder Robot::BE(3, 4);
 Imu Robot::IMU(4);
 ADIUltrasonic Robot::UT({{6, 2, 3}});
+ADIAnalogIn Robot::LB2({{6, 6}});
 ADIAnalogIn Robot::LB1({{6, 7}});
 ADIAnalogIn Robot::LB2({{6, 8}});
 ADIDigitalIn Robot::LabelBumper({{6, 1}});
@@ -51,7 +52,7 @@ int Robot::radius = 300;
 std::atomic<int> Robot::UB_count = 0;
 std::atomic<int> Robot::UT_count = 0;
 bool Robot::store_complete;
-std::atomic<double> BallsFrontAverage = 0;
+std::atomic<double> Robot::BallsFrontAverage = 0;
 /* Static member variables used to store information about location and number of balls being stored by our bot obtained 
 Robot::sensors */
 
@@ -340,6 +341,9 @@ void Robot::display(void *ptr)
 		lcd::print(3, "IMU value: %f", IMU.get_rotation());
 		lcd::print(4, "LB1: %d", LB1.get_value());
 		lcd::print(5, "LB2: %d", LB2.get_value());
+		lcd::print(6, "FrontSensors: %d", (int) BallsFrontAverage);
+		lcd::print(7, "Is the cock there?: %d", (int) Robot::BallsChecking(1000));
+
 		//lcd::print(7, "Ultrasonic: %d", UT.get_value());
 
 		delay(10);
@@ -386,6 +390,7 @@ void Robot::drive(void *ptr) {
 
         //Indexer/Flywheel
 		bool just_indexer = master.get_digital(DIGITAL_X);
+		bool slow_indexer_fly = master.get_digital(DIGITAL_B);
 		bool just_indexer_fly = master.get_digital(DIGITAL_R2) || master.get_digital(DIGITAL_Y);
 		
 		//Slower shoot
@@ -429,6 +434,7 @@ void Robot::drive(void *ptr) {
 			else if (poop) intake(1, "indexer", false, true);
 			else if (just_indexer_fly) intake(1, "indexer", false, false);
 			else if (just_indexer) intake(1, "indexer", true, false);
+			else if (slow_indexer_fly) intake(0.15, "indexer", false, false, false, true);
 			else intake(0);
 		}
 		delay(5);
@@ -456,7 +462,7 @@ void Robot::mecanum(int power, int strafe, int turn) {
  * @param flip: The direction of our ejector motor, either in ejection mode or intake mode.
  * @param powered: Tells which motors to power (intakes only, indexer only, or both)
  */
-void Robot::intake(double coefficient, std::string powered, bool fly_off,  bool flip, bool macro) {
+void Robot::intake(double coefficient, std::string powered, bool fly_off,  bool flip, bool macro, bool fast_fly) {
 	if (fly_power < fly_cap) fly_power += increment;
 	if (coefficient == 0) {
 		fly_power = 0;
@@ -490,7 +496,8 @@ void Robot::intake(double coefficient, std::string powered, bool fly_off,  bool 
 			R1 = -coefficient * 127;
 			coefficient = std::max(0.0, coefficient);
 			if (fly_off) R2 = 0;
-			else R2 = fly_power * ((!flip) ? coefficient * 127 : -coefficient * 127);;
+			else if (fast_fly) R2 = fly_power * ((!flip) ?  127 : -127);
+			else R2 = fly_power * ((!flip) ? coefficient * 127 : -coefficient * 127);
 			if (!powered.compare("both") == 0 && !macro) {
 				IL = 0;
 				IR = 0;
@@ -562,19 +569,20 @@ void Robot::BallsUpdating(void *ptr) {
 	std::deque<double> BallsFront;
 	while(true) {
 		int BallsFrontLength = (int) BallsFront.size();
-		BallsFront.push_back(LB1.get_value()+LB2.get_value());
-		if(BallsFrontLength > 10) {
+		BallsFront.push_back((LB1.get_value()+LB2.get_value())/2);
+		if(BallsFrontLength == 10) {
 			BallsFront.pop_front();
 			int sum = 0;
-			for(uint8_t i = 0; i<BallsFront.size(); i++) sum += BallsFront[i];
+			for(int i = 0; i<BallsFront.size(); i++) sum += BallsFront[i];
 			BallsFrontAverage = sum/10;
+			delay(750);
 		}
 	}
 }
 
 bool Robot::BallsChecking(double coefficient) {
-	double sensorAverages = ((double) LB1.get_value() + (double) LB2.get_value())/2;
-	return abs(BallsFrontAverage-sensorAverages) < coefficient;
+	double sensorAverages = (LB1.get_value()+LB2.get_value())/2;
+	return abs(BallsFrontAverage-sensorAverages) > coefficient;
 }
 
 void Robot::collectData(void *ptr) {
