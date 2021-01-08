@@ -28,6 +28,7 @@ Imu Robot::IMU(4);
 ADIUltrasonic Robot::UT({{6, 2, 3}});
 ADIAnalogIn Robot::LB1({{6, 7}});
 ADIAnalogIn Robot::LB2({{6, 8}});
+ADIDigitalIn Robot::LabelBumper({{6, 1}});
 /* Initializing motors, sensors, controller */
 
 PD Robot::power_PD(.24, 1.2, 5);
@@ -575,6 +576,27 @@ bool Robot::BallsChecking(double coefficient) {
 	double sensorAverages = ((double) LB1.get_value() + (double) LB2.get_value())/2;
 	return abs(BallsFrontAverage-sensorAverages) < coefficient;
 }
+
+void Robot::collectData(void *ptr) {
+	FILE* data_store = fopen("/usd/example.txt", "w");
+	std::deque<std::string> pastValues;
+
+	while(true) {
+		if(LabelBumper.get_value()) {
+			std::string data = "";
+			for(int i = 0; i<pastValues.size(); i++) data += pastValues[i] + " ";
+			data+="\n";
+			fputs(const_cast<char*>(data.c_str()), data_store);
+		}
+
+		int BallsFrontLength = pastValues.size();
+		pastValues.push_back(std::to_string((LB1.get_value()+LB2.get_value())/2));
+		if(BallsFrontLength > 15) pastValues.pop_front();
+	}
+
+	fclose(data_store);
+}
+
 
 /**
  * @desc: Resets IMU. Must be called in initialize.cpp and given at least 3 seconds to complete to allow IMU to calibrate

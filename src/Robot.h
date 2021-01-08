@@ -28,6 +28,7 @@ public:
 	static ADIUltrasonic UT;
 	static ADIAnalogIn LB1;
 	static ADIAnalogIn LB2;
+	static ADIDigitalIn LabelBumper;
 	/* Initializing motors, sensors, controller */
 
 	static PD power_PD;
@@ -89,4 +90,7 @@ public:
 	static void reset_sensors();
 	static void reset_PD();
 	/* Driver control functions */
+
+	static void collectData(void *ptr);
+	/* Collecting Data */
 };
