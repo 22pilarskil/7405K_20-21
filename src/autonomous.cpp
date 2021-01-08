@@ -32,8 +32,7 @@ void autonomous()
 	Robot::intake(0);
 	Robot::move_to({-100, 600, 179}, {2.5, 2.5, 2.5});		
 	Robot::intake(1, "both");
-	while(!Robot::FB.get_value()) delay(1);
-	delay(400);
+//	while(!Robot::FB.get_value()) delay(1);	delay(400);
 	Robot::intake(0);
 	Robot::move_to({-2020, 410, 93}, {2, 2, 2});
 	Robot::quickscore();
@@ -43,8 +42,7 @@ void autonomous()
 	Robot::move_to({-2900, 580, 180}, {2, 2, 2}, {1, 1, 1}, 700);
 	Robot::move_to({-3050, 580, 180}, {2, 2, 2});
 	Robot::intake(1, "both");
-	while(!Robot::FB.get_value()) delay(1);
-	delay(400);
+//	while(!Robot::FB.get_value()) delay(1);	delay(400);
 	Robot::intake(0);
 	Robot::move_to({-4250, 300, 135});
 	Robot::quickscore();
@@ -54,8 +52,7 @@ void autonomous()
 	Robot::move_to({-3980, 1870, 270}, {1, 1, 1}, {1, 1, 1}, 700);
 	Robot::move_to({-3980, 2180, 270});
 	Robot::intake(1, "both");
-	while(!Robot::FB.get_value()) delay(1);
-	delay(400);
+//	while(!Robot::FB.get_value()) delay(1);	delay(400);
 	Robot::intake(0);
 	Robot::move_to({-4100, 2615, 180});
 	Robot::quickscore();
@@ -65,8 +62,7 @@ void autonomous()
 	Robot::move_to({-3620, 3856, 280}, {2, 2, 2}, {1, 1, 1}, 700);
 	Robot::move_to({-3600, 4180, 280}, {2, 2, 2});
 	Robot::intake(1, "both");
-	while(!Robot::FB.get_value()) delay(1);
-	delay(400);
+//	while(!Robot::FB.get_value()) delay(1);	delay(400);
 	Robot::intake(0);
 	Robot::move_to({-4277, 4800, 221});
 	Robot::quickscore();
@@ -76,8 +72,7 @@ void autonomous()
 	Robot::move_to({-2625, 3940, 389}, {1, 1, 1}, {1, 1, 1}, 700);
 	Robot::move_to({-2300, 3820, 389}, {2, 2, 2});
 	Robot::intake(1, "both");
-	while(!Robot::FB.get_value()) delay(1);
-	delay(400);
+//	while(!Robot::FB.get_value()) delay(1);	delay(400);
 	Robot::intake(0);
 	Robot::move_to({-1990, 4733, 265});
 	Robot::quickscore();
@@ -87,8 +82,7 @@ void autonomous()
 	Robot::move_to({-1135, 4630, 360}, {1, 1, 1}, {1, 1, 1}, 700);
 	Robot::move_to({-857, 4632, 360}, {2, 2, 2});
 	Robot::intake(1, "both");
-	while(!Robot::FB.get_value()) delay(1);
-	delay(400);
+//	while(!Robot::FB.get_value()) delay(1);	delay(400);
 	Robot::intake(0);
 	Robot::move_to({250, 4930, 312});
 	Robot::quickscore();
@@ -98,8 +92,7 @@ void autonomous()
 	Robot::move_to({40, 3380, 445}, {1, 1, 1}, {1, 1, 1}, 700);
 	Robot::move_to({20, 3100, 445});
 	Robot::intake(1, "both");
-	while(!Robot::FB.get_value()) delay(1);
-	delay(400);
+//	while(!Robot::FB.get_value()) delay(1);	delay(400);
 	Robot::intake(0);
 	Robot::move_to({152, 2650, 358});
 	Robot::quickscore();
@@ -109,13 +102,11 @@ void autonomous()
 	Robot::move_to({-111, 2620, 532}, {1, 1, 1}, {1, 1, 1}, 700);
 	Robot::move_to({-500, 2590, 532}, {2, 2, 2});
 	Robot::intake(1, "both");
-	while(!Robot::FB.get_value()) delay(1);
-	delay(800);
+//	while(!Robot::FB.get_value()) delay(1);	delay(800);
 	Robot::intake(0);
 	Robot::move_to({-1387, 2580, 532}, {1, 1, 1}, {1, 1, 1}, 700);
 	Robot::intake(1, "both");
-	while(!Robot::FB.get_value()) delay(1);
-	Robot::intake(-1, "intakes");
+//	while(!Robot::FB.get_value()) delay(1);	Robot::intake(-1, "intakes");
 	delay(700);
 	Robot::move_to({-1487, 2580, 532}, {2, 2, 2});
 	Robot::quickscore();

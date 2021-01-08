@@ -6,6 +6,7 @@
 #include <numeric>
 #include <chrono>
 #include <unordered_map>
+#include <deque>
 using namespace pros;
 
 #define TO_RAD(n) n * M_PI / 180;
@@ -24,8 +25,9 @@ ADIEncoder Robot::LE(5, 6);
 ADIEncoder Robot::RE(1, 2, true);
 ADIEncoder Robot::BE(3, 4);
 Imu Robot::IMU(4);
-ADIUltrasonic Robot::UT(7, 8);
-ADIDigitalIn Robot::FB({{6, 1}});
+ADIUltrasonic Robot::UT({{6, 2, 3}});
+ADIAnalogIn Robot::LB1({{6, 7}});
+ADIAnalogIn Robot::LB2({{6, 8}});
 /* Initializing motors, sensors, controller */
 
 PD Robot::power_PD(.24, 1.2, 5);
@@ -62,6 +64,7 @@ double increment = 1;
 double Robot::fly_cap = 1;
 
 std::map<std::string, std::unique_ptr<pros::Task>> Robot::tasks;
+std::atomic<double> BallsFrontAverage = 0;
 /* Mapping of tasks instantiated during the program */
 
 /* Note: tasks are the pros version of threads, or a method for having independent subroutines run at the same time. Using
@@ -334,6 +337,8 @@ void Robot::display(void *ptr)
 		lcd::print(1, "LE: %d - RE: %d", LE.get_value(), RE.get_value());
 		lcd::print(2, "Back Encoder: %d", BE.get_value());
 		lcd::print(3, "IMU value: %f", IMU.get_rotation());
+		lcd::print(4, "LB1: %d", LB1.get_value());
+		lcd::print(5, "LB2: %d", LB2.get_value());
 		//lcd::print(7, "Ultrasonic: %d", UT.get_value());
 
 		delay(10);
@@ -549,6 +554,26 @@ void Robot::vis_sense(void *ptr) {
 		int blue_x_coord = blue_ball.x_middle_coord;
 		delay(100);
 	}
+}
+
+
+void Robot::BallsUpdating(void *ptr) {
+	std::vector<double> BallsFront;
+	while(true) {
+		int BallsFrontLength = (int) BallsFront.size();
+		BallsFront.push_back(LB1.get_value()+LB2.get_value());
+		if(BallsFrontLength > 10) {
+			BallsFront.pop_front();
+			int sum = 0;
+			for(uint8_t i = 0; i<BallsFront.size(); i++) sum += BallsFront[i];
+			BallsFrontAverage = sum/10;
+		}
+	}
+}
+
+bool Robot::BallsChecking(double coefficient) {
+	double sensorAverages = ((double) LB1.get_value() + (double) LB2.get_value())/2;
+	return abs(BallsFrontAverage-sensorAverages) < coefficient;
 }
 
 /**

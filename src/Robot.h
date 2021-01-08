@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <deque>
 using namespace pros;
 
 class Robot
@@ -25,7 +26,8 @@ public:
 	static Imu IMU;
 	static Vision vision;
 	static ADIUltrasonic UT;
-	static ADIDigitalIn FB;
+	static ADIAnalogIn LB1;
+	static ADIAnalogIn LB2;
 	/* Initializing motors, sensors, controller */
 
 	static PD power_PD;
@@ -54,6 +56,7 @@ public:
 	Robot::sensors */
 
 	static std::map<std::string, std::unique_ptr<pros::Task>> tasks;
+	static std::atomic<double> BallsFrontAverage;
 	/* Mapping of tasks instantiated during the program */
 
 	static void start_task(std::string name, void (*func)(void *));
@@ -83,5 +86,8 @@ public:
 	static void vis_sense(void *ptr);
 	static void reset_sensors();
 	static void reset_PD();
+	static void BallsUpdating(void *ptr);
+	static bool BallsChecking(double coefficient);
+
 	/* Driver control functions */
 };
