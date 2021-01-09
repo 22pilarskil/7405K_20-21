@@ -600,9 +600,11 @@ void Robot::BallsUpdating(void *ptr) {
 
 
 void Robot::BallsChecking(void *ptr) {
-	double sensorAverages = (LF1.get_value()+LF2.get_value())/2;
-	if(abs(BallsFrontAverage-sensorAverages) > 750) intake_count++;
-	if(abs(BallsBackAverage-LB1.get_value()) > 750) ejector_count++;
+	while (true) {
+		double sensorAverages = (LF1.get_value()+LF2.get_value())/2;
+		if(abs(BallsFrontAverage-sensorAverages) > 750) intake_count++;
+		if(abs(BallsBackAverage-LB1.get_value()) > 750) ejector_count++;
+	}
 }
 
 
