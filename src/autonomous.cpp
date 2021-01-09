@@ -18,98 +18,106 @@ void autonomous()
 	Robot::start_task("DISPLAY", Robot::display);
 	delay(100);
 
+	// Sample Code fo Testing Ultrasonic Integration
+	// Robot::intake(-1, "intakes", false, false);
+	// delay(600);
+	// Robot::intake(0, "intakes");
+	// delay(100);
+	// Robot::move_to({3000, 0, 0}, {1, 1, 1}, {1, 1, 1}, 0, false, true);
+	// for(int i; i<2; i++) Robot::intake(1, "intakes", false, false);
+
 
 	//Tower 1
-	Robot::move_to({110, 250, 27}, {2, 2, 2}, {1.5, 1.5, 1.5});
-	Robot::quickscore();
+// 	Robot::move_to({110, 250, 27}, {2, 2, 2}, {1.5, 1.5, 1.5});
+// 	// Robot::quickscore();
 
-	//Tower 2
-	Robot::move_to({300, 600, 179}, {2, 2, 2});
-	Robot::intake(.6, "intakes");
-	delay(1200);
-	Robot::intake(-1, "intakes");
-	delay(700);
-	Robot::intake(0);
-	Robot::move_to({-100, 600, 179}, {2.5, 2.5, 2.5});		
-	Robot::intake(1, "both");
-//	while(!Robot::FB.get_value()) delay(1);	delay(400);
-	Robot::intake(0);
-	Robot::move_to({-2020, 410, 93}, {2, 2, 2});
-	Robot::quickscore();
+// 	//Tower 2
+// 	Robot::move_to({300, 600, 179}, {2, 2, 2});
+// 	Robot::intake(.6, "intakes");
+// 	delay(1200);
+// 	Robot::intake(-1, "intakes");
+// 	delay(700);
+// 	Robot::intake(0);
+// 	Robot::move_to({-100, 600, 179}, {2.5, 2.5, 2.5});		
+// 	Robot::intake(1, "both");
+// //	while(!Robot::FB.get_value()) delay(1);	delay(400);
+// 	Robot::intake(0);
+// 	Robot::move_to({-2020, 410, 93}, {2, 2, 2});
+// 	// Robot::quickscore();
 
-	//Tower 3
-	Robot::move_to({-2020, 600, 93}, {2, 2, 2});
-	Robot::move_to({-2900, 580, 180}, {2, 2, 2}, {1, 1, 1}, 700);
-	Robot::move_to({-3050, 580, 180}, {2, 2, 2});
-	Robot::intake(1, "both");
-//	while(!Robot::FB.get_value()) delay(1);	delay(400);
-	Robot::intake(0);
-	Robot::move_to({-4250, 300, 135});
-	Robot::quickscore();
+// 	//Tower 3
+// 	Robot::move_to({-2020, 600, 93}, {2, 2, 2});
+// 	Robot::move_to({-2900, 580, 180}, {2, 2, 2}, {1, 1, 1}, 700);
+// 	Robot::move_to({-3050, 580, 180}, {2, 2, 2});
+// 	Robot::intake(1, "both");
+// //	while(!Robot::FB.get_value()) delay(1);	delay(400);
+// 	Robot::intake(0);
+// 	Robot::move_to({-4250, 300, 135});
+// 	// Robot::quickscore();
 
-	//Tower 4
-	Robot::move_to({-4006, 562, 135});
-	Robot::move_to({-3980, 1870, 270}, {1, 1, 1}, {1, 1, 1}, 700);
-	Robot::move_to({-3980, 2180, 270});
-	Robot::intake(1, "both");
-//	while(!Robot::FB.get_value()) delay(1);	delay(400);
-	Robot::intake(0);
-	Robot::move_to({-4100, 2615, 180});
-	Robot::quickscore();
+// 	//Tower 4
+// 	Robot::move_to({-4006, 562, 135});
+// 	Robot::move_to({-3980, 1870, 270}, {1, 1, 1}, {1, 1, 1}, 700);
+// 	Robot::move_to({-3980, 2180, 270});
+// 	Robot::intake(1, "both");
+// //	while(!Robot::FB.get_value()) delay(1);	delay(400);
+// 	Robot::intake(0);
+// 	Robot::move_to({-4100, 2615, 180});
+// 	// Robot::quickscore();
 
-	//Tower 5
-	Robot::move_to({-3900, 2615, 180}, {2, 2, 2});
-	Robot::move_to({-3620, 3856, 280}, {2, 2, 2}, {1, 1, 1}, 700);
-	Robot::move_to({-3600, 4180, 280}, {2, 2, 2});
-	Robot::intake(1, "both");
-//	while(!Robot::FB.get_value()) delay(1);	delay(400);
-	Robot::intake(0);
-	Robot::move_to({-4277, 4800, 221});
-	Robot::quickscore();
+// 	//Tower 5
+// 	Robot::move_to({-3900, 2615, 180}, {2, 2, 2});
+// 	Robot::move_to({-3620, 3856, 280}, {2, 2, 2}, {1, 1, 1}, 700);
+// 	Robot::move_to({-3600, 4180, 280}, {2, 2, 2});
+// 	Robot::intake(1, "both");
+// //	while(!Robot::FB.get_value()) delay(1);	delay(400);
+// 	Robot::intake(0);
+// 	Robot::move_to({-4277, 4800, 221});
+// 	// Robot::quickscore();
 
-	//Tower 6
-	Robot::move_to({-4200, 4700, 221});
-	Robot::move_to({-2625, 3940, 389}, {1, 1, 1}, {1, 1, 1}, 700);
-	Robot::move_to({-2300, 3820, 389}, {2, 2, 2});
-	Robot::intake(1, "both");
-//	while(!Robot::FB.get_value()) delay(1);	delay(400);
-	Robot::intake(0);
-	Robot::move_to({-1990, 4733, 265});
-	Robot::quickscore();
+// 	//Tower 6
+// 	Robot::move_to({-4200, 4700, 221});
+// 	Robot::move_to({-2625, 3940, 389}, {1, 1, 1}, {1, 1, 1}, 700);
+// 	Robot::move_to({-2300, 3820, 389}, {2, 2, 2});
+// 	Robot::intake(1, "both");
+// //	while(!Robot::FB.get_value()) delay(1);	delay(400);
+// 	Robot::intake(0);
+// 	Robot::move_to({-1990, 4733, 265});
+// 	// Robot::quickscore();
 
-	//Tower 7
-	Robot::move_to({-1990, 4500, 265}, {2, 2, 2});
-	Robot::move_to({-1135, 4630, 360}, {1, 1, 1}, {1, 1, 1}, 700);
-	Robot::move_to({-857, 4632, 360}, {2, 2, 2});
-	Robot::intake(1, "both");
-//	while(!Robot::FB.get_value()) delay(1);	delay(400);
-	Robot::intake(0);
-	Robot::move_to({250, 4930, 312});
-	Robot::quickscore();
+// 	//Tower 7
+// 	Robot::move_to({-1990, 4500, 265}, {2, 2, 2});
+// 	Robot::move_to({-1135, 4630, 360}, {1, 1, 1}, {1, 1, 1}, 700);
+// 	Robot::move_to({-857, 4632, 360}, {2, 2, 2});
+// 	Robot::intake(1, "both");
+// //	while(!Robot::FB.get_value()) delay(1);	delay(400);
+// 	Robot::intake(0);
+// 	Robot::move_to({250, 4930, 312});
+// 	// Robot::quickscore();
 
-	//Tower 8
-	Robot::move_to({27, 4800, 315});
-	Robot::move_to({40, 3380, 445}, {1, 1, 1}, {1, 1, 1}, 700);
-	Robot::move_to({20, 3100, 445});
-	Robot::intake(1, "both");
-//	while(!Robot::FB.get_value()) delay(1);	delay(400);
-	Robot::intake(0);
-	Robot::move_to({152, 2650, 358});
-	Robot::quickscore();
+// 	//Tower 8
+// 	Robot::move_to({27, 4800, 315});
+// 	Robot::move_to({40, 3380, 445}, {1, 1, 1}, {1, 1, 1}, 700);
+// 	Robot::move_to({20, 3100, 445});
+// 	Robot::intake(1, "both");
+// //	while(!Robot::FB.get_value()) delay(1);	delay(400);
+// 	Robot::intake(0);
+// 	Robot::move_to({152, 2650, 358});
+// 	// Robot::quickscore();
 
-	//Tower 9
-	Robot::move_to({-100, 2650, 358}, {2, 2, 2});
-	Robot::move_to({-111, 2620, 532}, {1, 1, 1}, {1, 1, 1}, 700);
-	Robot::move_to({-500, 2590, 532}, {2, 2, 2});
-	Robot::intake(1, "both");
-//	while(!Robot::FB.get_value()) delay(1);	delay(800);
-	Robot::intake(0);
-	Robot::move_to({-1387, 2580, 532}, {1, 1, 1}, {1, 1, 1}, 700);
-	Robot::intake(1, "both");
-//	while(!Robot::FB.get_value()) delay(1);	Robot::intake(-1, "intakes");
-	delay(700);
-	Robot::move_to({-1487, 2580, 532}, {2, 2, 2});
-	Robot::quickscore();
+// 	//Tower 9
+// 	Robot::move_to({-100, 2650, 358}, {2, 2, 2});
+// 	Robot::move_to({-111, 2620, 532}, {1, 1, 1}, {1, 1, 1}, 700);
+// 	Robot::move_to({-500, 2590, 532}, {2, 2, 2});
+// 	Robot::intake(1, "both");
+// //	while(!Robot::FB.get_value()) delay(1);	delay(800);
+// 	Robot::intake(0);
+// 	Robot::move_to({-1387, 2580, 532}, {1, 1, 1}, {1, 1, 1}, 700);
+// 	Robot::intake(1, "both");
+// //	while(!Robot::FB.get_value()) delay(1);	Robot::intake(-1, "intakes");
+// 	delay(700);
+// 	Robot::move_to({-1487, 2580, 532}, {2, 2, 2});
+// 	// Robot::quickscore();
 
 
 

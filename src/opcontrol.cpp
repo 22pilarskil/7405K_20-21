@@ -10,12 +10,20 @@ void opcontrol() {
 	delay(100);
 	Robot::start_task("DISPLAY", Robot::display);
 
-	// Robot::start_task("SENSING", Robot::BallsUpdating);
+	Robot::start_task("SENSORUPDATING", Robot::BallsUpdating);
+	Robot::start_task("SENSORCHECKING", Robot::BallsChecking);
 
-	// while (true) {
-		// Robot::BallsChecking(1000);
-	// }
 	Robot::start_task("DRIVE", Robot::drive);
 	Robot::start_task("FPS", Robot::fps);
+
+
+	// Robot::intake(-1, "intakes", false, false);
+	// delay(600);
+	// Robot::intake(0, "intakes");
+
+	// while(Robot::UF.get_value() > 80) delay(1);
+	// for(int i; i<2; i++) Robot::intake(1, "intakes", false, false);
+	// delay(100);
+	// Robot::intake(0, "intakes");
 
 }

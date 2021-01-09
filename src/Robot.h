@@ -27,7 +27,9 @@ public:
 	static Vision vision;
 	static ADIUltrasonic UT;
 	static ADIAnalogIn LB1;
-	static ADIAnalogIn LB2;
+	static ADIAnalogIn LF1;
+	static ADIAnalogIn LF2;
+	static ADIUltrasonic UF;
 	static ADIDigitalIn LabelBumper;
 	/* Initializing motors, sensors, controller */
 
@@ -49,8 +51,8 @@ public:
 	static int radius;
 	/* Presets for odometry and pure pursuit calculations */
 
-	static std::atomic<int> UT_count;
-	static std::atomic<int> UB_count;
+	static std::atomic<int> ejector_count;
+	static std::atomic<int> intake_count;
 	static bool store_complete;
 	static double fly_cap;
 	/* Static member variables used to store information about location and number of balls being stored by our bot obtained 
@@ -58,6 +60,7 @@ public:
 
 	static std::map<std::string, std::unique_ptr<pros::Task>> tasks;
 	static std::atomic<double> BallsFrontAverage;
+	static std::atomic<double> BallsBackAverage;
 	/* Mapping of tasks instantiated during the program */
 
 	static void start_task(std::string name, void (*func)(void *));
@@ -66,19 +69,17 @@ public:
 	/* Threading functions */
 
 	static void fps(void *ptr);
-	static void move_to(std::vector<double> pose, std::vector<double> margins = {1, 1, 1}, std::vector<double> speeds = {1, 1, 1}, int seconds = 0, bool pure_pursuit = false);
+	static void move_to(std::vector<double> pose, std::vector<double> margins = {1, 1, 1}, std::vector<double> speeds = {1, 1, 1}, int seconds = 0, bool pure_pursuit = false, bool ball_wait = false);
 	static void move_to_pure_pursuit(std::vector<std::vector<double>> points, std::vector<double> speeds = {1, 1, 1});
 	/* Autonomous movement and positioning functions */
 
 	static void sensors(void *ptr);
 	static void store(void *ptr);
-	static std::vector<int> get_data();
 	static void quickscore(int num_balls = 1, int speed = 1);
 	static void set_fly_cap(double cap = 1);
-	static void reset_balls(int ultrasonic_bottom = 0, int ultrasonic_top = 0, bool move_up_ = true, bool intake_store_ = false, bool intakes_on_ = true);
+	// static void reset_balls(int ultrasonic_bottom = 0, int ultrasonic_top = 0, bool move_up_ = true, bool intake_store_ = false, bool intakes_on_ = true);
 	static void BallsUpdating(void *ptr);
-	static bool BallsChecking(double coefficient);
-	/* Ball storing functions */
+	static void BallsChecking(void *ptr);	/* Ball storing functions */
 
 	static void display(void *ptr);
 	static void drive(void *ptr);
