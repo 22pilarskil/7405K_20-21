@@ -52,9 +52,11 @@ public:
 
 	static std::atomic<int> ejector_count;
 	static std::atomic<int> intake_count;
+	static std::atomic<int> shooting_count;
+    static std::atomic<int> storing_count;
 	static std::atomic<double> BallsFrontAverage;
 	static std::atomic<double> BallsBackAverage;
-	static std::atomic<bool> Robot::intaking;
+	static std::atomic<bool> intaking;
 	/* Static member variables used to store information about location and number of balls being stored by our bot obtained 
 	Robot::sensors */
 
@@ -90,7 +92,6 @@ public:
 	static void mecanum(int power, int strafe, int turn);
 	static void intake(double coefficient, std::string powered = "both", bool fly_off = true, bool flip = false, bool macro = false, bool fast_fly = false);
 	static void brake(std::string mode);
-	static void vis_sense(void *ptr);
 	static void reset_sensors();
 	static void reset_PD();
 	/* Driver control functions */

@@ -52,6 +52,8 @@ int Robot::radius = 300;
 
 std::atomic<int> Robot::ejector_count = 0;
 std::atomic<int> Robot::intake_count = 0;
+std::atomic<int> Robot::shooting_count = 0;
+std::atomic<int> Robot::storing_count = 0;
 std::atomic<double> Robot::BallsFrontAverage = 0;
 std::atomic<double> Robot::BallsBackAverage = 0;
 std::atomic<bool> Robot::intaking = false;
@@ -296,6 +298,7 @@ void Robot::set_fly_cap(double cap){
 void Robot::balls_updating(void *ptr) {
 	std::deque<double> BallsFront;
 	std::deque<double> BallsBack;
+	bool ut_toggle=false;
 
 	while(true) {
 		int BallsFrontLength = (int) BallsFront.size();
@@ -315,6 +318,12 @@ void Robot::balls_updating(void *ptr) {
 			for(int i = 0; i<BallsBack.size(); i++) sum += BallsBack[i];
 			BallsBackAverage = sum/10;
 		}
+		bool shoot_ball = UT.get_value() < 100;
+        if(shoot_ball && !ut_toggle) {
+            shooting_count++;
+            ut_toggle = true;
+        } else if (!shoot_ball && ut_toggle) ut_toggle = false;
+
 		delay(100);
 	}
 }
@@ -322,10 +331,11 @@ void Robot::balls_updating(void *ptr) {
 
 void Robot::balls_checking(void *ptr) {
 	while (true) {
-		double sensorAverages = (LF1.get_value()+LF2.get_value())/2;
-		if(abs(BallsFrontAverage-sensorAverages) > 750) intake_count++;
-		if(abs(BallsBackAverage-LB1.get_value()) > 750) ejector_count++;
-		delay(5);
+		double sensorAverages = ((LF1.get_value()+LF2.get_value())/2);
+        if(abs(BallsFrontAverage-sensorAverages) > 750) R1.get_direction() > 0 ? intake_count++ : intake_count--;
+        if(abs(BallsBackAverage-LB1.get_value()) > 750) ejector_count++;
+        storing_count = intake_count-(ejector_count+shooting_count);
+        delay(5);
 	}
 }
 
@@ -333,7 +343,7 @@ void Robot::balls_checking(void *ptr) {
 void Robot::balls_intaking(void *ptr) {
 	while (intaking){
 		if (UF.get_value() < 200){
-			Robot::intake(1)
+			intake(1);
 			intaking = false;
 		}
 	}
@@ -350,17 +360,19 @@ bool Robot::toggle_intaking(bool intaking_){
  */
 void Robot::display(void *ptr)
 {
-	while (true){
+	while (true) {
 
-		master.print(0, 0, "Joystick %d", master.get_analog(ANALOG_LEFT_X));
-		lcd::print(1, "LE: %d - RE: %d", LE.get_value(), RE.get_value());
-		lcd::print(2, "Back Encoder: %d", BE.get_value());
-		lcd::print(3, "IMU value: %f", IMU.get_rotation());
-		lcd::print(6, "LF1: %d LF2: %d", LF1.get_value(), LF2.get_value());
-		lcd::print(7, "UF: %d", UF.get_value());
+        master.print(0, 0, "Joystick %d", master.get_analog(ANALOG_LEFT_X));
+        lcd::print(1, "LE: %d - RE: %d", LE.get_value(), RE.get_value());
+        lcd::print(2, "Back Encoder: %d", BE.get_value());
+        lcd::print(3, "IMU value: %f", IMU.get_rotation());
+        lcd::print(6, "LF1: %d LF2: %d LB1: %d", LF1.get_value(), LF2.get_value(), LB1.get_value());
+        lcd::print(7, "UF: %d UT: %d Storing Count: ", UF.get_value(), UT.get_value(), (int) storing_count);
+        lcd::print(6, "FrontSensors: %d %d", (int) intake_count, (int) BallsFrontAverage);
+        lcd::print(7, "EjectorSensors: %d %d", (int) ejector_count, (int) BallsBackAverage);
 
-		delay(10);
-	}
+        delay(10);
+    }
 }
 
 
