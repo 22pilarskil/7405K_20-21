@@ -12,12 +12,12 @@ or right by a significant margin) the odometry points will not work, and our ski
 
 void autonomous()
 {
-	lcd::initialize();
-	delay(100);
 	Robot::start_task("FPS", Robot::fps);
 	Robot::start_task("DISPLAY", Robot::display);
+	Robot::toggle_intaking(true);
+	//Robot::start_task("BALLSINTAKING", Robot::balls_intaking);
 	delay(100);
-
+	Robot::move_to({0, -3000, 0});
 	// Sample Code fo Testing Ultrasonic Integration
 	// Robot::intake(-1, "intakes", false, false);
 	// delay(600);

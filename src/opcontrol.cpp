@@ -6,12 +6,15 @@ using namespace pros;
 /* Creates all tasks required for our Robot's driver control period */
 
 void opcontrol() {
+	delay(100);
 	lcd::initialize();
 	delay(100);
 	Robot::start_task("DISPLAY", Robot::display);
 
-	Robot::start_task("SENSORUPDATING", Robot::BallsUpdating);
-	Robot::start_task("SENSORCHECKING", Robot::BallsChecking);
+	Robot::start_task("SENSORUPDATING", Robot::balls_updating);
+	Robot::start_task("SENSORCHECKING", Robot::balls_checking);
+
+	Robot::start_task("BALLSINTAKING", Robot::balls_intaking);
 
 	Robot::start_task("DRIVE", Robot::drive);
 	Robot::start_task("FPS", Robot::fps);
