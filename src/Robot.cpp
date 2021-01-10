@@ -29,7 +29,7 @@ ADIAnalogIn Robot::LB1({{6, 6}});
 ADIAnalogIn Robot::LF1({{6, 7}});
 ADIAnalogIn Robot::LF2({{6, 8}});
 ADIUltrasonic Robot::UF({{6, 1, 2}});
-//ADIUltrasonic Robot::UT(7, 8);
+ADIUltrasonic Robot::UT(7, 8);
 ADIDigitalIn Robot::LabelBumper({{6, 3}});
 /* Initializing motors, sensors, controller */
 
@@ -54,16 +54,14 @@ std::atomic<int> Robot::ejector_count = 0;
 std::atomic<int> Robot::intake_count = 0;
 std::atomic<double> Robot::BallsFrontAverage = 0;
 std::atomic<double> Robot::BallsBackAverage = 0;
-bool Robot::store_complete;
+std::atomic<bool> Robot::intaking = false;
 /* Static member variables used to store information about location and number of balls being stored by our bot obtained 
 Robot::sensors */
 
-bool intaking = false;
-/* Parameters passed into storing functions */
-
-double fly_power = 0;
-double increment = 1;
+double Robot::fly_power = 0;
+double Robot::increment = 1;
 double Robot::fly_cap = 1;
+/* Static member variables for flywheel control */
 
 std::map<std::string, std::unique_ptr<pros::Task>> Robot::tasks;
 /* Mapping of tasks instantiated during the program */
@@ -275,7 +273,8 @@ void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, std::v
 /**
  * @desc Takes in information about where balls are as well as how many there are to shoot them in quick succession
  * @param ball_id: 1 to shoot from top stored position only, 0 to shoot a ball from bottom store, -1 to shoot from both
- * void Robot::quickscore(int num_balls, int speed) {
+ */ 
+void Robot::quickscore(int num_balls, int speed) {
 	while(UT.get_value() > 300){
 		intake(speed, "indexer", false);
 	}
@@ -287,12 +286,62 @@ void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, std::v
 	}
 	intake(0);
 }
- */
-
 
 
 void Robot::set_fly_cap(double cap){
 	fly_cap = cap;
+}
+
+
+void Robot::balls_updating(void *ptr) {
+	std::deque<double> BallsFront;
+	std::deque<double> BallsBack;
+
+	while(true) {
+		int BallsFrontLength = (int) BallsFront.size();
+		BallsFront.push_back((LF1.get_value()+LF2.get_value())/2);
+		if(BallsFrontLength == 10) {
+			BallsFront.pop_front();
+			int sum = 0;
+			for(int i = 0; i<BallsFront.size(); i++) sum += BallsFront[i];
+			BallsFrontAverage = sum/10;
+		}
+
+		int BallsBackLength = (int) BallsBack.size();
+		BallsBack.push_back(LB1.get_value());
+		if(BallsBackLength == 10) {
+			BallsBack.pop_front();
+			int sum = 0;
+			for(int i = 0; i<BallsBack.size(); i++) sum += BallsBack[i];
+			BallsBackAverage = sum/10;
+		}
+		delay(100);
+	}
+}
+
+
+void Robot::balls_checking(void *ptr) {
+	while (true) {
+		double sensorAverages = (LF1.get_value()+LF2.get_value())/2;
+		if(abs(BallsFrontAverage-sensorAverages) > 750) intake_count++;
+		if(abs(BallsBackAverage-LB1.get_value()) > 750) ejector_count++;
+		delay(5);
+	}
+}
+
+
+void Robot::balls_intaking(void *ptr) {
+	while (intaking){
+		if (UF.get_value() < 200){
+			Robot::intake(1)
+			intaking = false;
+		}
+	}
+}
+
+bool Robot::toggle_intaking(bool intaking_){
+	intaking = intaking_;
+	return intaking;
 }
 
 /**
@@ -331,7 +380,6 @@ void Robot::drive(void *ptr) {
 	int ejector_count=1;
 	int ejector_state=false;
 
-
 	while (true) {
 		int power = master.get_analog(ANALOG_LEFT_Y);
 		int strafe = master.get_analog(ANALOG_LEFT_X);
@@ -341,11 +389,8 @@ void Robot::drive(void *ptr) {
 
 		mecanum(power, strafe, turn);
 
-
 		// bool quickscore_ = master.get_digital(DIGITAL_A);
         // if (quickscore_) quickscore();
-
-
 
 		//Intakes/Outtakes
 		bool outtake = master.get_digital(DIGITAL_L1);
@@ -369,8 +414,6 @@ void Robot::drive(void *ptr) {
 		else if (outtake) motorpwr = -1;
 
 		if (poop) flip = true;
-
-
 
 		if((poop || just_intakes_indexer) && !ejector_state) {
 			ejector_state=true;
@@ -499,89 +542,20 @@ void Robot::brake(std::string mode)
 
 
 /**
- * @desc: Sets the motors to the correct power in order to allow our robot to flip out, or in other words automatically 
- expand from within the 18" size limit to our functional size (intakes and deflector shield are both out of size, must
- flip out to be legal)
+ * @desc: Resets IMU. Must be called in initialize.cpp and given at least 3 seconds to complete to allow IMU to calibrate
  */
-void Robot::flipout()
-{
-	IL = -127;
-	IR = -127;
-	R1 = 127;
-	R2 = 127;
+void Robot::reset_sensors() {
+	IMU.reset();
 }
 
 /**
- * @desc: Boiler plate code for recognizing balls through the use of the VEX vision sensor.
- * @param ptr: Required for compatibility with pros threading
+ * @desc: Resets all PD objects
  */
-void Robot::vis_sense(void *ptr) {
-	vision_signature_s_t red_signature = Vision::signature_from_utility(1, -669, 5305, 2318, -971, 571, -200, 0.700, 0);
-	vision_signature_s_t blue_signature = Vision::signature_from_utility(2, -3277, -2313, -2796, 9039, 13285, 11162, 3.000, 0);
-	vision.set_signature(1, &red_signature);
-	vision.set_signature(2, &blue_signature);
-	while (true) {
-		vision_object_s_t red_ball = vision.get_by_sig(0, 1);
-		vision_object_s_t blue_ball = vision.get_by_sig(0, 2);
-		int red_x_coord = red_ball.x_middle_coord;
-		int blue_x_coord = blue_ball.x_middle_coord;
-		delay(100);
-	}
+void Robot::reset_PD() {
+	power_PD.reset();
+	strafe_PD.reset();
+	turn_PD.reset();
 }
-
-
-void Robot::balls_updating(void *ptr) {
-	std::deque<double> BallsFront;
-	std::deque<double> BallsBack;
-
-	while(true) {
-		int BallsFrontLength = (int) BallsFront.size();
-		BallsFront.push_back((LF1.get_value()+LF2.get_value())/2);
-		if(BallsFrontLength == 10) {
-			BallsFront.pop_front();
-			int sum = 0;
-			for(int i = 0; i<BallsFront.size(); i++) sum += BallsFront[i];
-			BallsFrontAverage = sum/10;
-		}
-
-		int BallsBackLength = (int) BallsBack.size();
-		BallsBack.push_back(LB1.get_value());
-		if(BallsBackLength == 10) {
-			BallsBack.pop_front();
-			int sum = 0;
-			for(int i = 0; i<BallsBack.size(); i++) sum += BallsBack[i];
-			BallsBackAverage = sum/10;
-		}
-		delay(100);
-	}
-}
-
-
-void Robot::balls_checking(void *ptr) {
-	while (true) {
-		double sensorAverages = (LF1.get_value()+LF2.get_value())/2;
-		if(abs(BallsFrontAverage-sensorAverages) > 750) intake_count++;
-		if(abs(BallsBackAverage-LB1.get_value()) > 750) ejector_count++;
-		delay(5);
-	}
-}
-
-
-void Robot::balls_intaking(void *ptr) {
-	while (intaking){
-		if (UF.get_value() < 200){
-			Robot::intake(1);
-			intaking = false;
-		}
-	}
-}
-
-bool Robot::toggle_intaking(bool intaking_){
-	intaking = intaking_;
-	return intaking;
-}
-
-
 
 
 void Robot::collectData(void *ptr) {
@@ -600,21 +574,4 @@ void Robot::collectData(void *ptr) {
 	}
 
 	fclose(data_store);
-}
-
-
-/**
- * @desc: Resets IMU. Must be called in initialize.cpp and given at least 3 seconds to complete to allow IMU to calibrate
- */
-void Robot::reset_sensors() {
-	IMU.reset();
-}
-
-/**
- * @desc: Resets all PD objects
- */
-void Robot::reset_PD() {
-	power_PD.reset();
-	strafe_PD.reset();
-	turn_PD.reset();
 }

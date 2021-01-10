@@ -16,20 +16,19 @@ public:
 	static Motor FR;
 	static Motor BL;
 	static Motor BR;
-	static Motor IR;
 	static Motor IL;
+	static Motor IR;
 	static Motor R1;
 	static Motor R2;
 	static ADIEncoder LE;
 	static ADIEncoder RE;
 	static ADIEncoder BE;
 	static Imu IMU;
-	static Vision vision;
-	static ADIUltrasonic UT;
 	static ADIAnalogIn LB1;
 	static ADIAnalogIn LF1;
 	static ADIAnalogIn LF2;
 	static ADIUltrasonic UF;
+	static ADIUltrasonic UT;
 	static ADIDigitalIn LabelBumper;
 	/* Initializing motors, sensors, controller */
 
@@ -53,14 +52,18 @@ public:
 
 	static std::atomic<int> ejector_count;
 	static std::atomic<int> intake_count;
-	static bool store_complete;
-	static double fly_cap;
+	static std::atomic<double> BallsFrontAverage;
+	static std::atomic<double> BallsBackAverage;
+	static std::atomic<bool> Robot::intaking;
 	/* Static member variables used to store information about location and number of balls being stored by our bot obtained 
 	Robot::sensors */
 
+	static double fly_power;
+	static double increment;
+	static double fly_cap;
+	/* Static member variables for flywheel control */
+
 	static std::map<std::string, std::unique_ptr<pros::Task>> tasks;
-	static std::atomic<double> BallsFrontAverage;
-	static std::atomic<double> BallsBackAverage;
 	/* Mapping of tasks instantiated during the program */
 
 	static void start_task(std::string name, void (*func)(void *));
@@ -87,7 +90,6 @@ public:
 	static void mecanum(int power, int strafe, int turn);
 	static void intake(double coefficient, std::string powered = "both", bool fly_off = true, bool flip = false, bool macro = false, bool fast_fly = false);
 	static void brake(std::string mode);
-	static void flipout();
 	static void vis_sense(void *ptr);
 	static void reset_sensors();
 	static void reset_PD();
