@@ -50,14 +50,16 @@ double Robot::wheel_circumference = 2.75 * M_PI;
 int Robot::radius = 300;
 /* Presets for odometry and pure pursuit calculations */
 
-std::atomic<int> Robot::ejector_count = 0;
+std::atomic<int> Robot::ejector_count = -1;
 std::atomic<int> Robot::intake_count = 0;
 std::atomic<int> Robot::shooting_count = 0;
 std::atomic<int> Robot::storing_count = 0;
 std::atomic<double> Robot::BallsFrontAverage = 0;
 std::atomic<double> Robot::BallsBackAverage = 0;
 std::atomic<bool> Robot::intaking = false;
-/* Static member variables used to store information about location and number of balls being stored by our bot obtained 
+std::atomic<double> Robot::updateDelay = 5;
+std::atomic<double> Robot::checkDelay = 5;
+/* Static member variables used to store information about location and number of balls being stored by our bot obtained
 Robot::sensors */
 
 double Robot::fly_power = 0;
@@ -143,8 +145,8 @@ void Robot::fps(void *ptr) {
 		x = (float)x + global_dx;
 
 		lcd::print(3, "IMU value: %f", IMU.get_rotation());
-		lcd::print(4, "Offset: %d - Y: %f", int(turn_offset_y), (float)y);
-		lcd::print(5, "Offset: %d - X: %f", int(turn_offset_x), (float)x);
+//		lcd::print(4, "Offset: %d - Y: %f", int(turn_offset_y), (float)y);
+//		lcd::print(5, "Offset: %d - X: %f", int(turn_offset_x), (float)x);
 		printf("Y: %f - X: %f - IMU value: %f\n", (float)y, (float)x, IMU.get_rotation());
 
 		last_y = cur_y;
@@ -295,6 +297,17 @@ void Robot::set_fly_cap(double cap){
 }
 
 
+void Robot::shoot(void *ptr) {
+    int shooting_buffer = shooting_count;
+    while((shooting_count-shooting_buffer != storing_count) || (storing_count==0)) intake(0.75, "both", false, false, false, true);
+}
+
+void Robot::eject(void *ptr) {
+    int ejector_buffer = ejector_count;
+    while((ejector_count-ejector_buffer != storing_count) || (storing_count==0)) intake(1, "indexer", false, true);
+}
+
+
 void Robot::balls_updating(void *ptr) {
 	std::deque<double> BallsFront;
 	std::deque<double> BallsBack;
@@ -324,18 +337,32 @@ void Robot::balls_updating(void *ptr) {
             ut_toggle = true;
         } else if (!shoot_ball && ut_toggle) ut_toggle = false;
 
-		delay(100);
+		delay(updateDelay);
 	}
 }
 
 
 void Robot::balls_checking(void *ptr) {
-	while (true) {
+    bool intake_toggle=false;
+    bool ejector_toggle=false;
+    while (true) {
 		double sensorAverages = ((LF1.get_value()+LF2.get_value())/2);
-        if(abs(BallsFrontAverage-sensorAverages) > 750) R1.get_direction() > 0 ? intake_count++ : intake_count--;
-        if(abs(BallsBackAverage-LB1.get_value()) > 750) ejector_count++;
+
+		bool ball_at_intake = abs(BallsFrontAverage-sensorAverages) > 750;
+        if(ball_at_intake && !intake_toggle) {
+            if(R1.get_direction() < 0) intake_count++;
+            else if(R1.get_direction() > 0) intake_count--;
+            intake_toggle=true;
+        } else if (!ball_at_intake && intake_toggle) intake_toggle=false;
+
+        bool ball_at_ejector = abs(BallsBackAverage-LB1.get_value()) > 750;
+        if(ball_at_ejector && !ejector_toggle) {
+            ejector_count++;
+            ejector_toggle=true;
+        } else if (!ball_at_ejector && ejector_toggle) ejector_toggle=false;
+
         storing_count = intake_count-(ejector_count+shooting_count);
-        delay(5);
+        delay(checkDelay);
 	}
 }
 
@@ -366,14 +393,16 @@ void Robot::display(void *ptr)
         lcd::print(1, "LE: %d - RE: %d", LE.get_value(), RE.get_value());
         lcd::print(2, "Back Encoder: %d", BE.get_value());
         lcd::print(3, "IMU value: %f", IMU.get_rotation());
-        lcd::print(6, "LF1: %d LF2: %d LB1: %d", LF1.get_value(), LF2.get_value(), LB1.get_value());
-        lcd::print(7, "UF: %d UT: %d Storing Count: ", UF.get_value(), UT.get_value(), (int) storing_count);
+        lcd::print(4, "LF1: %d LF2: %d LB1: %d", LF1.get_value(), LF2.get_value(), LB1.get_value());
+        lcd::print(5, "UF: %d UT: %d SC: %d %d", UF.get_value(), UT.get_value(), (int) storing_count, (int) shooting_count);
         lcd::print(6, "FrontSensors: %d %d", (int) intake_count, (int) BallsFrontAverage);
         lcd::print(7, "EjectorSensors: %d %d", (int) ejector_count, (int) BallsBackAverage);
 
         delay(10);
     }
 }
+
+
 
 
 /**
@@ -391,6 +420,8 @@ void Robot::drive(void *ptr) {
 
 	int ejector_count=1;
 	int ejector_state=false;
+
+	int intake_buffer=0;
 
 	while (true) {
 		int power = master.get_analog(ANALOG_LEFT_Y);
@@ -453,8 +484,14 @@ void Robot::drive(void *ptr) {
 			else if (poop) intake(1, "indexer", false, true);
 			else if (just_indexer_fly) intake(1, "indexer", false, false);
 			else if (just_indexer) intake(1, "indexer", true, false);
-			else if (slow_indexer_fly) intake(0.25, "both", false, false, false, true);
+			else if (slow_indexer_fly) {
+			    checkDelay=500;
+                if (intake_count-intake_buffer != 2) intake(0.25, "both", false, false, false, true);
+                else intake(0.25, "indexer", false, false, false, true);
+            }
 			else intake(0);
+
+			if(!slow_indexer_fly) checkDelay=5;
 		}
 		delay(5);
 	}
