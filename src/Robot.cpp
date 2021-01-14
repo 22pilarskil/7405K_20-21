@@ -7,7 +7,9 @@
 #include <chrono>
 #include <unordered_map>
 #include <deque>
+#include <bits/stdc++.h> 
 using namespace pros;
+using namespace std;
 
 #define TO_RAD(n) n * M_PI / 180;
 /* Lambda function to convert number in degrees to radians. */
@@ -33,9 +35,9 @@ ADIUltrasonic Robot::UT(7, 8);
 ADIDigitalIn Robot::LabelBumper({{6, 3}});
 /* Initializing motors, sensors, controller */
 
-PD Robot::power_PD(.16, 0, 0);
-PD Robot::strafe_PD(.30, 0, 0);
-PD Robot::turn_PD(1.5, 0, 5);
+PD Robot::power_PD(.2, 0, 5);
+PD Robot::strafe_PD(.22, 0, 5);
+PD Robot::turn_PD(1.5, 0, 0);
 /* Initializing Our PD Instances */
 
 std::atomic<double> Robot::y = 0;
@@ -145,9 +147,8 @@ void Robot::fps(void *ptr) {
 		x = (float)x + global_dx;
 
 		lcd::print(3, "IMU value: %f", IMU.get_rotation());
-//		lcd::print(4, "Offset: %d - Y: %f", int(turn_offset_y), (float)y);
-//		lcd::print(5, "Offset: %d - X: %f", int(turn_offset_x), (float)x);
-		printf("Y: %f - X: %f - IMU value: %f\n", (float)y, (float)x, IMU.get_rotation());
+		lcd::print(5, "Y: %f - X: %f", (float)y, (float)x);
+		//printf("Y: %f - X: %f - IMU value: %f\n", (float)y, (float)x, IMU.get_rotation());
 
 		last_y = cur_y;
 		last_x = cur_x;
@@ -203,7 +204,7 @@ void Robot::move_to(std::vector<double> pose, std::vector<double> margin, std::v
 	example, moving to -358 deg would require almost a full 360 degree turn from 1 degree, but from its equivalent of -359
 	deg, it only takes a minor shift in position */
 
-	while (abs(y_error) > 30 * margin[0] || abs(x_error) > 30 * margin[1] || abs(imu_error) > 2 * margin[2])
+	while (abs(y_error) > 30 * margin[0] || abs(x_error) > 30 * margin[1] || abs(imu_error) > 1 * margin[2])
 	{ /* while Robot::y, Robot::x and IMU heading are all more than the specified margin away from the target */
 		
 		// if (time < seconds) intake(coefficient, powered);
@@ -251,7 +252,7 @@ void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, std::v
 	/* Instantiating filler variables that will be overwritten every iteration, instead of allocating memory to new 
 	objects */
 
-	for (int index = 0; index < points.size() - 1; index++)
+	for (int index = 0; index < points.size() - 2; index++)
 	{
 		start = points[index];
 		end = points[index + 1];
@@ -262,12 +263,13 @@ void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, std::v
 			/* Obtain pathing information through functions from PurePursuit.cpp */
 
 			std::vector<double> pose {target[0], target[1], heading};
-			Robot::move_to(pose, {1, 1, 1}, speeds, true);
+			move_to(pose, {1, 1, 1}, speeds, 0, true);
 			cur = {(float)y, (float)x};
 			delay(5);
 		}
 	}
-	
+	heading = get_degrees(points[points.size()-1], points[points.size()-2]);
+	move_to({points[points.size()-1][0], points[points.size()-1][1], heading});
 	brake("stop");
 	reset_PD();
 	lcd::print(6, "DONE");
@@ -393,9 +395,9 @@ void Robot::display(void *ptr)
         lcd::print(1, "LE: %d - RE: %d", LE.get_value(), RE.get_value());
         lcd::print(2, "Back Encoder: %d", BE.get_value());
         lcd::print(3, "IMU value: %f", IMU.get_rotation());
-        lcd::print(4, "LF1: %d LF2: %d LB1: %d", LF1.get_value(), LF2.get_value(), LB1.get_value());
-        lcd::print(5, "UF: %d UT: %d SC: %d %d", UF.get_value(), UT.get_value(), (int) storing_count, (int) shooting_count);
-        lcd::print(6, "FrontSensors: %d %d", (int) intake_count, (int) BallsFrontAverage);
+        //lcd::print(4, "LF1: %d LF2: %d LB1: %d", LF1.get_value(), LF2.get_value(), LB1.get_value());
+        //lcd::print(5, "UF: %d UT: %d SC: %d %d", UF.get_value(), UT.get_value(), (int) storing_count, (int) shooting_count);
+        //lcd::print(6, "FrontSensors: %d %d", (int) intake_count, (int) BallsFrontAverage);
         lcd::print(7, "EjectorSensors: %d %d", (int) ejector_count, (int) BallsBackAverage);
 
         delay(10);
@@ -506,10 +508,28 @@ void Robot::drive(void *ptr) {
  * @param turn: Degree of turning movement
  */
 void Robot::mecanum(int power, int strafe, int turn) {
-	FL = power + strafe + turn;
-	FR = power - strafe - turn;
-	BL = power - strafe + turn;
-	BR = power + strafe - turn;
+
+	int powers[] {
+		power + strafe + turn,
+		power - strafe - turn,
+		power - strafe + turn, 
+		power + strafe - turn
+	};
+
+	int max = *max_element(powers, powers + 4);
+	int min = abs(*min_element(powers, powers + 4));
+
+	double true_max = double(std::max(max, min));
+	double scalar = (true_max > 127) ? 127 / true_max : 1;
+
+	lcd::print(4, "%f %f", scalar, true_max);
+	scalar = scalar;
+
+	FL = (power + strafe + turn) * scalar;
+	FR = (power - strafe - turn) * scalar;
+	BL = (power - strafe + turn) * scalar;
+	BR = (power + strafe - turn) * scalar;
+	delay(5);
 }
 
 /**
