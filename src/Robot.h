@@ -94,7 +94,7 @@ public:
 	static void display(void *ptr);
 	static void drive(void *ptr);
 	static void mecanum(int power, int strafe, int turn);
-	static void intake(double coefficient, std::string powered = "both", bool fly_off = true, bool flip = false, bool macro = false, bool fast_fly = false);
+	static void intake(std::vector<int> coefficients);
 	static void brake(std::string mode);
 	static void reset_sensors();
 	static void reset_PD();

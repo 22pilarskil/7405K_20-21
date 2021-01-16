@@ -21,15 +21,15 @@ Motor Robot::BL(12);
 Motor Robot::BR(19, true);
 Motor Robot::IL(5, true);
 Motor Robot::IR(21);
-Motor Robot::R1(7, true);
+Motor Robot::R1(7);
 Motor Robot::R2(8, true);
 ADIEncoder Robot::LE(5, 6);
 ADIEncoder Robot::RE(1, 2, true);
 ADIEncoder Robot::BE(3, 4);
 Imu Robot::IMU(4);
 ADIAnalogIn Robot::LB1({{6, 6}});
-ADIAnalogIn Robot::LF1({{6, 7}});
-ADIAnalogIn Robot::LF2({{6, 8}});
+ADIAnalogIn Robot::LF2({{6, 7}});
+ADIAnalogIn Robot::LF1({{6, 8}});
 ADIUltrasonic Robot::UF({{6, 1, 2}});
 ADIUltrasonic Robot::UT(7, 8);
 ADIDigitalIn Robot::LabelBumper({{6, 3}});
@@ -280,44 +280,31 @@ void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, std::v
  * @desc Takes in information about where balls are as well as how many there are to shoot them in quick succession
  * @param ball_id: 1 to shoot from top stored position only, 0 to shoot a ball from bottom store, -1 to shoot from both
  */ 
-void Robot::quickscore(int num_balls, int speed) {
-	while(UT.get_value() > 300){
-		intake(speed, "indexer", false);
-	}
-	delay(100);
-	intake(0);
-	if (num_balls == 1) return;
-	while(UT.get_value() > 300){
-		intake(speed, "indexer", false);
-	}
-	intake(0);
-}
-
 
 void Robot::set_fly_cap(double cap){
 	fly_cap = cap;
 }
 
 
-void Robot::shoot(void *ptr) {
-    int shooting_buffer = shooting_count;
-    while((shooting_count-shooting_buffer != storing_count) || (storing_count==0)) intake(0.75, "both", false, false, false, true);
-}
+// void Robot::shoot(void *ptr) {
+//     int shooting_buffer = shooting_count;
+//     while((shooting_count-shooting_buffer != storing_count) || (storing_count==0)) intake(0.75, "both", false, false, false, true);
+// }
 
-void Robot::eject(void *ptr) {
-    int ejector_buffer = ejector_count;
-    while((ejector_count-ejector_buffer != storing_count) || (storing_count==0)) intake(1, "indexer", false, true);
-}
+// void Robot::eject(void *ptr) {
+//     int ejector_buffer = ejector_count;
+//     while((ejector_count-ejector_buffer != storing_count) || (storing_count==0)) intake(1, "indexer", false, true);
+// }
 
 
 void Robot::balls_updating(void *ptr) {
 	std::deque<double> BallsFront;
 	std::deque<double> BallsBack;
-	bool ut_toggle=false;
+	
 
 	while(true) {
 		int BallsFrontLength = (int) BallsFront.size();
-		BallsFront.push_back((LF1.get_value()+LF2.get_value())/2);
+		BallsFront.push_back(LF1.get_value());
 		if(BallsFrontLength == 10) {
 			BallsFront.pop_front();
 			int sum = 0;
@@ -333,13 +320,9 @@ void Robot::balls_updating(void *ptr) {
 			for(int i = 0; i<BallsBack.size(); i++) sum += BallsBack[i];
 			BallsBackAverage = sum/10;
 		}
-		bool shoot_ball = UT.get_value() < 100;
-        if(shoot_ball && !ut_toggle) {
-            shooting_count++;
-            ut_toggle = true;
-        } else if (!shoot_ball && ut_toggle) ut_toggle = false;
 
-		delay(updateDelay);
+		
+		delay(100);
 	}
 }
 
@@ -347,36 +330,50 @@ void Robot::balls_updating(void *ptr) {
 void Robot::balls_checking(void *ptr) {
     bool intake_toggle=false;
     bool ejector_toggle=false;
+
+    bool ut_toggle=false;
+	bool uf_toggle=false;
+
     while (true) {
-		double sensorAverages = ((LF1.get_value()+LF2.get_value())/2);
-
-		bool ball_at_intake = abs(BallsFrontAverage-sensorAverages) > 750;
-        if(ball_at_intake && !intake_toggle) {
-            if(R1.get_direction() < 0) intake_count++;
-            else if(R1.get_direction() > 0) intake_count--;
-            intake_toggle=true;
-        } else if (!ball_at_intake && intake_toggle) intake_toggle=false;
-
         bool ball_at_ejector = abs(BallsBackAverage-LB1.get_value()) > 750;
         if(ball_at_ejector && !ejector_toggle) {
             ejector_count++;
             ejector_toggle=true;
         } else if (!ball_at_ejector && ejector_toggle) ejector_toggle=false;
 
+
+		bool shoot_ball = UT.get_value() < 100;
+        if(shoot_ball && !ut_toggle) {
+            shooting_count++;
+            ut_toggle = true;
+        } else if (!shoot_ball && ut_toggle) ut_toggle = false;
+
+		bool ball_at_intake = abs(BallsFrontAverage-LF1.get_value()) > 750;
+        if(ball_at_intake && !intake_toggle) {
+        	intake_count ++;
+            intake_toggle=true;
+        } else if (!ball_at_intake && intake_toggle) intake_toggle=false;
+
+        // bool intake_ball = UF.get_value() < 100;
+        // if(intake_ball && !uf_toggle) {
+        //     intake_count++;
+        //     uf_toggle = true;
+        // } else if (!intake_ball && uf_toggle) uf_toggle = false;
+
         storing_count = intake_count-(ejector_count+shooting_count);
-        delay(checkDelay);
+        delay(5);
 	}
 }
 
 
-void Robot::balls_intaking(void *ptr) {
-	while (intaking){
-		if (UF.get_value() < 200){
-			intake(1);
-			intaking = false;
-		}
-	}
-}
+// void Robot::balls_intaking(void *ptr) {
+// 	while (intaking){
+// 		if (UF.get_value() < 200){
+// 			intake(1);
+// 			intaking = false;
+// 		}
+// 	}
+// }
 
 bool Robot::toggle_intaking(bool intaking_){
 	intaking = intaking_;
@@ -395,8 +392,8 @@ void Robot::display(void *ptr)
         lcd::print(1, "LE: %d - RE: %d", LE.get_value(), RE.get_value());
         lcd::print(2, "Back Encoder: %d", BE.get_value());
         lcd::print(3, "IMU value: %f", IMU.get_rotation());
-        //lcd::print(4, "LF1: %d LF2: %d LB1: %d", LF1.get_value(), LF2.get_value(), LB1.get_value());
-        //lcd::print(5, "UF: %d UT: %d SC: %d %d", UF.get_value(), UT.get_value(), (int) storing_count, (int) shooting_count);
+        lcd::print(4, "LF1: %d LF2: %d LB1: %d", LF1.get_value(), LF2.get_value(), LB1.get_value());
+        lcd::print(5, "UF: %d UT: %d SC: %d %d", UF.get_value(), UT.get_value(), (int) storing_count, (int) shooting_count);
         //lcd::print(6, "FrontSensors: %d %d", (int) intake_count, (int) BallsFrontAverage);
         lcd::print(7, "EjectorSensors: %d %d", (int) ejector_count, (int) BallsBackAverage);
 
@@ -421,9 +418,10 @@ void Robot::drive(void *ptr) {
 	bool flip = false;
 
 	int ejector_count=1;
-	int ejector_state=false;
+	bool ejector_state=false;
 
-	int intake_buffer=0;
+	bool store_state=false;
+	int last_store_count;
 
 	while (true) {
 		int power = master.get_analog(ANALOG_LEFT_Y);
@@ -434,67 +432,85 @@ void Robot::drive(void *ptr) {
 
 		mecanum(power, strafe, turn);
 
-		// bool quickscore_ = master.get_digital(DIGITAL_A);
-        // if (quickscore_) quickscore();
-
 		//Intakes/Outtakes
 		bool outtake = master.get_digital(DIGITAL_L1);
-        bool just_intakes_indexer = master.get_digital(DIGITAL_R1);
         bool intake_ = master.get_digital(DIGITAL_X);
+        bool intakes_indexer = master.get_digital(DIGITAL_R1);
 
         //Indexer/Flywheel
-		bool just_indexer = master.get_digital(DIGITAL_X);
-		bool slow_indexer_fly = master.get_digital(DIGITAL_B);
-		bool just_indexer_fly = master.get_digital(DIGITAL_R2) || master.get_digital(DIGITAL_Y);
+		bool indexer = master.get_digital(DIGITAL_X);
+		bool ejector = master.get_digital(DIGITAL_L2);
+		bool indexer_fly = master.get_digital(DIGITAL_R2);
 		
-		//Slower shoot
-		fly_cap = 1;
-		if (master.get_digital(DIGITAL_Y)) fly_cap = .8;
+		//Storing	
+		bool store1 = master.get_digital(DIGITAL_B) || master.get_digital(DIGITAL_A);
+		bool store2 = master.get_digital(DIGITAL_Y);
+
+
+
+
+
+		if ((store1 || store2) && !store_state) {
+			last_store_count=intake_count;
+			store_state=true;
+			R1 = R2 = -127;
+			delay(100);
+		} else if (!(store1 || store2)) store_state=false;
+
+
+		if((ejector || intakes_indexer) && !ejector_state) {
+			ejector_state=true;
+			if ((intakes_indexer && ejector_count%2 == 0) || ejector) ejector_count++;
+		} else if (!ejector) ejector_state=false;
+		bool eject = ejector_count%2 == 0;
+
+		int IL_ = 0;
+		int IR_ = 0;
+		int R1_ = 0;
+		int R2_ = 0;
+
+		lcd::print(6, "%d %d", int(last_store_count), int(intake_count));
+
+
+
+		if (indexer_fly) R1_ = R2_ = 127;
+
+		if (intakes_indexer) {
+			IL_ = IR_ = R1_ = 127;
+			if (!indexer_fly) R2.set_brake_mode(E_MOTOR_BRAKE_HOLD);
+		}
+
+		if (outtake) IL_ = IR_ = -127 * .5;
+
+		if (store1) {
+			if (intake_count - last_store_count < 1) {
+				IL_ = IR_ = 127;
+				delay(150);
+			}
+			R2_ = 127;
+			R1_ = 127 * .25;
+		}
+
+		if (store2) {
+			if (intake_count - last_store_count < 2) {
+				IL_ = IR_ = 127;
+				delay(150);
+			}
+			R2_ = 127;
+			R1_ = 127 * .25;
+		}
+
+		if (eject) {
+			R2_ = -127;
+			R1_ = 127;
+		}
+
+		intake({IL_, IR_, R1_, R2_});
+
+
+
 
         //flip
-		bool poop = master.get_digital(DIGITAL_L2);
-		if (poop) flip = true;
-
-		if (poop || just_indexer || just_indexer_fly || just_intakes_indexer) motorpwr = 1;
-		else if (outtake) motorpwr = -1;
-
-		if (poop) flip = true;
-
-		if((poop || just_intakes_indexer) && !ejector_state) {
-			ejector_state=true;
-			if(ejector_count%2 != 0 && just_intakes_indexer) ejector_count=ejector_count;
-			else ejector_count++;
-		} else if (!poop) ejector_state=false;
-
-		if (just_intakes_indexer) 
-
-		lcd::print(7, "ejector count %d", ejector_count);
-
-		if (ejector_count % 2 == 0 && !just_intakes_indexer){
-			bool macro = false;
-			if (outtake) macro = true;
-			intake(1, "indexer", false, true, macro);
-		}
-		else {
-
-			if (just_intakes_indexer || outtake) {
-				motorpwr = (just_intakes_indexer) ? 1 : -1;
-				if (just_intakes_indexer) intake(motorpwr, "both", !just_indexer_fly, false);
-				if (outtake) intake(motorpwr, "intakes", !just_indexer_fly, false);
-			}
-			else if (intake_) intake(1, "intakes");
-			else if (poop) intake(1, "indexer", false, true);
-			else if (just_indexer_fly) intake(1, "indexer", false, false);
-			else if (just_indexer) intake(1, "indexer", true, false);
-			else if (slow_indexer_fly) {
-			    checkDelay=500;
-                if (intake_count-intake_buffer != 2) intake(0.25, "both", false, false, false, true);
-                else intake(0.25, "indexer", false, false, false, true);
-            }
-			else intake(0);
-
-			if(!slow_indexer_fly) checkDelay=5;
-		}
 		delay(5);
 	}
 }
@@ -538,49 +554,18 @@ void Robot::mecanum(int power, int strafe, int turn) {
  * @param flip: The direction of our ejector motor, either in ejection mode or intake mode.
  * @param powered: Tells which motors to power (intakes only, indexer only, or both)
  */
-void Robot::intake(double coefficient, std::string powered, bool fly_off,  bool flip, bool macro, bool fast_fly) {
-	if (fly_power < fly_cap) fly_power += increment;
-	if (coefficient == 0) {
-		fly_power = 0;
-		IL = 0;
-		IR = 0;
-		R1 = 0;
-		R2 = 0;
-		return;
-	}
-	if (macro){
-		R1 = -coefficient * 127;
-		coefficient = std::max(0.0, coefficient);
-		if (fly_off) R2 = 0;
-		else R2 = fly_power * ((!flip) ? coefficient * 127 : -coefficient * 127);
-		double revised = -.4;
-		IL = int(revised * 127);
-		IR = int(revised * 127);
+void Robot::intake(std::vector<int> coefficients) {
+	int IL_ = coefficients[0];
+	int IR_ = coefficients[1];
+	int R1_ = coefficients[2];
+	int R2_ = coefficients[3];
 
-	}
-	else {
-		if (powered.compare("intakes") == 0 || powered.compare("both") == 0) {
-			double revised = (coefficient > 0) ? coefficient : coefficient * .4;
-			revised = (fast_fly) ? 1 : revised;
-			IL = int(revised * 127);
-			IR = int(revised * 127);
-			if (!powered.compare("both") == 0 && !macro) {
-				R1 = 0;
-				R2 = 0;
-			}
-		}
-		if (powered.compare("indexer") == 0 || powered.compare("both") == 0) {
-			R1 = -coefficient * 127;
-			coefficient = std::max(0.0, coefficient);
-			if (fly_off) R2 = 0;
-			else if (fast_fly) R2 = fly_power * ((!flip) ?  127 : -127);
-			else R2 = fly_power * ((!flip) ? coefficient * 127 : -coefficient * 127);
-			if (!powered.compare("both") == 0 && !macro) {
-				IL = 0;
-				IR = 0;
-			}
-		}
-	}
+	IL = IL_;
+	IR = IR_;
+	R1 = R1_;
+	R2 = R2_;
+
+	
 	//if (coefficient < 0) coefficient *= .1;
 }
 

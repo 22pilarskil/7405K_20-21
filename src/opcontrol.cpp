@@ -14,7 +14,6 @@ void opcontrol() {
 	Robot::start_task("SENSORUPDATING", Robot::balls_updating);
 	Robot::start_task("SENSORCHECKING", Robot::balls_checking);
 
-	Robot::start_task("BALLSINTAKING", Robot::balls_intaking);
 
 	Robot::start_task("DRIVE", Robot::drive);
 	Robot::start_task("FPS", Robot::fps);
