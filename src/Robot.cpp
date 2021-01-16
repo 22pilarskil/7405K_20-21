@@ -352,17 +352,17 @@ void Robot::balls_checking(void *ptr) {
             intake_toggle=true;
         } else if (!intake_ball && intake_toggle) intake_toggle=false;
 
-//		bool ball_at_intake = abs(BallsFrontAverage-LF1.get_value()) > 750;
-//        if(ball_at_intake && !intake_toggle) {
-//        	intake_count ++;
-//            intake_toggle=true;
-//        } else if (!ball_at_intake && intake_toggle) intake_toggle=false;
+		// bool ball_at_intake = abs(BallsFrontAverage-LF1.get_value()) > 750;
+  //      if(ball_at_intake && !intake_toggle) {
+  //      	intake_count ++;
+  //          intake_toggle=true;
+  //      } else if (!ball_at_intake && intake_toggle) intake_toggle=false;
 
-        // bool intake_ball = UF.get_value() < 100;
-        // if(intake_ball && !uf_toggle) {
-        //     intake_count++;
-        //     uf_toggle = true;
-        // } else if (!intake_ball && uf_toggle) uf_toggle = false;
+  //       bool intake_ball = UF.get_value() < 100;
+  //       if(intake_ball && !uf_toggle) {
+  //           intake_count++;
+  //           uf_toggle = true;
+  //       } else if (!intake_ball && uf_toggle) uf_toggle = false;
 
         storing_count = intake_count-(ejector_count+shooting_count);
         delay(30);
@@ -370,14 +370,17 @@ void Robot::balls_checking(void *ptr) {
 }
 
 
-// void Robot::balls_intaking(void *ptr) {
-// 	while (intaking){
-// 		if (UF.get_value() < 200){
-// 			intake(1);
-// 			intaking = false;
-// 		}
-// 	}
-// }
+void Robot::balls_intaking(void *ptr) {
+	intake({-127, -127, 0, 0});
+	delay(700);
+	intake({0, 0, 0, 0});
+	while (intaking){
+		if (UF.get_value() < 200){
+			intake(1);
+			intaking = false;
+		}
+	}
+}
 
 bool Robot::toggle_intaking(bool intaking_){
 	intaking = intaking_;
@@ -447,11 +450,8 @@ void Robot::drive(void *ptr) {
 		bool indexer_fly = master.get_digital(DIGITAL_R2);
 		
 		//Storing	
-		bool store1 = master.get_digital(DIGITAL_B) || master.get_digital(DIGITAL_A);
+		bool store1 = master.get_digital(DIGITAL_B);
 		bool store2 = master.get_digital(DIGITAL_Y);
-
-
-
 
 
 		if ((store1 || store2) && !store_state) {
@@ -474,8 +474,6 @@ void Robot::drive(void *ptr) {
 		int R2_ = 0;
 
 		lcd::print(6, "%d %d", int(last_store_count), int(intake_count));
-
-
 
 		if (indexer_fly) R1_ = R2_ = 127;
 
@@ -511,10 +509,6 @@ void Robot::drive(void *ptr) {
 
 		intake({IL_, IR_, R1_, R2_});
 
-
-
-
-        //flip
 		delay(5);
 	}
 }
@@ -542,14 +536,10 @@ void Robot::mecanum(int power, int strafe, int turn) {
 	double true_max = double(std::max(max, min));
 	double scalar = (true_max > 127) ? 127 / true_max : 1;
 
-	lcd::print(4, "%f %f", scalar, true_max);
-	scalar = scalar;
-
 	FL = (power + strafe + turn) * scalar;
 	FR = (power - strafe - turn) * scalar;
 	BL = (power - strafe + turn) * scalar;
 	BR = (power + strafe - turn) * scalar;
-	delay(5);
 }
 
 /**
@@ -559,18 +549,10 @@ void Robot::mecanum(int power, int strafe, int turn) {
  * @param powered: Tells which motors to power (intakes only, indexer only, or both)
  */
 void Robot::intake(std::vector<int> coefficients) {
-	int IL_ = coefficients[0];
-	int IR_ = coefficients[1];
-	int R1_ = coefficients[2];
-	int R2_ = coefficients[3];
-
-	IL = IL_;
-	IR = IR_;
-	R1 = R1_;
-	R2 = R2_;
-
-	
-	//if (coefficient < 0) coefficient *= .1;
+	IL = coefficients[0];
+	IR = coefficients[1];
+	R1 = coefficients[2];
+	R2 = coefficients[3];
 }
 
 
