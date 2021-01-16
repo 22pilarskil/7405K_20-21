@@ -24,7 +24,8 @@ public:
 	static ADIEncoder RE;
 	static ADIEncoder BE;
 	static Imu IMU;
-	static ADIAnalogIn LB1;
+    static ADIDigitalIn LM1;
+    static ADIAnalogIn LB1;
 	static ADIAnalogIn LF1;
 	static ADIAnalogIn LF2;
 	static ADIUltrasonic UF;

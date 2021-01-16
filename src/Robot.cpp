@@ -32,7 +32,7 @@ ADIAnalogIn Robot::LF2({{6, 7}});
 ADIAnalogIn Robot::LF1({{6, 8}});
 ADIUltrasonic Robot::UF({{6, 1, 2}});
 ADIUltrasonic Robot::UT(7, 8);
-ADIDigitalIn Robot::LabelBumper({{6, 3}});
+ADIDigitalIn Robot::LM1({{6, 3}});
 /* Initializing motors, sensors, controller */
 
 PD Robot::power_PD(.2, 0, 5);
@@ -298,32 +298,8 @@ void Robot::set_fly_cap(double cap){
 
 
 void Robot::balls_updating(void *ptr) {
-	std::deque<double> BallsFront;
-	std::deque<double> BallsBack;
-	
 
-	while(true) {
-		int BallsFrontLength = (int) BallsFront.size();
-		BallsFront.push_back(LF1.get_value());
-		if(BallsFrontLength == 10) {
-			BallsFront.pop_front();
-			int sum = 0;
-			for(int i = 0; i<BallsFront.size(); i++) sum += BallsFront[i];
-			BallsFrontAverage = sum/10;
-		}
 
-		int BallsBackLength = (int) BallsBack.size();
-		BallsBack.push_back(LB1.get_value());
-		if(BallsBackLength == 10) {
-			BallsBack.pop_front();
-			int sum = 0;
-			for(int i = 0; i<BallsBack.size(); i++) sum += BallsBack[i];
-			BallsBackAverage = sum/10;
-		}
-
-		
-		delay(100);
-	}
 }
 
 
@@ -334,7 +310,29 @@ void Robot::balls_checking(void *ptr) {
     bool ut_toggle=false;
 	bool uf_toggle=false;
 
+    std::deque<double> BallsFront;
+    std::deque<double> BallsBack;
+
+
     while (true) {
+//        int BallsFrontLength = (int) BallsFront.size();
+//        BallsFront.push_back(LF1.get_value());
+//        if(BallsFrontLength == 10) {
+//            BallsFront.pop_front();
+//            int sum = 0;
+//            for(int i = 0; i<BallsFront.size(); i++) sum += BallsFront[i];
+//            BallsFrontAverage = sum/10;
+//        }
+
+        int BallsBackLength = (int) BallsBack.size();
+        BallsBack.push_back(LB1.get_value());
+        if(BallsBackLength == 10) {
+            BallsBack.pop_front();
+            int sum = 0;
+            for(int i = 0; i<BallsBack.size(); i++) sum += BallsBack[i];
+            BallsBackAverage = sum/10;
+        }
+
         bool ball_at_ejector = abs(BallsBackAverage-LB1.get_value()) > 750;
         if(ball_at_ejector && !ejector_toggle) {
             ejector_count++;
@@ -348,11 +346,17 @@ void Robot::balls_checking(void *ptr) {
             ut_toggle = true;
         } else if (!shoot_ball && ut_toggle) ut_toggle = false;
 
-		bool ball_at_intake = abs(BallsFrontAverage-LF1.get_value()) > 750;
-        if(ball_at_intake && !intake_toggle) {
-        	intake_count ++;
+        bool intake_ball = LM1.get_value();
+        if(intake_ball && !intake_toggle) {
+            intake_count ++;
             intake_toggle=true;
-        } else if (!ball_at_intake && intake_toggle) intake_toggle=false;
+        } else if (!intake_ball && intake_toggle) intake_toggle=false;
+
+//		bool ball_at_intake = abs(BallsFrontAverage-LF1.get_value()) > 750;
+//        if(ball_at_intake && !intake_toggle) {
+//        	intake_count ++;
+//            intake_toggle=true;
+//        } else if (!ball_at_intake && intake_toggle) intake_toggle=false;
 
         // bool intake_ball = UF.get_value() < 100;
         // if(intake_ball && !uf_toggle) {
@@ -361,7 +365,7 @@ void Robot::balls_checking(void *ptr) {
         // } else if (!intake_ball && uf_toggle) uf_toggle = false;
 
         storing_count = intake_count-(ejector_count+shooting_count);
-        delay(5);
+        delay(30);
 	}
 }
 
@@ -453,8 +457,8 @@ void Robot::drive(void *ptr) {
 		if ((store1 || store2) && !store_state) {
 			last_store_count=intake_count;
 			store_state=true;
-			R1 = R2 = -127;
-			delay(100);
+			R1 = -127;
+			delay(20);
 		} else if (!(store1 || store2)) store_state=false;
 
 
