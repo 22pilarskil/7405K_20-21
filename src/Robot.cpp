@@ -304,7 +304,7 @@ void Robot::balls_updating(void *ptr) {
 
 
 void Robot::balls_checking(void *ptr) {
-    bool intake_toggle=false;
+    int intake_toggle=0;
     bool ejector_toggle=false;
 
     bool ut_toggle=false;
@@ -347,10 +347,10 @@ void Robot::balls_checking(void *ptr) {
         } else if (!shoot_ball && ut_toggle) ut_toggle = false;
 
         bool intake_ball = LM1.get_value();
-        if(intake_ball && !intake_toggle) {
-            intake_count ++;
-            intake_toggle=true;
-        } else if (!intake_ball && intake_toggle) intake_toggle=false;
+        if(intake_ball && intake_toggle==10) {
+            intake_count++;
+            intake_toggle=0;
+        } else if (!intake_ball && intake_toggle<10) intake_toggle++;
 
 		// bool ball_at_intake = abs(BallsFrontAverage-LF1.get_value()) > 750;
   //      if(ball_at_intake && !intake_toggle) {
@@ -376,7 +376,7 @@ void Robot::balls_intaking(void *ptr) {
 	intake({0, 0, 0, 0});
 	while (intaking){
 		if (UF.get_value() < 200){
-			intake(1);
+			intake({127, 127, 0, 0});
 			intaking = false;
 		}
 	}
@@ -457,7 +457,7 @@ void Robot::drive(void *ptr) {
 		if ((store1 || store2) && !store_state) {
 			last_store_count=intake_count;
 			store_state=true;
-			R1 = -127;
+			R1 = -127 * .3;
 			delay(20);
 		} else if (!(store1 || store2)) store_state=false;
 
@@ -482,7 +482,7 @@ void Robot::drive(void *ptr) {
 			if (!indexer_fly) R2.set_brake_mode(E_MOTOR_BRAKE_HOLD);
 		}
 
-		if (outtake) IL_ = IR_ = -127 * .5;
+		if (outtake) IL_ = IR_ = -127 * .6;
 
 		if (store1) {
 			if (intake_count - last_store_count < 1) {
@@ -536,10 +536,10 @@ void Robot::mecanum(int power, int strafe, int turn) {
 	double true_max = double(std::max(max, min));
 	double scalar = (true_max > 127) ? 127 / true_max : 1;
 
-	FL = (power + strafe + turn) * scalar;
-	FR = (power - strafe - turn) * scalar;
-	BL = (power - strafe + turn) * scalar;
-	BR = (power + strafe - turn) * scalar;
+	FL = (power + strafe + turn);// * scalar;
+	FR = (power - strafe - turn);// * scalar;
+	BL = (power - strafe + turn);// * scalar;
+	BR = (power + strafe - turn);// * scalar;
 }
 
 /**
