@@ -457,8 +457,10 @@ void Robot::drive(void *ptr) {
 		if ((store1 || store2) && !store_state) {
 			last_store_count=intake_count;
 			store_state=true;
-			R1 = -127 * .3;
-			delay(20);
+			R1 = -127 * .5;
+			delay(10);
+			R2 = -127 * .1;
+			delay(10);
 		} else if (!(store1 || store2)) store_state=false;
 
 
@@ -503,6 +505,7 @@ void Robot::drive(void *ptr) {
 		}
 
 		if (eject) {
+			if (UF.get_value() < 200) IL_ = IR_ = 127;
 			R2_ = -127;
 			R1_ = 127;
 		}
