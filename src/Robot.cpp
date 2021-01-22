@@ -35,9 +35,9 @@ ADIUltrasonic Robot::UT(7, 8);
 ADIDigitalIn Robot::LM1({{6, 3}});
 /* Initializing motors, sensors, controller */
 
-PD Robot::power_PD(.2, 0, 5);
-PD Robot::strafe_PD(.22, 0, 5);
-PD Robot::turn_PD(1.5, 0, 0);
+PD Robot::power_PD(.2, 0, 10);
+PD Robot::strafe_PD(.22, 0, 10);
+PD Robot::turn_PD(1.5, 0, 10);
 /* Initializing Our PD Instances */
 
 std::atomic<double> Robot::y = 0;
@@ -59,6 +59,7 @@ std::atomic<int> Robot::storing_count = 0;
 std::atomic<double> Robot::BallsFrontAverage = 0;
 std::atomic<double> Robot::BallsBackAverage = 0;
 std::atomic<bool> Robot::intaking = false;
+std::atomic<int> Robot::intake_delay = 0;
 std::atomic<double> Robot::updateDelay = 5;
 std::atomic<double> Robot::checkDelay = 5;
 /* Static member variables used to store information about location and number of balls being stored by our bot obtained
@@ -241,7 +242,7 @@ void Robot::move_to(std::vector<double> pose, std::vector<double> margin, std::v
  	a straight line was drawn between each consecutive pair of points) serves as the model for our curved, generated path 
  * @param speeds: Same function and format as @param speeds from Robot::move_to, see above
  */
-void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, std::vector<double> speeds)
+void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, std::vector<double> final_point, std::vector<double> speeds)
 {
 
 	std::vector<double> end;
@@ -252,7 +253,7 @@ void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, std::v
 	/* Instantiating filler variables that will be overwritten every iteration, instead of allocating memory to new 
 	objects */
 
-	for (int index = 0; index < points.size() - 2; index++)
+	for (int index = 0; index < points.size() - 1; index++)
 	{
 		start = points[index];
 		end = points[index + 1];
@@ -268,8 +269,7 @@ void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, std::v
 			delay(5);
 		}
 	}
-	heading = get_degrees(points[points.size()-1], points[points.size()-2]);
-	move_to({points[points.size()-1][0], points[points.size()-1][1], heading});
+	move_to(final_point, {1, 1, 1}, {2, 2, 2});
 	brake("stop");
 	reset_PD();
 	lcd::print(6, "DONE");
@@ -286,21 +286,7 @@ void Robot::set_fly_cap(double cap){
 }
 
 
-// void Robot::shoot(void *ptr) {
-//     int shooting_buffer = shooting_count;
-//     while((shooting_count-shooting_buffer != storing_count) || (storing_count==0)) intake(0.75, "both", false, false, false, true);
-// }
 
-// void Robot::eject(void *ptr) {
-//     int ejector_buffer = ejector_count;
-//     while((ejector_count-ejector_buffer != storing_count) || (storing_count==0)) intake(1, "indexer", false, true);
-// }
-
-
-void Robot::balls_updating(void *ptr) {
-
-
-}
 
 
 void Robot::balls_checking(void *ptr) {
@@ -315,14 +301,6 @@ void Robot::balls_checking(void *ptr) {
 
 
     while (true) {
-//        int BallsFrontLength = (int) BallsFront.size();
-//        BallsFront.push_back(LF1.get_value());
-//        if(BallsFrontLength == 10) {
-//            BallsFront.pop_front();
-//            int sum = 0;
-//            for(int i = 0; i<BallsFront.size(); i++) sum += BallsFront[i];
-//            BallsFrontAverage = sum/10;
-//        }
 
         int BallsBackLength = (int) BallsBack.size();
         BallsBack.push_back(LB1.get_value());
@@ -352,27 +330,20 @@ void Robot::balls_checking(void *ptr) {
             intake_toggle=0;
         } else if (!intake_ball && intake_toggle<10) intake_toggle++;
 
-		// bool ball_at_intake = abs(BallsFrontAverage-LF1.get_value()) > 750;
-  //      if(ball_at_intake && !intake_toggle) {
-  //      	intake_count ++;
-  //          intake_toggle=true;
-  //      } else if (!ball_at_intake && intake_toggle) intake_toggle=false;
-
-  //       bool intake_ball = UF.get_value() < 100;
-  //       if(intake_ball && !uf_toggle) {
-  //           intake_count++;
-  //           uf_toggle = true;
-  //       } else if (!intake_ball && uf_toggle) uf_toggle = false;
-
         storing_count = intake_count-(ejector_count+shooting_count);
         delay(30);
 	}
 }
 
+int Robot::count(){
+	return int(intake_count);
+}
+
 
 void Robot::balls_intaking(void *ptr) {
-	intake({-127, -127, 0, 0});
-	delay(700);
+	IL = -127;
+	IR = -127;
+	delay(intake_delay);
 	intake({0, 0, 0, 0});
 	while (intaking){
 		if (UF.get_value() < 200){
@@ -382,8 +353,9 @@ void Robot::balls_intaking(void *ptr) {
 	}
 }
 
-bool Robot::toggle_intaking(bool intaking_){
+bool Robot::toggle_intaking(bool intaking_, int intake_delay_){
 	intaking = intaking_;
+	intake_delay = intake_delay_;
 	return intaking;
 }
 
@@ -401,14 +373,45 @@ void Robot::display(void *ptr)
         lcd::print(3, "IMU value: %f", IMU.get_rotation());
         lcd::print(4, "LF1: %d LF2: %d LB1: %d", LF1.get_value(), LF2.get_value(), LB1.get_value());
         lcd::print(5, "UF: %d UT: %d SC: %d %d", UF.get_value(), UT.get_value(), (int) storing_count, (int) shooting_count);
-        //lcd::print(6, "FrontSensors: %d %d", (int) intake_count, (int) BallsFrontAverage);
+        lcd::print(6, "Intake: %d shoot: %d ultra: %d", (int) intake_count, (int) shooting_count, UT.get_value());
         lcd::print(7, "EjectorSensors: %d %d", (int) ejector_count, (int) BallsBackAverage);
 
         delay(10);
     }
 }
 
-
+void Robot::shoot_store(int shoot, int store){
+	int last_intake_count = int(intake_count);
+    R1 = -127 * .5;
+    delay(50);
+    R2 = -127 * .1;
+    delay(50);
+    R1 = 127 * .25;
+    R2 = 127;
+    delay(100);
+    intake_count = last_intake_count;
+    int last_shooting_count=shooting_count;
+    while(shooting_count - last_shooting_count < shoot || intake_count - last_intake_count < store){
+//        lcd::print(6, "%d %d", int(shooting_count), int(intake_count));
+        if (intake_count - last_intake_count < store){
+            IL = 127;
+            IR = 127;
+        }
+        else {
+            IL = 0;
+            IR = 0;
+        }
+        if (shooting_count - last_shooting_count < shoot ){
+            R1 = 127 * .25;
+            R2 = 127;
+        }
+        else {
+            R1 = 0;
+            R2 = 0;
+        }
+    }
+    intake({0,0,0,0});
+}
 
 
 /**
@@ -545,7 +548,7 @@ void Robot::mecanum(int power, int strafe, int turn) {
 	BR = (power + strafe - turn);// * scalar;
 }
 
-/**
+/**sss
  * @desc Mostly used in driver control, it is a function for controlling our intakes and rollers with simplicity
  * @param coefficient: The power of the motor
  * @param flip: The direction of our ejector motor, either in ejection mode or intake mode.

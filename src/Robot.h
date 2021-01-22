@@ -58,6 +58,7 @@ public:
 	static std::atomic<double> BallsFrontAverage;
 	static std::atomic<double> BallsBackAverage;
 	static std::atomic<bool> intaking;
+	static std::atomic<int> intake_delay;
 	static std::atomic<double> checkDelay;
     static std::atomic<double> updateDelay;
 	/* Static member variables used to store information about location and number of balls being stored by our bot obtained 
@@ -78,18 +79,18 @@ public:
 
 	static void fps(void *ptr);
 	static void move_to(std::vector<double> pose, std::vector<double> margins = {1, 1, 1}, std::vector<double> speeds = {1, 1, 1}, int seconds = 0, bool pure_pursuit = false, bool ball_wait = false);
-	static void move_to_pure_pursuit(std::vector<std::vector<double>> points, std::vector<double> speeds = {1, 1, 1});
+	static void move_to_pure_pursuit(std::vector<std::vector<double>> points, std::vector<double> final_point, std::vector<double> speeds = {1, 1, 1});
 	/* Autonomous movement and positioning functions */
 
 	static void quickscore(int num_balls = 1, int speed = 1);
 	static void set_fly_cap(double cap = 1);
 
 	static void balls_checking(void *ptr);
-	static void balls_updating(void *ptr);
 	static void balls_intaking(void *ptr);
-	static void shoot(void *ptr);
+	static int count();
+	static void shoot_store(int shoot, int store);
     static void eject(void *ptr);
-	static bool toggle_intaking(bool intaking_ = false);
+	static bool toggle_intaking(bool intaking_ = false, int intake_delay_ = 0);
 	/* Ball storing functions */
 
 	static void display(void *ptr);
