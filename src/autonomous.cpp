@@ -35,8 +35,8 @@ void autonomous()
 		Robot::intake({127, 127, 127, 0});
 	}
 	delay(200);
-    Robot::move_to({1100, -400, 90}, {2, 2, 2});
-	Robot::move_to({1100, -400, 250}, {2, 2, 2});
+    Robot::move_to({1100, -400, 90}, {3, 3, 3});
+	Robot::move_to({1100, -400, 250}, {3, 3, 3});
 	Robot::intake({127, 127, 127, -127});
 	delay(400);
 	Robot::intake({0, 0, 127, -127});
@@ -58,14 +58,28 @@ void autonomous()
     Robot::intake({0, 0, 127, -127});
     Robot::toggle_intaking(true, 600, 0);
     Robot::start_task("OUTTAKE2", Robot::balls_intaking);
-	Robot::move_to({-1270, 1770, 219});
+	Robot::move_to({-1270, 1770, 219}, {1, 1, 1}, {1, 1, 2});
 	Robot::move_to({-1790, 2930, 219}, {1, 1, 1}, {1, 2, 1});
+	while(!Robot::toggle_intaking(true)){
+	    delay(1);
+	}
 	Robot::kill_task("OUTTAKE2");
     while(Robot::UF.get_value() > 400){
         delay(1);
     }
     delay(200);
     Robot::intake({0, 0, 0, 0});
-    Robot::move_to({-730, 1260, 188});
-    Robot::move_to({-2340, 2260, 180}, {1, 1, 1}, {2, 2, 2});
+    Robot::move_to({-2090, 2370, 178});
+    Robot::move_to({-2320, 2320, 178}, {1, 1, 1}, {2, 2, 2});
+    Robot::shoot_store(2, 2);
+
+
+   //Tower 4
+    Robot::move_to({-2090, 2290, 180});
+    Robot::intake({127, 127, 127, -127});
+	delay(400);
+	Robot::intake({0, 0, 127, -127});
+    Robot::toggle_intaking(true, 600, 0);
+    Robot::start_task("OUTTAKE3", Robot::balls_intaking);
+    Robot::move_to({60, 2850, 312}, {1, 1, 1}, {1, 1, 2});
 }
