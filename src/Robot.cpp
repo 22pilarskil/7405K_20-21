@@ -15,7 +15,7 @@ using namespace std;
 /* Lambda function to convert number in degrees to radians. */
 
 Controller Robot::master(E_CONTROLLER_MASTER);
-Motor Robot::FL(2);
+Motor Robot::FL(1);
 Motor Robot::FR(10, true);
 Motor Robot::BL(12);
 Motor Robot::BR(19, true);
@@ -60,6 +60,7 @@ std::atomic<double> Robot::BallsFrontAverage = 0;
 std::atomic<double> Robot::BallsBackAverage = 0;
 std::atomic<bool> Robot::intaking = false;
 std::atomic<int> Robot::intake_delay = 0;
+std::atomic<int> Robot::intake_opening_delay = 0;
 std::atomic<double> Robot::updateDelay = 5;
 std::atomic<double> Robot::checkDelay = 5;
 /* Static member variables used to store information about location and number of balls being stored by our bot obtained
@@ -147,7 +148,7 @@ void Robot::fps(void *ptr) {
 		y = (float)y + global_dy;
 		x = (float)x + global_dx;
 
-		lcd::print(3, "IMU value: %f", IMU.get_rotation());
+//		lcd::print(3, "IMU value: %f", IMU.get_rotation());
 		lcd::print(5, "Y: %f - X: %f", (float)y, (float)x);
 		//printf("Y: %f - X: %f - IMU value: %f\n", (float)y, (float)x, IMU.get_rotation());
 
@@ -341,21 +342,24 @@ int Robot::count(){
 
 
 void Robot::balls_intaking(void *ptr) {
-	IL = -127;
-	IR = -127;
+    delay(intake_opening_delay);
+	IL = -127 * .5;
+	IR = -127 * .5;
 	delay(intake_delay);
-	intake({0, 0, 0, 0});
+	IL = 0;
+	IR = 0;
 	while (intaking){
 		if (UF.get_value() < 200){
-			intake({127, 127, 0, 0});
+			intake({127, 127, 127, 0});
 			intaking = false;
 		}
 	}
 }
 
-bool Robot::toggle_intaking(bool intaking_, int intake_delay_){
+bool Robot::toggle_intaking(bool intaking_, int intake_delay_, int intake_opening_delay_){
 	intaking = intaking_;
 	intake_delay = intake_delay_;
+    intake_opening_delay = intake_opening_delay_;
 	return intaking;
 }
 
@@ -372,7 +376,7 @@ void Robot::display(void *ptr)
         lcd::print(2, "Back Encoder: %d", BE.get_value());
         lcd::print(3, "IMU value: %f", IMU.get_rotation());
         lcd::print(4, "LF1: %d LF2: %d LB1: %d", LF1.get_value(), LF2.get_value(), LB1.get_value());
-        lcd::print(5, "UF: %d UT: %d SC: %d %d", UF.get_value(), UT.get_value(), (int) storing_count, (int) shooting_count);
+        //lcd::print(5, "UF: %d UT: %d SC: %d %d", UF.get_value(), UT.get_value(), (int) storing_count, (int) shooting_count);
         lcd::print(6, "Intake: %d shoot: %d ultra: %d", (int) intake_count, (int) shooting_count, UT.get_value());
         lcd::print(7, "EjectorSensors: %d %d", (int) ejector_count, (int) BallsBackAverage);
 
@@ -383,7 +387,7 @@ void Robot::display(void *ptr)
 void Robot::shoot_store(int shoot, int store){
 	int last_intake_count = int(intake_count);
     R1 = -127 * .5;
-    delay(50);
+    delay(100);
     R2 = -127 * .1;
     delay(50);
     R1 = 127 * .25;
@@ -406,7 +410,6 @@ void Robot::shoot_store(int shoot, int store){
             R2 = 127;
         }
         else {
-            R1 = 0;
             R2 = 0;
         }
     }
@@ -444,7 +447,6 @@ void Robot::drive(void *ptr) {
 
 		//Intakes/Outtakes
 		bool outtake = master.get_digital(DIGITAL_L1);
-        bool intake_ = master.get_digital(DIGITAL_X);
         bool intakes_indexer = master.get_digital(DIGITAL_R1);
 
         //Indexer/Flywheel
@@ -455,7 +457,7 @@ void Robot::drive(void *ptr) {
 		//Storing	
 		bool store1 = master.get_digital(DIGITAL_B);
 		bool store2 = master.get_digital(DIGITAL_Y);
-
+        bool store3 = master.get_digital(DIGITAL_X);
 
 		if ((store1 || store2) && !store_state) {
 			last_store_count=intake_count;
@@ -478,9 +480,13 @@ void Robot::drive(void *ptr) {
 		int R1_ = 0;
 		int R2_ = 0;
 
-		lcd::print(6, "%d %d", int(last_store_count), int(intake_count));
+//		lcd::print(6, "%d %d", int(last_store_count), int(intake_count));
 
-		if (indexer_fly) R1_ = R2_ = 127;
+		if (indexer_fly) {
+            R1_ = 127;
+            R2_ = 127 * 0.7;
+		}
+
 
 		if (intakes_indexer) {
 			IL_ = IR_ = R1_ = 127;
@@ -489,31 +495,41 @@ void Robot::drive(void *ptr) {
 
 		if (outtake) IL_ = IR_ = -127 * .6;
 
-		if (store1) {
-			if (intake_count - last_store_count < 1) {
-				IL_ = IR_ = 127;
-				delay(150);
-			}
-			R2_ = 127;
-			R1_ = 127 * .25;
-		}
-
-		if (store2) {
-			if (intake_count - last_store_count < 2) {
-				IL_ = IR_ = 127;
-				delay(150);
-			}
-			R2_ = 127;
-			R1_ = 127 * .25;
-		}
-
 		if (eject) {
 			if (UF.get_value() < 200) IL_ = IR_ = 127;
 			R2_ = -127;
 			R1_ = 127;
 		}
 
-		intake({IL_, IR_, R1_, R2_});
+
+        if (store1) {
+            if (intake_count - last_store_count < 1) {
+                IL_ = IR_ = 127;
+                delay(150);
+            }
+            R2_ = 127;
+            R1_ = 127 * .25;
+        }
+
+        if (store2) {
+            if (intake_count - last_store_count < 2) {
+                IL_ = IR_ = 127;
+                delay(150);
+            }
+            R2_ = 127;
+            R1_ = 127 * .25;
+        }
+
+        if (store3) {
+            if (intake_count - last_store_count < 3) {
+                IL_ = IR_ = 127;
+                delay(150);
+            }
+            R2_ = 127;
+            R1_ = 127 * .25;
+        }
+
+        intake({IL_, IR_, R1_, R2_});
 
 		delay(5);
 	}

@@ -59,7 +59,8 @@ public:
 	static std::atomic<double> BallsBackAverage;
 	static std::atomic<bool> intaking;
 	static std::atomic<int> intake_delay;
-	static std::atomic<double> checkDelay;
+    static std::atomic<int> intake_opening_delay;
+    static std::atomic<double> checkDelay;
     static std::atomic<double> updateDelay;
 	/* Static member variables used to store information about location and number of balls being stored by our bot obtained 
 	Robot::sensors */
@@ -89,8 +90,7 @@ public:
 	static void balls_intaking(void *ptr);
 	static int count();
 	static void shoot_store(int shoot, int store);
-    static void eject(void *ptr);
-	static bool toggle_intaking(bool intaking_ = false, int intake_delay_ = 0);
+	static bool toggle_intaking(bool intaking_ = false, int intake_delay_ = 0, int intake_opening_delay_ = 0);
 	/* Ball storing functions */
 
 	static void display(void *ptr);

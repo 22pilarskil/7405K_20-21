@@ -15,7 +15,9 @@ void autonomous()
 	Robot::start_task("FPS", Robot::fps);
 	Robot::start_task("DISPLAY", Robot::display);
     Robot::start_task("SENSORCHECKING", Robot::balls_checking);
-	
+
+
+    //Tower 1
 	Robot::intake({127, 127, 127, 0});
 	Robot::move_to_pure_pursuit({{0, 0}, {1200, 100}, {1500, 0}}, {1600, -180, 45}, {1.5, 1.5, 1,5});
 	int last_store_count = Robot::count();
@@ -28,15 +30,42 @@ void autonomous()
 	Robot::move_to({1100, -840, 90}, {1, 1, 1}, {2, 2, 2});
 	Robot::shoot_store(3, 2);
 
+	//Tower 2
 	while(Robot::UF.get_value() > 400){
-		Robot::intake({127, 127, 0, 0});
+		Robot::intake({127, 127, 127, 0});
 	}
+	delay(200);
+    Robot::move_to({1100, -400, 90}, {2, 2, 2});
+	Robot::move_to({1100, -400, 250}, {2, 2, 2});
+	Robot::intake({127, 127, 127, -127});
+	delay(400);
 	Robot::intake({0, 0, 127, -127});
-	Robot::toggle_intaking(true, 500);
-	Robot::start_task("OUTTAKE", Robot::balls_intaking);
-	Robot::move_to({400, 1400, 250});
+	Robot::toggle_intaking(true, 600, 0);
+	Robot::start_task("OUTTAKE1", Robot::balls_intaking);
+	Robot::move_to({400, 1400, 250}, {1, 1, 1}, {1, 1, 2});
+	while(!Robot::toggle_intaking(true)){
+	    delay(1);
+	}
+	Robot::kill_task("OUTTAKE1");
+	Robot::R2.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
+	Robot::intake({127, 127, 127, 0});
+	Robot::move_to({-470, 870, 132}, {1, 1, 1}, {1, 1, 2});
+	Robot::intake({0, 0, 0, 0});
+	Robot::shoot_store(1, 1);
 
-
-
-
+	//Tower 3
+    Robot::move_to({-380, 960, 132});
+    Robot::intake({0, 0, 127, -127});
+    Robot::toggle_intaking(true, 600, 0);
+    Robot::start_task("OUTTAKE2", Robot::balls_intaking);
+	Robot::move_to({-1270, 1770, 219});
+	Robot::move_to({-1790, 2930, 219}, {1, 1, 1}, {1, 2, 1});
+	Robot::kill_task("OUTTAKE2");
+    while(Robot::UF.get_value() > 400){
+        delay(1);
+    }
+    delay(200);
+    Robot::intake({0, 0, 0, 0});
+    Robot::move_to({-730, 1260, 188});
+    Robot::move_to({-2340, 2260, 180}, {1, 1, 1}, {2, 2, 2});
 }
