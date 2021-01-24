@@ -40,46 +40,117 @@ void autonomous()
 	Robot::intake({127, 127, 127, -127});
 	delay(400);
 	Robot::intake({0, 0, 127, -127});
-	Robot::toggle_intaking(true, 600, 0);
-	Robot::start_task("OUTTAKE1", Robot::balls_intaking);
-	Robot::move_to({400, 1400, 250}, {1, 1, 1}, {1, 1, 2});
-	while(!Robot::toggle_intaking(true)){
-	    delay(1);
-	}
+	Robot::toggle_outtake(600, 0);
+	Robot::start_task("OUTTAKE1", Robot::balls_outtake);
+	Robot::move_to({450, 1300, 247}, {1, 1, 1}, {1, 1, 2});
 	Robot::kill_task("OUTTAKE1");
 	Robot::R2.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
 	Robot::intake({127, 127, 127, 0});
+	delay(500);
 	Robot::move_to({-470, 870, 132}, {1, 1, 1}, {1, 1, 2});
 	Robot::intake({0, 0, 0, 0});
 	Robot::shoot_store(1, 1);
 
-	//Tower 3
+//	//Tower 3
     Robot::move_to({-380, 960, 132});
     Robot::intake({0, 0, 127, -127});
-    Robot::toggle_intaking(true, 600, 0);
-    Robot::start_task("OUTTAKE2", Robot::balls_intaking);
-	Robot::move_to({-1270, 1770, 219}, {1, 1, 1}, {1, 1, 2});
-	Robot::move_to({-1790, 2930, 219}, {1, 1, 1}, {1, 2, 1});
-	while(!Robot::toggle_intaking(true)){
-	    delay(1);
-	}
-	Robot::kill_task("OUTTAKE2");
-    while(Robot::UF.get_value() > 400){
-        delay(1);
-    }
+    Robot::toggle_outtake(600, 0);
+    Robot::start_task("OUTTAKE2", Robot::balls_outtake);
+	Robot::move_to({-1140, 1710, 221}, {1, 1, 1}, {1, 1, 2});
+    Robot::kill_task("OUTTAKE2");
+    Robot::intake({127, 127, 127, 0});
+    Robot::move_to({-1790, 2930, 219}, {1, 1, 1}, {1, 2, 1});
     delay(200);
     Robot::intake({0, 0, 0, 0});
     Robot::move_to({-2090, 2370, 178});
     Robot::move_to({-2320, 2320, 178}, {1, 1, 1}, {2, 2, 2});
     Robot::shoot_store(2, 2);
 
-
-   //Tower 4
-    Robot::move_to({-2090, 2290, 180});
+//   //Tower 4
+    Robot::move_to({-2090, 2290, 180}, {2, 2, 2}, {1, 1, 1});
     Robot::intake({127, 127, 127, -127});
 	delay(400);
 	Robot::intake({0, 0, 127, -127});
-    Robot::toggle_intaking(true, 600, 0);
-    Robot::start_task("OUTTAKE3", Robot::balls_intaking);
-    Robot::move_to({60, 2850, 312}, {1, 1, 1}, {1, 1, 2});
+    Robot::toggle_outtake(600, 1000);
+    Robot::start_task("OUTTAKE3", Robot::balls_outtake); //ratchet for second to last ball
+    Robot::move_to({-220, 2980, 338}, {2, 2, 1}, {1, 1, 2}); //point for second to last ball
+    Robot::kill_task("OUTTAKE3");
+    delay(200);
+    Robot::intake({127, 127, 127, 0}); //intake second to last ball
+    Robot::move_to({-8, 3340, 221}); // prelim point
+    Robot::move_to({-230, 3490, 221}); // get last ball
+    Robot::intake({0, 0, 0, 0});
+    Robot::move_to({-660, 3900, 221}); // into tower 4
+    Robot::shoot_store(2, 1);
+
+    //tower 5
+    Robot::move_to({-565, 3900, 221});
+    Robot::toggle_outtake(1000, 0);
+    Robot::intake({127, 127, 127, -127});
+    delay(400);
+    Robot::intake({0, 0, 127, -127});
+    Robot::start_task("OUTTAKE4", Robot::balls_outtake);
+    Robot::move_to({455, 4950, 221}); // get last ball
+    Robot::kill_task("OUTTAKE4");
+    Robot::move_to({240, 5170, 223});
+    Robot::intake({127, 127, 127, 0});
+    Robot::move_to({850, 5600, 266});
+    Robot::intake({0, 0, 0, 0});
+    Robot::move_to({770, 5680, 270}); //tower 5 THIS IS A FUCKING PIECE OF SHIT THAT NEVER FUCKING WORKS FIXME
+    Robot::shoot_store(1, 2);
+    Robot::move_to({850, 5600, 266});
+
+    //Tower 6
+    Robot::move_to({560, 5380, 394});
+    Robot::intake({0, 0, 127, -127});
+    delay(400);
+    Robot::intake({0, 0, 127, -127});
+
+    Robot::toggle_outtake(500, 0);
+    Robot::start_task("OUTTAKE5", Robot::balls_outtake);
+    Robot::move_to({830, 5230, 399});
+    Robot::kill_task("OUTTAKE5");
+    Robot::intake({127, 127, 127, 0});
+    delay(1000);
+    Robot::intake({0, 0, 0, 0});
+    Robot::start_task("OUTTAKE6", Robot::balls_outtake);
+    Robot::move_to({1330, 3520, 401});
+    Robot::kill_task("OUTTAKE6");
+    Robot::intake({127, 127, 127, 0});
+
+    Robot::move_to({2510, 4090, 311});
+    Robot::shoot_store(2, 1);
+
+    //Tower 7
+    Robot::intake({0, 0, 127, -127});
+    delay(400);
+    Robot::intake({0, 0, 127, -127});
+    Robot::move_to({2320, 3920, 312});
+    Robot::start_task("OUTTAKE7", Robot::balls_outtake);
+    Robot::move_to({3140, 3300, 401});
+    Robot::kill_task("OUTTAKE7");
+    Robot::intake({127, 127, 127, 0});
+    Robot::move_to({3800, 2110, 401}); //other ball
+    Robot::move_to({4100, 2700, 359}); //prelim
+    Robot::intake({0, 0, 0, 0});
+    Robot::move_to({4260, 2690, 357}); //tower
+    Robot::shoot_store(2, 2);
+
+    //Tower 8
+    Robot::move_to({4010, 2670, 357}); //tower
+    Robot::start_task("OUTTAKE8", Robot::balls_outtake);
+    Robot::move_to({2810, 1520, 491}); //tower
+    Robot::kill_task("OUTTAKE8");
+    Robot::intake({127, 127, 127, 0});
+    delay(300);
+    Robot::intake({0, 0, 0, 0});
+    Robot::move_to({2480, 1200, 403}); //tower
+    Robot::move_to({2610, 1020, 399}); //tower
+    Robot::shoot_store(1, 1);
+    Robot::intake({0, 0, 127, -127});
+    delay(400);
+    Robot::intake({0, 0, 127, -127});
+
+
+
 }

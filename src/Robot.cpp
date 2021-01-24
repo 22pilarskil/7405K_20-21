@@ -15,7 +15,7 @@ using namespace std;
 /* Lambda function to convert number in degrees to radians. */
 
 Controller Robot::master(E_CONTROLLER_MASTER);
-Motor Robot::FL(1);
+Motor Robot::FL(11);
 Motor Robot::FR(10, true);
 Motor Robot::BL(12);
 Motor Robot::BR(19, true);
@@ -59,8 +59,8 @@ std::atomic<int> Robot::storing_count = 0;
 std::atomic<double> Robot::BallsFrontAverage = 0;
 std::atomic<double> Robot::BallsBackAverage = 0;
 std::atomic<bool> Robot::intaking = false;
-std::atomic<int> Robot::intake_delay = 0;
-std::atomic<int> Robot::intake_opening_delay = 0;
+std::atomic<int> Robot::outtake_delay = 0;
+std::atomic<int> Robot::outtake_opening_delay = 0;
 std::atomic<double> Robot::updateDelay = 5;
 std::atomic<double> Robot::checkDelay = 5;
 /* Static member variables used to store information about location and number of balls being stored by our bot obtained
@@ -341,26 +341,18 @@ int Robot::count(){
 }
 
 
-void Robot::balls_intaking(void *ptr) {
-    delay(intake_opening_delay);
+void Robot::balls_outtake(void *ptr) {
+    delay(outtake_opening_delay);
 	IL = -127 * .5;
 	IR = -127 * .5;
-	delay(intake_delay);
+	delay(outtake_delay);
 	IL = 0;
 	IR = 0;
-	while (intaking){
-		if (UF.get_value() < 200){
-			intake({127, 127, 127, 0});
-			intaking = false;
-		}
-	}
 }
 
-bool Robot::toggle_intaking(bool intaking_, int intake_delay_, int intake_opening_delay_){
-	intaking = intaking_;
-	intake_delay = intake_delay_;
-    intake_opening_delay = intake_opening_delay_;
-	return intaking;
+void Robot::toggle_outtake(int outtake_delay_, int outtake_opening_delay_){
+	outtake_delay = outtake_delay_;
+    outtake_opening_delay = outtake_opening_delay_;
 }
 
 /**
