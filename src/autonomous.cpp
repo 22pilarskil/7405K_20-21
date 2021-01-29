@@ -20,7 +20,7 @@ void autonomous()
 
 
 
-    bool pass = true;
+    bool pass = false;
     //Tower 1
 	//intaking
 	Robot::intake({127, 127, 127, 0}); //turning on intakes for the next two balls
@@ -38,7 +38,7 @@ void autonomous()
 	Robot::shoot_store(3, 2, pass); //shooting 3, storing 2
 
 
-    pass = true;
+    pass = false;
 	//Tower 2
 
 	//pooping
@@ -62,7 +62,7 @@ void autonomous()
 	Robot::intake({0, 0, 0, 0}); //shutting off intakes
 	Robot::shoot_store(1, 1, pass); //shooting one and storing one
 
-	pass = true;
+	pass = false;
 
 	//Tower 3
 	//pooping
