@@ -89,7 +89,7 @@ public:
 	static void balls_checking(void *ptr);
 	static void balls_outtake(void *ptr);
 	static int count();
-	static void shoot_store(int shoot, int store);
+	static void shoot_store(int shoot, int store, bool pass = false);
 	static void toggle_outtake(int outtake_delay_=0, int outtake_opening_delay_=0);
 	/* Ball storing functions */
 

@@ -15,7 +15,7 @@ using namespace std;
 /* Lambda function to convert number in degrees to radians. */
 
 Controller Robot::master(E_CONTROLLER_MASTER);
-Motor Robot::FL(11);
+Motor Robot::FL(13);
 Motor Robot::FR(10, true);
 Motor Robot::BL(12);
 Motor Robot::BR(19, true);
@@ -35,9 +35,11 @@ ADIUltrasonic Robot::UT(7, 8);
 ADIDigitalIn Robot::LM1({{6, 3}});
 /* Initializing motors, sensors, controller */
 
-PD Robot::power_PD(.2, 0, 10);
-PD Robot::strafe_PD(.22, 0, 10);
-PD Robot::turn_PD(1.5, 0, 10);
+//.4, 0.1, 5
+//.4, 0.1, 5
+PD Robot::power_PD(.45, 0.1, 5);
+PD Robot::strafe_PD(.45, 0.1, 5);
+PD Robot::turn_PD(3, 0, 5);
 /* Initializing Our PD Instances */
 
 std::atomic<double> Robot::y = 0;
@@ -369,14 +371,17 @@ void Robot::display(void *ptr)
         lcd::print(3, "IMU value: %f", IMU.get_rotation());
         lcd::print(4, "LF1: %d LF2: %d LB1: %d", LF1.get_value(), LF2.get_value(), LB1.get_value());
         //lcd::print(5, "UF: %d UT: %d SC: %d %d", UF.get_value(), UT.get_value(), (int) storing_count, (int) shooting_count);
-        lcd::print(6, "Intake: %d shoot: %d ultra: %d", (int) intake_count, (int) shooting_count, UT.get_value());
+//        lcd::print(6, "Intake: %d shoot: %d ultra: %d", (int) intake_count, (int) shooting_count, UT.get_value());
         lcd::print(7, "EjectorSensors: %d %d", (int) ejector_count, (int) BallsBackAverage);
 
         delay(10);
     }
 }
 
-void Robot::shoot_store(int shoot, int store){
+void Robot::shoot_store(int shoot, int store, bool pass){
+    if (pass){
+        return;
+    }
 	int last_intake_count = int(intake_count);
     R1 = -127 * .5;
     delay(100);
@@ -550,10 +555,10 @@ void Robot::mecanum(int power, int strafe, int turn) {
 	double true_max = double(std::max(max, min));
 	double scalar = (true_max > 127) ? 127 / true_max : 1;
 
-	FL = (power + strafe + turn);// * scalar;
-	FR = (power - strafe - turn);// * scalar;
-	BL = (power - strafe + turn);// * scalar;
-	BR = (power + strafe - turn);// * scalar;
+	FL = (power + strafe + turn) * scalar;
+	FR = (power - strafe - turn) * scalar;
+	BL = (power - strafe + turn) * scalar;
+	BR = (power + strafe - turn) * scalar;
 }
 
 /**sss
