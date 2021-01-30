@@ -328,10 +328,10 @@ void Robot::balls_checking(void *ptr) {
         } else if (!shoot_ball && ut_toggle) ut_toggle = false;
 
         bool intake_ball = LM1.get_value();
-        if(intake_ball && intake_toggle==10) {
+        if(intake_ball && intake_toggle==5) {
             intake_count++;
             intake_toggle=0;
-        } else if (!intake_ball && intake_toggle<10) intake_toggle++;
+        } else if (!intake_ball && intake_toggle<5) intake_toggle++;
 
         storing_count = intake_count-(ejector_count+shooting_count);
         delay(30);
@@ -390,6 +390,7 @@ void Robot::shoot_store(int shoot, int store, bool pass){
     R1 = 127 * .25;
     R2 = 127;
     delay(100);
+    double coefficient = .25;
     intake_count = last_intake_count;
     int last_shooting_count=shooting_count;
     while(shooting_count - last_shooting_count < shoot || intake_count - last_intake_count < store){
@@ -403,7 +404,7 @@ void Robot::shoot_store(int shoot, int store, bool pass){
             IR = 0;
         }
         if (shooting_count - last_shooting_count < shoot ){
-            R1 = 127 * .25;
+            R1 = 127 * coefficient;
             R2 = 127;
         }
         else {
@@ -481,7 +482,7 @@ void Robot::drive(void *ptr) {
 
 		if (indexer_fly) {
             R1_ = 127;
-            R2_ = 127 * 0.7;
+            R2_ = 127;
 		}
 
 
