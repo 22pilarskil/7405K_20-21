@@ -383,18 +383,15 @@ void Robot::shoot_store(int shoot, int store, bool pass){
         return;
     }
 	int last_intake_count = int(intake_count);
-    R1 = -127 * .5;
-    delay(100);
-    R2 = -127 * .1;
-    delay(50);
-    R1 = 127 * .25;
-    R2 = 127;
-    delay(100);
-    double coefficient = .25;
     intake_count = last_intake_count;
     int last_shooting_count=shooting_count;
+    bool go = true;
     while(shooting_count - last_shooting_count < shoot || intake_count - last_intake_count < store){
-//        lcd::print(6, "%d %d", int(shooting_count), int(intake_count));
+    	if (shooting_count - last_shooting_count == 1 && go){
+    		R1 = -127 * .25;
+    		delay(100);
+    		go = false;
+    	}
         if (intake_count - last_intake_count < store){
             IL = 127;
             IR = 127;
@@ -404,7 +401,7 @@ void Robot::shoot_store(int shoot, int store, bool pass){
             IR = 0;
         }
         if (shooting_count - last_shooting_count < shoot ){
-            R1 = 127 * coefficient;
+            R1 = 127 * .25;
             R2 = 127;
         }
         else {
