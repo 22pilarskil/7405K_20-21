@@ -235,7 +235,7 @@ void Robot::move_to(std::vector<double> pose, std::vector<double> margin, std::v
 		time += 5;
 	}
 	reset_PD();
-	lcd::print(6, "DONE");
+	//lcd::print(6, "DONE");
 	brake("stop");
 }
 
@@ -275,7 +275,7 @@ void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, std::v
 	move_to(final_point, {1, 1, 1}, {2, 2, 2});
 	brake("stop");
 	reset_PD();
-	lcd::print(6, "DONE");
+	//lcd::print(6, "DONE");
 }
 
 
@@ -371,13 +371,13 @@ void Robot::display(void *ptr)
         lcd::print(3, "IMU value: %f", IMU.get_rotation());
         lcd::print(4, "LF1: %d LF2: %d LB1: %d", LF1.get_value(), LF2.get_value(), LB1.get_value());
         //lcd::print(5, "UF: %d UT: %d SC: %d %d", UF.get_value(), UT.get_value(), (int) storing_count, (int) shooting_count);
-//        lcd::print(6, "Intake: %d shoot: %d ultra: %d", (int) intake_count, (int) shooting_count, UT.get_value());
+        lcd::print(6, "Intake: %d shoot: %d ultra: %d", (int) intake_count, (int) shooting_count, UT.get_value());
         lcd::print(7, "EjectorSensors: %d %d", (int) ejector_count, (int) BallsBackAverage);
 
         delay(10);
     }
 }
-
+//TODO possibly make it so second stage of acceleration with 3 balls
 void Robot::shoot_store(int shoot, int store, bool pass){
     if (pass){
         return;
@@ -385,24 +385,32 @@ void Robot::shoot_store(int shoot, int store, bool pass){
 	int last_intake_count = int(intake_count);
     intake_count = last_intake_count;
     int last_shooting_count=shooting_count;
-    bool go = true;
+	double R1_coefficient = .25;
+	double R2_coefficient = 1;
+	bool shut_off = true;
     while(shooting_count - last_shooting_count < shoot || intake_count - last_intake_count < store){
-    	if (shooting_count - last_shooting_count == 1 && go){
-    		R1 = -127 * .25;
-    		delay(100);
-    		go = false;
+    	if (shooting_count - last_shooting_count == 1 && shut_off){
+			R2_coefficient = .75; 
+			R1 = 0;
+			delay(100);
+			shut_off = false;
     	}
+		if (shooting_count - last_shooting_count == shoot || shooting_count - last_shooting_count == 2){
+			R1_coefficient = 1;
+			if (shooting_count - last_shooting_count == 2) R1_coefficient = .75;
+		}
         if (intake_count - last_intake_count < store){
             IL = 127;
             IR = 127;
         }
         else {
+			R1_coefficient = 1;
             IL = 0;
             IR = 0;
         }
         if (shooting_count - last_shooting_count < shoot ){
-            R1 = 127 * .25;
-            R2 = 127;
+            R1 = 127 * R1_coefficient;
+            R2 = 127 * R2_coefficient;
         }
         else {
             R2 = 0;
