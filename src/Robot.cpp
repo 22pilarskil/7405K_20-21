@@ -382,32 +382,33 @@ void Robot::shoot_store(int shoot, int store, bool pass){
     if (pass){
         return;
     }
-	int last_intake_count = int(intake_count);
-    intake_count = last_intake_count;
-    int last_shooting_count=shooting_count;
-	double R1_coefficient = .25;
-	double R2_coefficient = 1;
-	bool shut_off = true;
+
+    R1 = -127 * .5;
+    delay(100);
+    R2 = -127 * .1;
+    delay(100);
+
+    double R1_coefficient = .25;
+    double R2_coefficient = 1;
+
+    int last_intake_count = int(intake_count);
+    int last_shooting_count = shooting_count;
+
     while(shooting_count - last_shooting_count < shoot || intake_count - last_intake_count < store){
-    	if (shooting_count - last_shooting_count == 1 && shut_off){
-			R2_coefficient = .75; 
-			R1 = 0;
-			delay(100);
-			shut_off = false;
-    	}
-		if (shooting_count - last_shooting_count == shoot || shooting_count - last_shooting_count == 2){
-			R1_coefficient = 1;
-			if (shooting_count - last_shooting_count == 2) R1_coefficient = .75;
+		if (shooting_count - last_shooting_count == shoot || shooting_count - last_shooting_count >= 2){
+		    R1_coefficient = .5;
 		}
         if (intake_count - last_intake_count < store){
             IL = 127;
             IR = 127;
+            R1 = 127 * R1_coefficient;
         }
         else {
 			R1_coefficient = 1;
             IL = 0;
             IR = 0;
         }
+
         if (shooting_count - last_shooting_count < shoot ){
             R1 = 127 * R1_coefficient;
             R2 = 127 * R2_coefficient;
