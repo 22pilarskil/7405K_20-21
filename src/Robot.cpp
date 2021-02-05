@@ -388,15 +388,24 @@ void Robot::shoot_store(int shoot, int store, bool pass){
     R2 = -127 * .1;
     delay(100);
 
-    double R1_coefficient = .25;
+    double R1_coefficient = .35;
     double R2_coefficient = 1;
 
-    int last_intake_count = int(intake_count);
     int last_shooting_count = shooting_count;
+    int last_intake_count = int(intake_count);
+
+    bool off_1 = true;
+    bool off_2 = true;
 
     while(shooting_count - last_shooting_count < shoot || intake_count - last_intake_count < store){
-		if (shooting_count - last_shooting_count == shoot || shooting_count - last_shooting_count >= 2){
+		if (shooting_count - last_shooting_count >= shoot && off_1){
 		    R1_coefficient = .5;
+		    off_1 = false;
+		}
+		if (shooting_count - last_shooting_count >= 1 && off_2){
+		    off_2 = false;
+		    R1 = 0;
+		    delay(100);
 		}
         if (intake_count - last_intake_count < store){
             IL = 127;
@@ -404,7 +413,7 @@ void Robot::shoot_store(int shoot, int store, bool pass){
             R1 = 127 * R1_coefficient;
         }
         else {
-			R1_coefficient = 1;
+            if (shooting_count - last_shooting_count == shoot) R1_coefficient = 1;
             IL = 0;
             IR = 0;
         }
@@ -415,8 +424,11 @@ void Robot::shoot_store(int shoot, int store, bool pass){
         }
         else {
             R2 = 0;
+            R2.set_brake_mode(E_MOTOR_BRAKE_HOLD);
         }
     }
+    R1 = 127;
+    delay(50);
     intake({0,0,0,0});
 }
 
