@@ -44,10 +44,10 @@ void autonomous()
 	//Tower 2
 	//pooping
     Robot::toggle_outtake(300, 0);
-    //Robot::start_task("OUTTAKE0", Robot::balls_outtake);
+    Robot::start_task("OUTTAKE0", Robot::balls_outtake);
     delay(200);
     Robot::move_to({1020, 0, 90}, {3, 3, 3}); //backout
-    //Robot::kill_task("OUTTAKE0");
+    Robot::kill_task("OUTTAKE0");
 	Robot::move_to({1020, 0, 238}, {3, 3, 3}); //turning
 	Robot::intake({127, 127, -127, -127});
 	delay(100);
@@ -60,6 +60,7 @@ void autonomous()
 	Robot::kill_task("OUTTAKE1");
 	Robot::R2.set_brake_mode(E_MOTOR_BRAKE_BRAKE); //braking fly to not poop
 	Robot::shoot_store(0, 1, pass);
+    Robot::intake({0, 0, 127, 0});
 
 	//tower
 	Robot::move_to({-470, 870, 132}, {1, 1, 1}, {1, 1, 2}); //tower 2
@@ -88,35 +89,36 @@ void autonomous()
 	//tower
     Robot::move_to({-2090, 2370, 178}); //prelim point
     Robot::intake({0, 0, 0, 0});
-    Robot::move_to({-2350, 2270, 177}); //tower 3
+    Robot::move_to({-2320, 2280, 180}); //tower 3
     Robot::shoot_store(2, 2, pass); //shoot 2, store 2
 
 
     //Tower 4
 	//pooping
-    Robot::move_to({-2090, 2290, 180}, {2, 2, 2}, {1, 1, 1}); //backout
+    Robot::move_to({-1870, 2380, 180}, {1, 1, 1}, {1, 1, 1}); //backout
     Robot::intake({127, 127, 127, -90}); //pooping
 	Robot::intake({0, 0, 127, -127}); //popping and shutting intakes
-    Robot::move_to({-2090, 2290, 338}, {2, 2, 2}, {1, 1, 1}); //turning
+    Robot::move_to({-1870, 2380, 334}, {1, 1, 1}, {1, 1, 1}); //backout
+    
 
 	//first ball
     Robot::toggle_outtake(600, 0);
     Robot::start_task("OUTTAKE3", Robot::balls_outtake); //ratchet
-    Robot::move_to({-220, 2980, 338}, {2, 2, 1}, {1, 1, 2}); //ball point
+    Robot::move_to({-215, 2920, 333}, {1, 1, 1}, {1, 1, 3}); //ball point
     Robot::kill_task("OUTTAKE3");
     Robot::shoot_store(0, 1);
 
 	//second ball
     Robot::toggle_outtake(600, 0);
     Robot::start_task("OUTTAKE4", Robot::balls_outtake); //ratchet
-    Robot::move_to({300, 3060, 221}, {1, 1, 1}, {3, 3, 3}); //prelim point
     Robot::kill_task("OUTTAKE4");
-    Robot::move_to({-230, 3490, 221}); //ball point
-    Robot::intake({127, 127, 127, 0});
-    delay(1000);
+    Robot::move_to({-266, 3428, 221}, {1, 1, 1}, {1, 1, 3}); //ball point
+    Robot::shoot_store(0, 1);
+    Robot::intake({0, 0, 127, 0});
 
 	//tower
     Robot::move_to({-620, 3890, 222}); //tower 4
+    Robot::intake({0, 0, 0, 0});
     Robot::shoot_store(2, 1, pass); //shoot 2, store 1
 
 
@@ -125,12 +127,14 @@ void autonomous()
     Robot::move_to({-350, 3640, 222}); //backout
     Robot::intake({127, 127, 127, -127}); //pooping
     delay(200);
+
 	//first ball
+    Robot::move_to({-350, 3640, 320}); //turning
     Robot::toggle_outtake(600, 0);
     Robot::start_task("OUTTAKE5", Robot::balls_outtake);
     delay(400); //delay to open intakes before strafing out of tower
     Robot::kill_task("OUTTAKE5");
-    Robot::move_to({780, 4570, 320}); //ball point
+    Robot::move_to({780, 4570, 320}, {1, 1, 1}, {3, 3, 3}); //ball point
     Robot::intake({127, 127, 127, 0});
     delay(1000);
 
@@ -139,16 +143,16 @@ void autonomous()
     Robot::intake({127, 127, 127, 0});
 
 	//tower
-    Robot::move_to({720, 5390, 270}); //prelim point
+    Robot::move_to({720, 5390, 267}); //prelim point
     Robot::intake({0, 0, 0, 0});
-    Robot::move_to({700, 5650, 270}); //tower 5 very inconsistent
+    Robot::move_to({750, 5700, 272}); //tower 5 very inconsistent
     Robot::shoot_store(2, 2, pass); //shoot 1, store 2
 
 
     //Tower 6
 	//pooping
-	Robot::move_to({450, 5470, 293}); //backout
-    Robot::move_to({570, 5370, 400}); //turning
+	Robot::move_to({830, 5350, 270}); //backout
+    Robot::move_to({830, 5350, 435}); //turning
     Robot::toggle_outtake(450, 0);
     Robot::start_task("OUTTAKE6", Robot::balls_outtake);
     Robot::intake({0, 0, 127, -90}); //pooping
@@ -165,7 +169,7 @@ void autonomous()
     Robot::intake({0, 0, 127, 0}); //indexing while moving
 
     //tower
-    Robot::move_to({2410, 4110, 311}, {1, 1, 1}, {2, 2, 2}); //tower 6
+    Robot::move_to({2420, 4100, 312}, {1, 1, 1}, {2, 2, 2}); //tower 6
     Robot::shoot_store(1,1); //shoot 2, store 1
 
 
