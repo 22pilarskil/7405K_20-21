@@ -272,7 +272,7 @@ void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, std::v
 			delay(5);
 		}
 	}
-	move_to(final_point, {1, 1, 1}, {2, 2, 2});
+	move_to(final_point, {1, 1, 1});
 	brake("stop");
 	reset_PD();
 	//lcd::print(6, "DONE");
