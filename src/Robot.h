@@ -60,6 +60,7 @@ public:
 	static std::atomic<bool> intaking;
 	static std::atomic<int> outtake_delay;
     static std::atomic<int> outtake_opening_delay;
+    static std::atomic<bool> close_intakes;
     static std::atomic<double> checkDelay;
     static std::atomic<double> updateDelay;
 	/* Static member variables used to store information about location and number of balls being stored by our bot obtained 
@@ -86,12 +87,15 @@ public:
 	static void quickscore(int num_balls = 1, int speed = 1);
 	static void set_fly_cap(double cap = 1);
 
+    static int count();
+    static bool check_intaking();
 	static void balls_checking(void *ptr);
-	static void balls_outtake(void *ptr);
-	static int count();
-	static void shoot_store(int shoot, int store, bool pass = false);
-	static void toggle_outtake(int outtake_delay_=0, int outtake_opening_delay_=0);
-	/* Ball storing functions */
+	static void balls_intake_toggle(int outtake_delay_=0, int outtake_opening_delay_=0, bool close_intakes_=false);
+    static void balls_outtake(void *ptr);
+
+    static void balls_intake(void *ptr);
+    static void shoot_store(int shoot, int store, bool pass = false);
+    /* Ball storing functions */
 
 	static void display(void *ptr);
 	static void drive(void *ptr);

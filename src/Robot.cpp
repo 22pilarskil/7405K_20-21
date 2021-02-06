@@ -63,6 +63,7 @@ std::atomic<double> Robot::BallsBackAverage = 0;
 std::atomic<bool> Robot::intaking = false;
 std::atomic<int> Robot::outtake_delay = 0;
 std::atomic<int> Robot::outtake_opening_delay = 0;
+std::atomic<bool> Robot::close_intakes;
 std::atomic<double> Robot::updateDelay = 5;
 std::atomic<double> Robot::checkDelay = 5;
 /* Static member variables used to store information about location and number of balls being stored by our bot obtained
@@ -342,19 +343,36 @@ int Robot::count(){
 	return int(intake_count);
 }
 
-
-void Robot::balls_outtake(void *ptr) {
-    delay(outtake_opening_delay);
-	IL = -127 * .5;
-	IR = -127 * .5;
-	delay(outtake_delay);
-	IL = 0;
-	IR = 0;
+bool Robot::check_intaking(){
+    return bool(intaking);
 }
 
-void Robot::toggle_outtake(int outtake_delay_, int outtake_opening_delay_){
+void Robot::balls_intake(void *ptr) {
+    intaking = true;
+    bool outtake=false;
+    int outtake_count = 0;
+
+    delay(outtake_opening_delay);
+    IL = -127 * .5;
+    IR = -127 * .5;
+    delay(outtake_delay);
+    IL = 0;
+    IR = 0;
+
+    while(true) {
+        if(UF.get_value() < 300 && close_intakes) {
+            Robot::intake({127, 127, 127, 0});
+            intaking = false;
+            break;
+        }
+        delay(5);
+    }
+}
+
+void Robot::balls_intake_toggle(int outtake_delay_, int outtake_opening_delay_, bool close_intakes_){
 	outtake_delay = outtake_delay_;
     outtake_opening_delay = outtake_opening_delay_;
+    close_intakes = close_intakes_;
 }
 
 /**
@@ -371,7 +389,7 @@ void Robot::display(void *ptr)
         lcd::print(3, "IMU value: %f", IMU.get_rotation());
         lcd::print(4, "LF1: %d LF2: %d LB1: %d", LF1.get_value(), LF2.get_value(), LB1.get_value());
         //lcd::print(5, "UF: %d UT: %d SC: %d %d", UF.get_value(), UT.get_value(), (int) storing_count, (int) shooting_count);
-        lcd::print(6, "Intake: %d shoot: %d ultra: %d", (int) intake_count, (int) shooting_count, UT.get_value());
+        lcd::print(6, "Intake: %d shoot: %d UF: %d", (int) intake_count, (int) shooting_count, UF.get_value());
         lcd::print(7, "EjectorSensors: %d %d", (int) ejector_count, (int) BallsBackAverage);
 
         delay(10);
