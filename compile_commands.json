@@ -61,11 +61,11 @@
             "-funwind-tables",
             "--std=gnu++17",
             "-o",
-            "bin/initialize.cpp.o",
-            "src/initialize.cpp"
+            "bin/PD.cpp.o",
+            "src/PD.cpp"
         ],
         "directory": "/Users/michaelpilarski/Desktop/7405K_20-21",
-        "file": "src/initialize.cpp"
+        "file": "src/PD.cpp"
     },
     {
         "arguments": [
@@ -95,11 +95,11 @@
             "-funwind-tables",
             "--std=gnu++17",
             "-o",
-            "bin/PD.cpp.o",
-            "src/PD.cpp"
+            "bin/initialize.cpp.o",
+            "src/initialize.cpp"
         ],
         "directory": "/Users/michaelpilarski/Desktop/7405K_20-21",
-        "file": "src/PD.cpp"
+        "file": "src/initialize.cpp"
     },
     {
         "arguments": [

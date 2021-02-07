@@ -60,6 +60,7 @@ public:
 	static std::atomic<bool> intaking;
 	static std::atomic<int> outtake_delay;
     static std::atomic<int> outtake_opening_delay;
+    static std::atomic<bool> close_intakes;
     static std::atomic<double> checkDelay;
     static std::atomic<double> updateDelay;
 	/* Static member variables used to store information about location and number of balls being stored by our bot obtained 
@@ -68,6 +69,7 @@ public:
 	static double fly_power;
 	static double increment;
 	static double fly_cap;
+	static bool pass;
 	/* Static member variables for flywheel control */
 
 	static std::map<std::string, std::unique_ptr<pros::Task>> tasks;
@@ -79,19 +81,23 @@ public:
 	/* Threading functions */
 
 	static void fps(void *ptr);
-	static void move_to(std::vector<double> pose, std::vector<double> margins = {1, 1, 1}, std::vector<double> speeds = {1, 1, 1}, int seconds = 0, bool pure_pursuit = false, bool ball_wait = false);
+	static void move_to(std::vector<double> pose, std::vector<double> margins = {1, 1, 1}, std::vector<double> speeds = {1, 1, 1}, bool pure_pursuit = false);
 	static void move_to_pure_pursuit(std::vector<std::vector<double>> points, std::vector<double> final_point, std::vector<double> speeds = {1, 1, 1});
 	/* Autonomous movement and positioning functions */
 
 	static void quickscore(int num_balls = 1, int speed = 1);
 	static void set_fly_cap(double cap = 1);
 
+    static int count();
+    static bool check_intaking();
 	static void balls_checking(void *ptr);
-	static void balls_outtake(void *ptr);
-	static int count();
-	static void shoot_store(int shoot, int store, bool pass = false);
-	static void toggle_outtake(int outtake_delay_=0, int outtake_opening_delay_=0);
-	/* Ball storing functions */
+	static void balls_intake_toggle(int outtake_delay_=0, int outtake_opening_delay_=0, bool close_intakes_=false);
+    static void balls_outtake(void *ptr);
+
+    static void balls_intake(void *ptr);
+    static void set_pass(bool pass_);
+    static void shoot_store(int shoot, int store);
+    /* Ball storing functions */
 
 	static void display(void *ptr);
 	static void drive(void *ptr);

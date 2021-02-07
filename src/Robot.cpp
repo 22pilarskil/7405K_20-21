@@ -15,10 +15,10 @@ using namespace std;
 /* Lambda function to convert number in degrees to radians. */
 
 Controller Robot::master(E_CONTROLLER_MASTER);
-Motor Robot::FL(13);
+Motor Robot::FL(14);
 Motor Robot::FR(10, true);
 Motor Robot::BL(12);
-Motor Robot::BR(19, true);
+Motor Robot::BR(18, true);
 Motor Robot::IL(5, true);
 Motor Robot::IR(21);
 Motor Robot::R1(7);
@@ -63,6 +63,7 @@ std::atomic<double> Robot::BallsBackAverage = 0;
 std::atomic<bool> Robot::intaking = false;
 std::atomic<int> Robot::outtake_delay = 0;
 std::atomic<int> Robot::outtake_opening_delay = 0;
+std::atomic<bool> Robot::close_intakes;
 std::atomic<double> Robot::updateDelay = 5;
 std::atomic<double> Robot::checkDelay = 5;
 /* Static member variables used to store information about location and number of balls being stored by our bot obtained
@@ -71,6 +72,7 @@ Robot::sensors */
 double Robot::fly_power = 0;
 double Robot::increment = 1;
 double Robot::fly_cap = 1;
+bool Robot::pass = false;
 /* Static member variables for flywheel control */
 
 std::map<std::string, std::unique_ptr<pros::Task>> Robot::tasks;
@@ -180,7 +182,7 @@ void Robot::fps(void *ptr) {
  * @param pure_pursuit: A boolean (true or false) that tells us whether or not we are calling this function in the context
  	of Robot::move_to_pure_pursuit
  */
-void Robot::move_to(std::vector<double> pose, std::vector<double> margin, std::vector<double> speeds, int seconds, bool pure_pursuit, bool ball_wait)
+void Robot::move_to(std::vector<double> pose, std::vector<double> margin, std::vector<double> speeds, bool pure_pursuit)
 {
 	double new_y = pose[0];
 	double new_x = pose[1];
@@ -190,14 +192,6 @@ void Robot::move_to(std::vector<double> pose, std::vector<double> margin, std::v
 	double x_error = -(new_x - x);
 	int coefficient = 0;
 	std::string powered = "intakes";
-
-	if (seconds > 0) coefficient = -1;
-	else if (seconds < 0){
-		coefficient = 1;
-		powered = "both";
-	}
-
-	seconds = abs(seconds);
 
 	int time = 0;
 
@@ -267,7 +261,7 @@ void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, std::v
 			/* Obtain pathing information through functions from PurePursuit.cpp */
 
 			std::vector<double> pose {target[0], target[1], heading};
-			move_to(pose, {1, 1, 1}, speeds, 0, true);
+			move_to(pose, {1, 1, 1}, speeds, true);
 			cur = {(float)y, (float)x};
 			delay(5);
 		}
@@ -328,10 +322,10 @@ void Robot::balls_checking(void *ptr) {
         } else if (!shoot_ball && ut_toggle) ut_toggle = false;
 
         bool intake_ball = LM1.get_value();
-        if(intake_ball && intake_toggle==5) {
+        if(intake_ball && intake_toggle==8) {
             intake_count++;
             intake_toggle=0;
-        } else if (!intake_ball && intake_toggle<5) intake_toggle++;
+        } else if (!intake_ball && intake_toggle<8) intake_toggle++;
 
         storing_count = intake_count-(ejector_count+shooting_count);
         delay(30);
@@ -342,19 +336,36 @@ int Robot::count(){
 	return int(intake_count);
 }
 
-
-void Robot::balls_outtake(void *ptr) {
-    delay(outtake_opening_delay);
-	IL = -127 * .5;
-	IR = -127 * .5;
-	delay(outtake_delay);
-	IL = 0;
-	IR = 0;
+bool Robot::check_intaking(){
+    return bool(intaking);
 }
 
-void Robot::toggle_outtake(int outtake_delay_, int outtake_opening_delay_){
+void Robot::balls_intake(void *ptr) {
+    intaking = true;
+    bool outtake=false;
+    int outtake_count = 0;
+
+    delay(outtake_opening_delay);
+    IL = -127 * .5;
+    IR = -127 * .5;
+    delay(outtake_delay);
+    IL = 0;
+    IR = 0;
+
+    while(true) {
+        if(UF.get_value() < 300 && close_intakes) {
+            Robot::intake({127, 127, 127, 0});
+            intaking = false;
+            break;
+        }
+        delay(5);
+    }
+}
+
+void Robot::balls_intake_toggle(int outtake_delay_, int outtake_opening_delay_, bool close_intakes_){
 	outtake_delay = outtake_delay_;
     outtake_opening_delay = outtake_opening_delay_;
+    close_intakes = close_intakes_;
 }
 
 /**
@@ -371,22 +382,30 @@ void Robot::display(void *ptr)
         lcd::print(3, "IMU value: %f", IMU.get_rotation());
         lcd::print(4, "LF1: %d LF2: %d LB1: %d", LF1.get_value(), LF2.get_value(), LB1.get_value());
         //lcd::print(5, "UF: %d UT: %d SC: %d %d", UF.get_value(), UT.get_value(), (int) storing_count, (int) shooting_count);
-        lcd::print(6, "Intake: %d shoot: %d ultra: %d", (int) intake_count, (int) shooting_count, UT.get_value());
+        lcd::print(6, "Intake: %d shoot: %d UF: %d", (int) intake_count, (int) shooting_count, UF.get_value());
         lcd::print(7, "EjectorSensors: %d %d", (int) ejector_count, (int) BallsBackAverage);
 
         delay(10);
     }
 }
+
+
+void Robot::set_pass(bool pass_){
+	pass = pass_;
+}
+
 //TODO possibly make it so second stage of acceleration with 3 balls
-void Robot::shoot_store(int shoot, int store, bool pass){
+void Robot::shoot_store(int shoot, int store){
     if (pass){
         return;
     }
 
-    R1 = -127 * .5;
-    delay(100);
-    R2 = -127 * .1;
-    delay(100);
+    if (shoot > 0) {
+    	R1 = -127 * .5;
+	    delay(100);
+	    R2 = -127 * .1;
+	    delay(100);
+    }
 
     double R1_coefficient = .35;
     double R2_coefficient = 1;
@@ -397,6 +416,8 @@ void Robot::shoot_store(int shoot, int store, bool pass){
     bool off_1 = true;
     bool off_2 = true;
 
+    int time = 0;
+
     while(shooting_count - last_shooting_count < shoot || intake_count - last_intake_count < store){
 		if (shooting_count - last_shooting_count >= shoot && off_1){
 		    R1_coefficient = .5;
@@ -405,7 +426,7 @@ void Robot::shoot_store(int shoot, int store, bool pass){
 		if (shooting_count - last_shooting_count >= 1 && off_2){
 		    off_2 = false;
 		    R1 = 0;
-		    delay(100);
+		    delay(200);
 		}
         if (intake_count - last_intake_count < store){
             IL = 127;
@@ -418,14 +439,15 @@ void Robot::shoot_store(int shoot, int store, bool pass){
             IR = 0;
         }
 
-        if (shooting_count - last_shooting_count < shoot ){
+        if (shooting_count - last_shooting_count < shoot){
             R1 = 127 * R1_coefficient;
             R2 = 127 * R2_coefficient;
         }
         else {
-            R2 = 0;
-            R2.set_brake_mode(E_MOTOR_BRAKE_HOLD);
+            time += 1;
+            if (time > 100) R2.set_brake_mode(E_MOTOR_BRAKE_HOLD);
         }
+        delay(1);
     }
     R1 = 127;
     delay(50);
