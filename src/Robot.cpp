@@ -333,7 +333,7 @@ void Robot::balls_checking(void *ptr) {
 }
 
 int Robot::count(){
-	return int(intake_count);
+	return int(ejector_count);
 }
 
 bool Robot::check_intaking(){
@@ -400,7 +400,7 @@ void Robot::shoot_store(int shoot, int store){
         return;
     }
 
-    if (shoot > 0) {
+    if (shoot > 1) {
     	R1 = -127 * .5;
 	    delay(100);
 	    R2 = -127 * .1;
@@ -444,13 +444,12 @@ void Robot::shoot_store(int shoot, int store){
             R2 = 127 * R2_coefficient;
         }
         else {
-            time += 1;
-            if (time > 100) R2.set_brake_mode(E_MOTOR_BRAKE_HOLD);
+			R2 = -10;
         }
         delay(1);
     }
-    R1 = 127;
-    delay(50);
+   	intake({127, 127, 0, 0});
+    delay(100);
     intake({0,0,0,0});
 }
 
