@@ -19,32 +19,42 @@ void autonomous()
 	//every tower after 3 is inconsistent
 
 
-    Robot::set_pass(true);
+    Robot::set_pass(false);
     //Tower 1 -------------------------------------------------------------------------------------------------------
 	//intaking
-	Robot::intake({127, 127, 127, 0}); //turning on intakes for the next two balls
+	Robot::intake({127, 127, 80, 0}); //turning on intakes for the next two balls
 	Robot::move_to_pure_pursuit({{0, 0}, {800, 1}, {1000, 0}}, {1590, -150, 43}, {1.5, 1.5, 1,5}); //pp for first two balls
-	// int last_store_count = Robot::count();
-	// while(Robot::count() == last_store_count){
-	// 	delay(1);
-	// }
 	delay(100);
-	//tower
-	Robot::move_to({1130, -650, 89}); //tower prelim
+	Robot::move_to({1150, -530, 94}); //tower prelim
 	Robot::intake({0, 0, 0, 0});
-	Robot::move_to({1100, -790, 90}, {1, 1, 1}, {2, 2, 2}); //tower 1
+	Robot::move_to({1150, -810, 94}); //tower 1
 	Robot::shoot_store(3, 2); //shooting 3, storing 2
 
 	//Tower 2 -------------------------------------------------------------------------------------------------------
 	//pooping
+	Robot::intake({0, 0, 127, 0});
+	int last_ejector = Robot::count();
+	Robot::balls_intake_toggle(600, 0);
+	Robot::start_task("OUTTAKE0", Robot::balls_intake);
     Robot::move_to({1020, 0, 90}); //backout
+    Robot::intake({0, 0, 0, 0});
 	Robot::move_to({1020, 0, 238}); //turning
-	Robot::intake({0, 0, 127, -90});
+	Robot::kill_task("OUTTAKE0");
+	Robot::intake({0, 0, 127, -127});
 	//first ball
 	Robot::balls_intake_toggle(600, 0, false); //thread delay
 	Robot::start_task("OUTTAKE1", Robot::balls_intake);
-	Robot::move_to({450, 1300, 238}, {1, 1, 1}, {1, 1, 2}); //ball point
+	Robot::move_to({550, 1290, 238}, {1, 1, 1}, {1, 1, 2}); //ball point
 	Robot::kill_task("OUTTAKE1");
+	if (Robot::count() - last_ejector < 2){
+		Robot::intake({0, 0, -127, -127});
+		delay(100);
+		Robot::intake({0, 0, 127, -127});
+		while(Robot::count() - last_ejector < 2){
+			delay(1);
+		}
+	}
+	
 	Robot::shoot_store(0, 1);
 	Robot::intake({0, 0, 127, 0});
 	//tower
@@ -57,45 +67,46 @@ void autonomous()
 	Robot::intake({0, 0, 127, -90});
     Robot::move_to({-380, 960, 221}, {1, 1, 1}, {3, 3, 1}); //back out
 	//first ball
-    Robot::balls_intake_toggle(600, 300, false); //thread delay
+    Robot::balls_intake_toggle(600, 300, true); //thread delay
     Robot::start_task("OUTTAKE2", Robot::balls_intake);
 	Robot::move_to({-1140, 1710, 221}, {1, 1, 1}, {1, 1, 2}); //ball point
-	Robot::kill_task("OUTTAKE2");
- 	Robot::shoot_store(0, 1);
- 	Robot::intake({127, 127, 127, 0});
 	//second ball
-    Robot::move_to({-1820, 2870, 221}, {1, 1, 1}, {1, 2, 1}); //ball point
-    delay(200);
+    Robot::move_to({-1730, 2870, 221}, {1, 1, 1}, {1, 2, 1}); //ball point
+    delay(100);
+    Robot::kill_task("OUTTAKE2");
 	//tower
     Robot::move_to({-2090, 2370, 178}); //prelim point
     Robot::intake({0, 0, 0, 0});
-    Robot::move_to({-2320, 2280, 180}); //tower 3
+    Robot::move_to({-2360, 2230, 181}); //tower 3
     Robot::shoot_store(2, 2); //shoot 2, store 2
 
 
     //Tower 4 -------------------------------------------------------------------------------------------------------
 	//pooping
-	Robot::intake({0, 0, 0, -90});
+	Robot::intake({0, 0, 127, -127});
+	last_ejector = Robot::count();
+	Robot::balls_intake_toggle(600, 0);
+	Robot::start_task("OUTTAKE3", Robot::balls_intake);
     Robot::move_to({-1870, 2380, 200}); //backout
-    Robot::intake({127, 127, 0, -90});
     Robot::move_to({-1870, 2380, 334}); //turning
-    Robot::intake({127, 127, 127, -90}); //pooping
-	Robot::intake({0, 0, 127, -127}); //popping and shutting intakes
+    if (Robot::count() - last_ejector < 2){
+		Robot::intake({0, 0, -127, -127});
+		delay(100);
+		Robot::intake({0, 0, 127, -127});
+	}
 	//first ball
-    Robot::balls_intake_toggle(600, 0, false); //thread delay
-    Robot::start_task("OUTTAKE3", Robot::balls_intake);
     Robot::move_to({-215, 2920, 333}, {1, 1, 1}, {1, 1, 3}); //ball point
 	Robot::shoot_store(0, 1);
+	Robot::intake({0, 0, 127, 0});
 	Robot::kill_task("OUTTAKE3");
 	//second ball
     Robot::balls_intake_toggle(600, 0, false); //thread delay
     Robot::start_task("OUTTAKE4", Robot::balls_intake);
-    Robot::move_to({-266, 3428, 221}, {1, 1, 1}, {1, 1, 3}); //ball point
+    Robot::move_to({-220, 3550, 221}, {1, 1, 1}, {1, 1, 3}); //ball point
     Robot::kill_task("OUTTAKE4");
     Robot::intake({0, 0, 0, 0});
     Robot::shoot_store(0, 1);
     Robot::intake({0, 0, 127, 0});
-    delay(100);
 	//tower
     Robot::move_to({-620, 3890, 222}); //tower 4
     Robot::intake({0, 0, 0, 0});
@@ -104,13 +115,13 @@ void autonomous()
     Robot::set_pass(false);
 	//Tower 5 -------------------------------------------------------------------------------------------------------
 	//pooping
+	Robot::balls_intake_toggle(600, 0);
+	Robot::intake({0, 0, 127, -127});
+	Robot::start_task("OUTTAKE5", Robot::balls_intake);
 	Robot::move_to({-350, 3640, 222}); //backout
-	Robot::intake({127, 127, 127, -127}); //pooping
 	delay(200);
 	//first ball
 	Robot::move_to({-350, 3640, 320}); //turning
-	Robot::balls_intake_toggle(600, 0);
-	Robot::start_task("OUTTAKE5", Robot::balls_intake);
 	delay(400); //delay to open intakes before strafing out of tower
 	Robot::kill_task("OUTTAKE5");
 	Robot::move_to({780, 4570, 320}, {1, 1, 1}, {3, 3, 3}); //ball point
@@ -129,7 +140,7 @@ void autonomous()
 	//Tower 6 -------------------------------------------------------------------------------------------------------
 	//pooping
 	Robot::intake({0, 0, 127, -127});
-	int last_ejector = Robot::count()
+	last_ejector = Robot::count();
 	Robot::balls_intake_toggle(600, 0);
 	Robot::start_task("OUTTAKE7", Robot::balls_intake);
 	Robot::move_to({830, 5210, 268}); //backout
@@ -197,17 +208,17 @@ void autonomous()
 	//first ball
 	Robot::balls_intake_toggle(600, 0);
 	Robot::start_task("OUTTAKE8", Robot::balls_intake); //ratchet
-	Robot::move_to({2480, 1200, 580}); //turning
+	Robot::move_to({2480, 1200, 586}); //turning
 	Robot::kill_task("OUTTAKE8");
-	Robot::move_to({2160, 1480, 580}); //ball point
+	Robot::move_to({2070, 1470, 586}); //ball point
 	Robot::shoot_store(0, 1); //making sure ball is in bot for the next ratchet
 	//tower
 	Robot::balls_intake_toggle(600, 0);
 	Robot::start_task("OUTTAKE8", Robot::balls_intake); //ratchet for middle tower poles
-	Robot::move_to({1410, 2170, 580}); //tower 9
+	Robot::move_to({1340, 2090, 586}); //tower 9
 	Robot::kill_task("OUTTAKE8");
 	Robot::shoot_store(1, 3); //shoot 1, store 3
 	Robot::balls_intake_toggle(400, 0);
 	Robot::start_task("OUTTAKE8", Robot::balls_intake);
-	Robot::move_to({1520, 1970, 580});
+	Robot::move_to({1520, 1970, 586});
 }
