@@ -399,9 +399,9 @@ void Robot::shoot_store(int shoot, int store){
     if (pass){
         return;
     }
-    
+    int time = (shoot > 1) ? 100 : 0;
 	R1 = -127 * .5;
-    delay(100);
+    delay(time);
     R2 = -127 * .1;
     delay(100);
 
@@ -414,7 +414,7 @@ void Robot::shoot_store(int shoot, int store){
     bool off_1 = true;
     bool off_2 = true;
 
-    int time = 0;
+    time = 0;
 
     while(shooting_count - last_shooting_count < shoot || intake_count - last_intake_count < store){
 		if (shooting_count - last_shooting_count >= shoot && off_1){
