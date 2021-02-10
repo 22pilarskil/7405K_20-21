@@ -399,13 +399,11 @@ void Robot::shoot_store(int shoot, int store){
     if (pass){
         return;
     }
-
-    if (shoot > 1) {
-    	R1 = -127 * .5;
-	    delay(100);
-	    R2 = -127 * .1;
-	    delay(100);
-    }
+    
+	R1 = -127 * .5;
+    delay(100);
+    R2 = -127 * .1;
+    delay(100);
 
     double R1_coefficient = .35;
     double R2_coefficient = 1;

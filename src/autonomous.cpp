@@ -59,9 +59,6 @@ void autonomous()
     Robot::balls_intake_toggle(600, 300, true); //thread delay
     Robot::start_task("OUTTAKE2", Robot::balls_intake);
     Robot::move_to_pure_pursuit({{-380, 960}, {-1190, 1690}, {-1800, 2560}}, {-2000, 2710, 247});
-	// Robot::move_to({-1140, 1710, 221}, {1, 1, 1}, {1, 1, 2}); //ball point
-	// //second ball
-    // Robot::move_to({-1730, 2870, 221}, {1, 1, 1}, {1, 2, 1}); //ball point
     delay(100);
     Robot::kill_task("OUTTAKE2");
 	//tower
