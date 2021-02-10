@@ -38,12 +38,11 @@ void autonomous()
 	//Tower 2 -------------------------------------------------------------------------------------------------------
 	//pooping
 	Robot::balls_intake_toggle(600, 0);
-    Robot::intake({0, 0, 0, -90}); //top ball down
+    Robot::intake({0, 0, -127, -90}); //outtaking balls into corner
 	Robot::start_task("OUTTAKE0", Robot::balls_intake);
     Robot::move_to({1020, 0, 90}, {2, 2, 2}); //backout
 	Robot::move_to({1020, 0, 238}); //turning
 	Robot::kill_task("OUTTAKE0");
-	Robot::intake({0, 0, 127, -127}); //pooping
 
 	//first ball
 	Robot::move_to({550, 1290, 238}, {1, 1, 1}, {1, 1, 2}); //ball point
