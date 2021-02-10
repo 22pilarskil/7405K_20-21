@@ -196,7 +196,7 @@ void Robot::move_to(std::vector<double> pose, std::vector<double> margin, std::v
 	int time = 0;
 
 	double heading2 = (heading < 0) ? heading + 360 : heading - 360;
-	//heading = (abs(IMU.get_rotation() - heading) < abs(IMU.get_rotation() - heading2)) ? heading : heading2;
+	if (pure_pursuit) heading = (abs(IMU.get_rotation() - heading) < abs(IMU.get_rotation() - heading2)) ? heading : heading2;
 	double imu_error = -(IMU.get_rotation() - heading);
 	/* Calculate inverse headings (i.e. 1 deg = -359 deg), then find which heading is closer to current heading. For 
 	example, moving to -358 deg would require almost a full 360 degree turn from 1 degree, but from its equivalent of -359
@@ -448,8 +448,6 @@ void Robot::shoot_store(int shoot, int store){
         }
         delay(1);
     }
-   	intake({127, 127, 0, 0});
-    delay(100);
     intake({0,0,0,0});
 }
 

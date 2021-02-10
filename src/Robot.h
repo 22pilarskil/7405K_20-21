@@ -96,6 +96,8 @@ public:
 
     static void balls_intake(void *ptr);
     static void set_pass(bool pass_);
+	static void toggle_storing_count(int storing_numb);
+	static void get_storing_count();
     static void shoot_store(int shoot, int store);
     /* Ball storing functions */
 
