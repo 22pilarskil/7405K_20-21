@@ -184,51 +184,64 @@ void Robot::fps(void *ptr) {
  */
 void Robot::move_to(std::vector<double> pose, std::vector<double> margin, std::vector<double> speeds, bool pure_pursuit)
 {
-	double new_y = pose[0];
-	double new_x = pose[1];
-	double heading = pose[2];
+    double new_y = pose[0];
+    double new_x = pose[1];
+    double heading = pose[2];
 
-	double y_error = new_y - y;
-	double x_error = -(new_x - x);
-	int coefficient = 0;
-	std::string powered = "intakes";
+    std::deque<double> motion;
 
-	int time = 0;
+    double y_error = new_y - y;
+    double x_error = -(new_x - x);
+    int coefficient = 0;
+    double last_x = x;
+    double last_y = y;
+    std::string powered = "intakes";
 
-	double heading2 = (heading < 0) ? heading + 360 : heading - 360;
-	if (pure_pursuit) heading = (abs(IMU.get_rotation() - heading) < abs(IMU.get_rotation() - heading2)) ? heading : heading2;
-	double imu_error = -(IMU.get_rotation() - heading);
-	/* Calculate inverse headings (i.e. 1 deg = -359 deg), then find which heading is closer to current heading. For 
-	example, moving to -358 deg would require almost a full 360 degree turn from 1 degree, but from its equivalent of -359
-	deg, it only takes a minor shift in position */
+    int time = 0;
 
-	while (abs(y_error) > 30 * margin[0] || abs(x_error) > 30 * margin[1] || abs(imu_error) > 1 * margin[2])
-	{ /* while Robot::y, Robot::x and IMU heading are all more than the specified margin away from the target */
-		
-		// if (time < seconds) intake(coefficient, powered);
-		// else intake(0);
-		
-		double phi = TO_RAD(IMU.get_rotation());
-		double power = power_PD.get_value(y_error * std::cos(phi) + x_error * std::sin(phi)) * speeds[0];
-		double strafe = strafe_PD.get_value(x_error * std::cos(phi) - y_error * std::sin(phi)) * speeds[1];
-		double turn = turn_PD.get_value(imu_error) * 1.5 * speeds[2];
-		mecanum(power, strafe, turn);
-		/* Using our PD objects we use the error on each of our degrees of freedom (axial, lateral, and turning movement)
-		to obtain speeds to input into Robot::mecanum. We perform a rotation matrix calculation to translate our y and x 
-		error to the same coordinate plane as Robot::y and Robot::x to ensure that the errors we are using are indeed 
-		proportional/compatible with Robot::y and Robot::x */
+    double heading2 = (heading < 0) ? heading + 360 : heading - 360;
+    if (pure_pursuit) heading = (abs(IMU.get_rotation() - heading) < abs(IMU.get_rotation() - heading2)) ? heading : heading2;
+    double imu_error = -(IMU.get_rotation() - heading);
+    /* Calculate inverse headings (i.e. 1 deg = -359 deg), then find which heading is closer to current heading. For
+    example, moving to -358 deg would require almost a full 360 degree turn from 1 degree, but from its equivalent of -359
+    deg, it only takes a minor shift in position */
 
-		imu_error = -(IMU.get_rotation() - heading);
-		y_error = new_y - y;
-		x_error = -(new_x - x);
-		/* Recalculating our error by subtracting components of our current position vector from target position vector */
+    while (abs(y_error) > 30 * margin[0] || abs(x_error) > 30 * margin[1] || abs(imu_error) > 1 * margin[2])
+    { /* while Robot::y, Robot::x and IMU heading are all more than the specified margin away from the target */
+
+        if ((int)motion.size() == 10) motion.pop_front();
+        motion.push_back(abs(last_x - x) + abs(last_y - y));
+        double sum = 0;
+        for (int i = 0; i < motion.size(); i++) sum += motion[i];
+        double motion_average = sum / 10;
+        if (motion_average < .1 && time > 100) break;
+
+        last_x = x;
+        last_y = y;
+
+        double phi = TO_RAD(IMU.get_rotation());
+        double power = power_PD.get_value(y_error * std::cos(phi) + x_error * std::sin(phi)) * speeds[0];
+        double strafe = strafe_PD.get_value(x_error * std::cos(phi) - y_error * std::sin(phi)) * speeds[1];
+        double turn = turn_PD.get_value(imu_error) * 1.5 * speeds[2];
+        mecanum(power, strafe, turn);
+        /* Using our PD objects we use the error on each of our degrees of freedom (axial, lateral, and turning movement)
+        to obtain speeds to input into Robot::mecanum. We perform a rotation matrix calculation to translate our y and x
+        error to the same coordinate plane as Robot::y and Robot::x to ensure that the errors we are using are indeed
+        proportional/compatible with Robot::y and Robot::x */
+
+        imu_error = -(IMU.get_rotation() - heading);
+        y_error = new_y - y;
+        x_error = -(new_x - x);
+        /* Recalculating our error by subtracting components of our current position vector from target position vector */
 
 
-		if (pure_pursuit) return;
-		delay(5);
-		time += 5;
-	}
-	reset_PD();
+        if (pure_pursuit) return;
+        delay(5);
+        time += 5;
+    }
+    reset_PD();
+    //lcd::print(6, "DONE");
+    brake("stop");
 	//lcd::print(6, "DONE");
 	brake("stop");
 }
@@ -395,26 +408,28 @@ void Robot::set_pass(bool pass_){
 }
 
 //TODO possibly make it so second stage of acceleration with 3 balls
-void Robot::shoot_store(int shoot, int store){
+void Robot::shoot_store(int shoot, int store, bool outtake){
     if (pass){
         return;
     }
-    int time = (shoot > 1) ? 100 : 0;
-	R1 = -127 * .5;
-    delay(time);
-    R2 = -127 * .1;
-    delay(100);
+    int time1 = (shoot > 1) ? 100 : 0;
+    int time2 = (shoot == 2) ? 200 : 100;
+
+    if (outtake) {
+        R1 = -127 * .5;
+        delay(time1);
+        R2 = -127 * .1;
+        delay(time2);
+    }
 
     double R1_coefficient = .35;
-    double R2_coefficient = 1;
+    double R2_coefficient = (store == 3) ? .7 : 1;
 
     int last_shooting_count = shooting_count;
     int last_intake_count = int(intake_count);
 
     bool off_1 = true;
     bool off_2 = true;
-
-    time = 0;
 
     while(shooting_count - last_shooting_count < shoot || intake_count - last_intake_count < store){
 		if (shooting_count - last_shooting_count >= shoot && off_1){
@@ -447,6 +462,7 @@ void Robot::shoot_store(int shoot, int store){
         delay(1);
     }
     intake({0,0,0,0});
+    lcd::print(6, "DONE");
 }
 
 
@@ -466,10 +482,16 @@ void Robot::drive(void *ptr) {
 	int ejector_count=1;
 	bool ejector_state=false;
 
+	bool tower1 = false;
+	int tower1_count=1;
+
 	bool store_state=false;
 	int last_store_count;
 
+	int time = 0;
+
 	while (true) {
+	    time += 1;
 		int power = master.get_analog(ANALOG_LEFT_Y);
 		int strafe = master.get_analog(ANALOG_LEFT_X);
 		int turn = master.get_analog(ANALOG_RIGHT_X);
@@ -483,14 +505,13 @@ void Robot::drive(void *ptr) {
         bool intakes_indexer = master.get_digital(DIGITAL_R1);
 
         //Indexer/Flywheel
-		bool indexer = master.get_digital(DIGITAL_X);
+		bool tower1_button = master.get_digital(DIGITAL_X);
 		bool ejector = master.get_digital(DIGITAL_L2);
 		bool indexer_fly = master.get_digital(DIGITAL_R2);
 		
 		//Storing	
 		bool store1 = master.get_digital(DIGITAL_B);
 		bool store2 = master.get_digital(DIGITAL_Y);
-        bool store3 = master.get_digital(DIGITAL_X);
 
 		if ((store1 || store2) && !store_state) {
 			last_store_count=intake_count;
@@ -508,18 +529,25 @@ void Robot::drive(void *ptr) {
 		} else if (!ejector) ejector_state=false;
 		bool eject = ejector_count%2 == 0;
 
+		if(tower1_button && !tower1) {
+		    tower1 = true;
+		    tower1_count++;
+		} else if (!tower1_button) tower1 = false;
+		bool tower_1 = tower1_count%2 == 0;
+
+
+
 		int IL_ = 0;
 		int IR_ = 0;
 		int R1_ = 0;
 		int R2_ = 0;
 
-//		lcd::print(6, "%d %d", int(last_store_count), int(intake_count));
+
 
 		if (indexer_fly) {
             R1_ = 127;
             R2_ = 127;
 		}
-
 
 		if (intakes_indexer) {
 			IL_ = IR_ = R1_ = 127;
@@ -533,7 +561,11 @@ void Robot::drive(void *ptr) {
 			R2_ = -127;
 			R1_ = 127;
 		}
-
+        if(tower_1) {
+            shoot_store(3, 2);
+            R1_ = R2_ = IL_ = IR_ = 0;
+            lcd::print(6, "%d", time);
+        }
 
         if (store1) {
             if (intake_count - last_store_count < 1) {
@@ -552,20 +584,13 @@ void Robot::drive(void *ptr) {
             R2_ = 127;
             R1_ = 127 * .25;
         }
-
-        if (store3) {
-            if (intake_count - last_store_count < 3) {
-                IL_ = IR_ = 127;
-                delay(150);
-            }
-            R2_ = 127;
-            R1_ = 127 * .25;
-        }
+        lcd::print(7, "%d", time);
 
         intake({IL_, IR_, R1_, R2_});
 
 		delay(5);
 	}
+	lcd::print(1, "%d", 0);
 }
 
 
