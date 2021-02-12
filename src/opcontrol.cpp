@@ -9,7 +9,7 @@ void opcontrol() {
 	delay(100);
 	lcd::initialize();
 	delay(100);
-	Robot::start_task("DISPLAY", Robot::display);
+	// Robot::start_task("DISPLAY", Robot::display);
 	Robot::start_task("SENSORCHECKING", Robot::balls_checking);
 
 	Robot::start_task("DRIVE", Robot::drive);

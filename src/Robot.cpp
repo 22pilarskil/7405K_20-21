@@ -436,11 +436,13 @@ void Robot::shoot_store(int shoot, int store, bool outtake){
 		    R1_coefficient = .5;
 		    off_1 = false;
 		}
+
 		if (shooting_count - last_shooting_count >= 1 && off_2){
 		    off_2 = false;
 		    R1 = 0;
 		    delay(200);
 		}
+
         if (intake_count - last_intake_count < store){
             IL = 127;
             IR = 127;
@@ -462,7 +464,12 @@ void Robot::shoot_store(int shoot, int store, bool outtake){
         delay(1);
     }
     intake({0,0,0,0});
-    lcd::print(6, "DONE");
+    lcd::print(2, "DONE");
+}
+
+
+void Robot::shoot_store_thread(void *ptr) {
+	Robot::shoot_store(3, 1);
 }
 
 
@@ -557,15 +564,19 @@ void Robot::drive(void *ptr) {
 		if (outtake) IL_ = IR_ = -127 * .6;
 
 		if (eject) {
-			if (UF.get_value() < 200) IL_ = IR_ = 127;
+			if (outtake) IL_ = IR_ = -127 * .6;
+			else if (UF.get_value() < 200) IL_ = IR_ = 127;
 			R2_ = -127;
 			R1_ = 127;
 		}
+		lcd::print(6, "%d", tower_1);
         if(tower_1) {
-            shoot_store(3, 2);
-            R1_ = R2_ = IL_ = IR_ = 0;
-            lcd::print(6, "%d", time);
-        }
+            Robot::start_task("SHOOT_STORE_DRIVER", Robot::shoot_store_thread);
+			lcd::print(6, "PENIS");
+        } else {
+			Robot::kill_task("SHOOT_STORE_DRIVER");
+			lcd::print(6, "SOMETHING");
+		}
 
         if (store1) {
             if (intake_count - last_store_count < 1) {
@@ -585,10 +596,11 @@ void Robot::drive(void *ptr) {
             R1_ = 127 * .25;
         }
         lcd::print(7, "%d", time);
-
+		lcd::print(3, "%d %d %d %d", R2_, R1_, IL_, IR_);
         intake({IL_, IR_, R1_, R2_});
 
 		delay(5);
+		
 	}
 	lcd::print(1, "%d", 0);
 }

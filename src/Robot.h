@@ -99,6 +99,7 @@ public:
 	static void toggle_storing_count(int storing_numb);
 	static void get_storing_count();
     static void shoot_store(int shoot, int store, bool outtake=true);
+	static void shoot_store_thread(void *ptr);
     /* Ball storing functions */
 
 	static void display(void *ptr);
