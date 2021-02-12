@@ -98,7 +98,7 @@ public:
     static void set_pass(bool pass_);
 	static void toggle_storing_count(int storing_numb);
 	static void get_storing_count();
-    static void shoot_store(int shoot, int store);
+    static void shoot_store(int shoot, int store, bool outtake=true);
     /* Ball storing functions */
 
 	static void display(void *ptr);
