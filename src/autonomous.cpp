@@ -17,11 +17,13 @@ void autonomous()
 	Robot::start_task("DISPLAY", Robot::display);
     Robot::start_task("SENSORCHECKING", Robot::balls_checking);
 	//intake format: index 0,1 is the intakes, index 2 is the indexer, index 3 is the fly
-	//every tower after 3 is inconsistent    
+	//every tower after 3 is inconsistent
 
     Robot::set_pass(false);
     //Tower 1 -------------------------------------------------------------------------------------------------------
 	//intaking
+	Robot::intake({0, 0, 0, -90});
+	delay(100);
 	Robot::intake({127, 127, 80, 0}); //turning on intakes for the next two balls
 	Robot::move_to_pure_pursuit({{0, 0}, {800, 1}, {1000, 0}}, {1590, -150, 43}, {1.5, 1.5, 1.5}); //pp for first two balls
     Robot::intake({127, 127, 30, 0});
@@ -50,7 +52,6 @@ void autonomous()
 	Robot::shoot_store(1, 1); //shoot 1, store 1
 
 
-    Robot::set_pass(false);
 	//Tower 3 -------------------------------------------------------------------------------------------------------
 	//pooping
 	Robot::intake({0, 0, 127, -90});
@@ -65,7 +66,7 @@ void autonomous()
 	//tower
     Robot::move_to({-2120, 2330, 178}); //prelim point
     Robot::intake({0, 0, 0, 0});
-    Robot::move_to({-2410, 22267, 178}); //tower 3
+    Robot::move_to({-2360, 2330, 178}); //tower 3
     Robot::shoot_store(2, 2); //shoot 2, store 2
 
 
@@ -100,7 +101,6 @@ void autonomous()
     Robot::intake({0, 0, 0, 0});
     Robot::shoot_store(2, 1); //shoot 2, store 1
 
-    Robot::set_pass(false);
 	//Tower 5 -------------------------------------------------------------------------------------------------------
 	//pooping
 	Robot::balls_intake_toggle(600, 0);
@@ -148,6 +148,7 @@ void autonomous()
 	Robot::shoot_store(1,1); //shoot 2, store 1
 
 
+	Robot::set_pass(false);
 	//Tower 7 -------------------------------------------------------------------------------------------------------
 	//pooping
 	Robot::intake({0, 0, 127, -127});
@@ -163,9 +164,9 @@ void autonomous()
 	//second ball
 	Robot::move_to({3750, 2110, 401}, {1, 1, 1}, {1, 1, 1}); //ball point
 	//tower
-	Robot::move_to({3600, 2730, 358}); //prelim tower
+	Robot::move_to({3750, 2580, 356}); //prelim tower
 	Robot::intake({0, 0, 0, 0}); //intake shut off
-	Robot::move_to({4310, 2740, 358}); //tower 7
+	Robot::move_to({4280, 2630, 356}); //tower 7
 	Robot::shoot_store(2, 2); //shoot 2, store 2
 
 
@@ -184,7 +185,7 @@ void autonomous()
 	Robot::intake({0, 0, 127, 0}); //indexer
 	//tower
 	Robot::move_to({2500, 1140, 400}); //prelim point
-	Robot::move_to({2710, 1080, 400}); //tower 8
+	Robot::move_to({2670, 1030, 400}); //tower 8
 	Robot::shoot_store(1, 1); //shoot 1, store 1
 
 

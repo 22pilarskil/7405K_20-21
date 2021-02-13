@@ -30,6 +30,7 @@ public:
 	static ADIAnalogIn LF2;
 	static ADIUltrasonic UF;
 	static ADIUltrasonic UT;
+	static ADIUltrasonic UF_DRIVER;
 	static ADIDigitalIn LabelBumper;
 	/* Initializing motors, sensors, controller */
 
@@ -70,6 +71,7 @@ public:
 	static double increment;
 	static double fly_cap;
 	static bool pass;
+	static bool driver;
 	/* Static member variables for flywheel control */
 
 	static std::map<std::string, std::unique_ptr<pros::Task>> tasks;

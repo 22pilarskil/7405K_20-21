@@ -15,7 +15,7 @@ using namespace std;
 /* Lambda function to convert number in degrees to radians. */
 
 Controller Robot::master(E_CONTROLLER_MASTER);
-Motor Robot::FL(14);
+Motor Robot::FL(15);
 Motor Robot::FR(10, true);
 Motor Robot::BL(12);
 Motor Robot::BR(18, true);
@@ -32,6 +32,7 @@ ADIAnalogIn Robot::LF2({{6, 7}});
 ADIAnalogIn Robot::LF1({{6, 8}});
 ADIUltrasonic Robot::UF({{6, 1, 2}});
 ADIUltrasonic Robot::UT(7, 8);
+ADIUltrasonic Robot::UF_DRIVER({6, 7, 8});
 ADIDigitalIn Robot::LM1({{6, 3}});
 /* Initializing motors, sensors, controller */
 
@@ -73,6 +74,7 @@ double Robot::fly_power = 0;
 double Robot::increment = 1;
 double Robot::fly_cap = 1;
 bool Robot::pass = false;
+bool Robot::driver = false;
 /* Static member variables for flywheel control */
 
 std::map<std::string, std::unique_ptr<pros::Task>> Robot::tasks;
@@ -432,6 +434,7 @@ void Robot::shoot_store(int shoot, int store, bool outtake){
     bool off_2 = true;
 
     while(shooting_count - last_shooting_count < shoot || intake_count - last_intake_count < store){
+		lcd::print(5, "IN TASK");
 		if (shooting_count - last_shooting_count >= shoot && off_1){
 		    R1_coefficient = .5;
 		    off_1 = false;
@@ -469,7 +472,8 @@ void Robot::shoot_store(int shoot, int store, bool outtake){
 
 
 void Robot::shoot_store_thread(void *ptr) {
-	Robot::shoot_store(3, 1);
+	Robot::shoot_store(3, 2);
+	lcd::print(1, "DONE");
 }
 
 
@@ -512,7 +516,7 @@ void Robot::drive(void *ptr) {
         bool intakes_indexer = master.get_digital(DIGITAL_R1);
 
         //Indexer/Flywheel
-		bool tower1_button = master.get_digital(DIGITAL_X);
+		bool tower1_button = master.get_digital(DIGITAL_UP);
 		bool ejector = master.get_digital(DIGITAL_L2);
 		bool indexer_fly = master.get_digital(DIGITAL_R2);
 		
@@ -536,11 +540,13 @@ void Robot::drive(void *ptr) {
 		} else if (!ejector) ejector_state=false;
 		bool eject = ejector_count%2 == 0;
 
+
+		int cur_tower1_count = tower1_count;
 		if(tower1_button && !tower1) {
 		    tower1 = true;
 		    tower1_count++;
 		} else if (!tower1_button) tower1 = false;
-		bool tower_1 = tower1_count%2 == 0;
+		bool tower_1 = tower1_count == 2;
 
 
 
@@ -564,20 +570,16 @@ void Robot::drive(void *ptr) {
 		if (outtake) IL_ = IR_ = -127 * .6;
 
 		if (eject) {
-			if (outtake) IL_ = IR_ = -127 * .6;
-			else if (UF.get_value() < 200) IL_ = IR_ = 127;
+			if (UF_DRIVER.get_value() < 200) IL_ = IR_ = 127;
 			R2_ = -127;
 			R1_ = 127;
 		}
-		lcd::print(6, "%d", tower_1);
-        if(tower_1) {
-            Robot::start_task("SHOOT_STORE_DRIVER", Robot::shoot_store_thread);
-			lcd::print(6, "PENIS");
-        } else {
-			Robot::kill_task("SHOOT_STORE_DRIVER");
-			lcd::print(6, "SOMETHING");
-		}
+		lcd::print(6, "%d %d", tower1_count, tower1_button);
+        if(tower_1 && tower1_button) {
+			Robot::shoot_store(3, 2);
+			tower1_count++;
 
+        }
         if (store1) {
             if (intake_count - last_store_count < 1) {
                 IL_ = IR_ = 127;
@@ -595,8 +597,7 @@ void Robot::drive(void *ptr) {
             R2_ = 127;
             R1_ = 127 * .25;
         }
-        lcd::print(7, "%d", time);
-		lcd::print(3, "%d %d %d %d", R2_, R1_, IL_, IR_);
+    
         intake({IL_, IR_, R1_, R2_});
 
 		delay(5);
@@ -627,6 +628,8 @@ void Robot::mecanum(int power, int strafe, int turn) {
 
 	double true_max = double(std::max(max, min));
 	double scalar = (true_max > 127) ? 127 / true_max : 1;
+	
+	if (driver) scalar = 1;
 
 	FL = (power + strafe + turn) * scalar;
 	FR = (power - strafe - turn) * scalar;
