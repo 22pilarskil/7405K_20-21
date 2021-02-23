@@ -154,9 +154,9 @@ void Robot::fps(void *ptr) {
 		y = (float)y + global_dy;
 		x = (float)x + global_dx;
 
-//		lcd::print(3, "IMU value: %f", IMU.get_rotation());
+		lcd::print(3, "IMU value: %f", IMU.get_rotation());
 		lcd::print(5, "Y: %f - X: %f", (float)y, (float)x);
-		//printf("Y: %f - X: %f - IMU value: %f\n", (float)y, (float)x, IMU.get_rotation());
+		// printf("Y: %f - X: %f - IMU value: %f\n", (float)y, (float)x, IMU.get_rotation());
 
 		last_y = cur_y;
 		last_x = cur_x;
@@ -367,6 +367,9 @@ void Robot::balls_intake(void *ptr) {
     IL = 0;
     IR = 0;
 
+
+
+
     while(true) {
         if(UF.get_value() < 300 && close_intakes) {
             Robot::intake({127, 127, 127, 0});
@@ -375,6 +378,8 @@ void Robot::balls_intake(void *ptr) {
         }
         delay(5);
     }
+
+
 }
 
 void Robot::balls_intake_toggle(int outtake_delay_, int outtake_opening_delay_, bool close_intakes_){
@@ -476,6 +481,11 @@ void Robot::shoot_store_thread(void *ptr) {
 	lcd::print(1, "DONE");
 }
 
+void Robot::flipout(void *ptr) {
+	intake({127, 127, 0, int(-127 * 0.5)});
+	delay(750);
+	intake({0,0,0,0});
+}
 
 /**
  * @desc:
@@ -498,6 +508,11 @@ void Robot::drive(void *ptr) {
 
 	bool store_state=false;
 	int last_store_count;
+
+	int flipout_count=1;
+	bool flipout_state=false;
+	bool flipout_cooldown;
+	int flipout_cooldown_count;
 
 	int time = 0;
 
@@ -524,13 +539,14 @@ void Robot::drive(void *ptr) {
 		bool store1 = master.get_digital(DIGITAL_B);
 		bool store2 = master.get_digital(DIGITAL_Y);
 
+
+		bool flipout = master.get_digital(DIGITAL_RIGHT);
 		if ((store1 || store2) && !store_state) {
 			last_store_count=intake_count;
 			store_state=true;
 			R1 = -127 * .5;
-			delay(10);
 			R2 = -127 * .1;
-			delay(10);
+			delay(50);
 		} else if (!(store1 || store2)) store_state=false;
 
 
@@ -548,14 +564,26 @@ void Robot::drive(void *ptr) {
 		} else if (!tower1_button) tower1 = false;
 		bool tower_1 = tower1_count == 2;
 
-
-
+		if(flipout && !flipout_state) {
+		    flipout_state = true;
+		    flipout_count++;
+		} else if (!flipout) flipout_state = false;
+		bool activate_flipout = flipout_count == 2;
+		
 		int IL_ = 0;
 		int IR_ = 0;
 		int R1_ = 0;
 		int R2_ = 0;
+		bool activate_intakes = true;
 
-
+		if (activate_flipout) {
+			Robot::start_task("FLIPOUT", Robot::flipout);
+			flipout_count++;
+			flipout_cooldown = true;
+		} else if (flipout_cooldown && flipout_cooldown_count < 200) {
+			activate_intakes = false;
+			flipout_cooldown_count++;
+		} 
 
 		if (indexer_fly) {
             R1_ = 127;
@@ -586,7 +614,7 @@ void Robot::drive(void *ptr) {
                 delay(150);
             }
             R2_ = 127;
-            R1_ = 127 * .25;
+            R1_ = 127 * .40;
         }
 
         if (store2) {
@@ -595,11 +623,10 @@ void Robot::drive(void *ptr) {
                 delay(150);
             }
             R2_ = 127;
-            R1_ = 127 * .25;
+            R1_ = 127 * .40;
         }
     
-        intake({IL_, IR_, R1_, R2_});
-
+        if(activate_intakes) intake({IL_, IR_, R1_, R2_});
 		delay(5);
 		
 	}

@@ -1,4 +1,3 @@
-  
 #include "main.h"
 #include "Robot.h"
 using namespace pros;
@@ -6,7 +5,7 @@ using namespace pros;
 /* Below is our programming skills path in its entirety. It takes advantage of the Robot::move_to, Robot::move_to_pure_pursuit,
 and Robot::store functions to move to preset positions on the field and intake balls that we know to be there. It is
 important to note that while in our programming skills video (https://www.youtube.com/watch?v=_H-iJ-kX9H8) it appears
-that our robot is detecting and chasing down balls on the field, this is not the case. Since the field is set up the 
+that our robot is detecting and chasing down balls on the field, this is set the case. Since the field is set up the 
 same way every time, we simply use odometry to find the points on the field where balls are located, and initiate a
 single, uniform sequence each run. In effect, if the field is set up incorrectly (say a ball is shifted to the left 
 or right by a significant margin) the odometry points will not work, and our skills path will fail. */
@@ -18,6 +17,49 @@ void autonomous()
     Robot::start_task("SENSORCHECKING", Robot::balls_checking);
 	//intake format: index 0,1 is the intakes, index 2 is the indexer, index 3 is the fly
 	//every tower after 3 is inconsistent
+
+    match_auton();
+}
+
+
+
+void match_auton() {
+    //Tower 1
+    Robot::intake({0, 0, 0, -127});
+    delay(500);
+    Robot::intake({0, 0, 0, 0});
+    Robot::move_to({750, -390, -41});
+    Robot::shoot_store(0, 1);
+    Robot::move_to({960, -220, -41});
+    Robot::shoot_store(1, 0);
+    Robot::intake({0, 0, 127, 0});
+
+    //Tower 2
+    Robot::move_to({700, -500, -41});
+    Robot::intake({0, 0, 0, 0});
+
+    Robot::balls_intake_toggle(1000, 0); 
+    Robot::start_task("OUTTAKE0", Robot::balls_intake);
+    Robot::move_to({-1370, -370, -87});
+    Robot::shoot_store(1, 1);
+    
+    //Tower 3
+    Robot::intake({0, 0, 127, 0});
+    delay(500);
+    Robot::intake({0, 0, 127, -90});
+    Robot::move_to({-1370, -540, -87});
+    Robot::intake({0, 0, 0, 0});
+    Robot::balls_intake_toggle(1000, 0); 
+    Robot::start_task("OUTTAKE1", Robot::balls_intake);
+    Robot::move_to({-3400, -480, -129});
+    Robot::move_to({-3670, -170, -129});
+    Robot::shoot_store(1, 0);
+    Robot::move_to({-3530, -340, -129});
+
+}
+
+
+void skills_auton() {
 
     Robot::set_pass(false);
     //Tower 1 -------------------------------------------------------------------------------------------------------
@@ -70,6 +112,7 @@ void autonomous()
     Robot::shoot_store(2, 2); //shoot 2, store 2
 
 
+    Robot::set_pass(false);
 
     //Tower 4 -------------------------------------------------------------------------------------------------------
 	//pooping
@@ -91,7 +134,7 @@ void autonomous()
 	//second ball
     Robot::balls_intake_toggle(600, 0); //thread delay
     Robot::start_task("OUTTAKE4", Robot::balls_intake);
-    Robot::move_to({-220, 3550, 218}, {1, 1, 1}, {1, 1, 3}); //ball point
+    Robot::move_to({-177, 3460, 222}, {1, 1, 1}, {1, 1, 3}); //ball point
     Robot::kill_task("OUTTAKE4");
     Robot::shoot_store(0, 1);
     Robot::intake({127, 127, 127, 0});
@@ -148,7 +191,6 @@ void autonomous()
 	Robot::shoot_store(1,1); //shoot 2, store 1
 
 
-	Robot::set_pass(false);
 	//Tower 7 -------------------------------------------------------------------------------------------------------
 	//pooping
 	Robot::intake({0, 0, 127, -127});
@@ -211,4 +253,3 @@ void autonomous()
 	Robot::start_task("OUTTAKE8", Robot::balls_intake);
 	Robot::move_to({1520, 1970, 586});
 }
-

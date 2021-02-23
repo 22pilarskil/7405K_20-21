@@ -61,7 +61,13 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+//autonomous
 void autonomous(void);
+void match_auton(void);
+void skills_auton(void);
+
+
 void initialize(void);
 void disabled(void);
 void competition_initialize(void);

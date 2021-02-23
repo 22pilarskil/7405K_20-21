@@ -102,6 +102,7 @@ public:
 	static void get_storing_count();
     static void shoot_store(int shoot, int store, bool outtake=true);
 	static void shoot_store_thread(void *ptr);
+	static void flipout(void *ptr);
     /* Ball storing functions */
 
 	static void display(void *ptr);
