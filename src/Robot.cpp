@@ -534,7 +534,7 @@ void Robot::drive(void *ptr) {
 		bool tower1_button = master.get_digital(DIGITAL_UP);
 		bool ejector = master.get_digital(DIGITAL_L2);
 		bool indexer_fly = master.get_digital(DIGITAL_R2);
-		
+		bool front_eject = master.get_digital(DIGITAL_X);
 		//Storing	
 		bool store1 = master.get_digital(DIGITAL_B);
 		bool store2 = master.get_digital(DIGITAL_Y);
@@ -576,6 +576,9 @@ void Robot::drive(void *ptr) {
 		int R2_ = 0;
 		bool activate_intakes = true;
 
+
+
+		if (front_eject) R1_ = -127;
 		if (activate_flipout) {
 			Robot::start_task("FLIPOUT", Robot::flipout);
 			flipout_count++;

@@ -9,7 +9,6 @@ in initialize, autonomous functions will not work properly */
 void initialize() {
     Robot::reset_sensors();
     lcd::initialize();
-	delay(100);
 
 }
 

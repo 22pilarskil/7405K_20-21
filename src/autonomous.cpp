@@ -28,7 +28,7 @@ void match_auton() {
     Robot::intake({0, 0, 0, -127});
     delay(500);
     Robot::intake({0, 0, 0, 0});
-    Robot::move_to({750, -390, -41});
+    Robot::move_to({730, -415, -41});
     Robot::shoot_store(0, 1);
     Robot::move_to({960, -220, -41});
     Robot::shoot_store(1, 0);
@@ -41,21 +41,20 @@ void match_auton() {
     Robot::balls_intake_toggle(1000, 0); 
     Robot::start_task("OUTTAKE0", Robot::balls_intake);
     Robot::move_to({-1370, -370, -87});
-    Robot::shoot_store(1, 1);
+    Robot::shoot_store(1, 0);
     
     //Tower 3
     Robot::intake({0, 0, 127, 0});
     delay(500);
-    Robot::intake({0, 0, 127, -90});
     Robot::move_to({-1370, -540, -87});
     Robot::intake({0, 0, 0, 0});
     Robot::balls_intake_toggle(1000, 0); 
     Robot::start_task("OUTTAKE1", Robot::balls_intake);
     Robot::move_to({-3400, -480, -129});
-    Robot::move_to({-3670, -170, -129});
+    Robot::shoot_store(0, 1);
+    Robot::intake({0, 0, 127, 0});
+    Robot::move_to({-3730, -220, -129});
     Robot::shoot_store(1, 0);
-    Robot::move_to({-3530, -340, -129});
-
 }
 
 
