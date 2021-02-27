@@ -64,7 +64,9 @@ public:
     static std::atomic<bool> close_intakes;
     static std::atomic<double> checkDelay;
     static std::atomic<double> updateDelay;
-	/* Static member variables used to store information about location and number of balls being stored by our bot obtained 
+    static std::atomic<int> driver_type;
+    static std::atomic<int> progress;
+    /* Static member variables used to store information about location and number of balls being stored by our bot obtained
 	Robot::sensors */
 
 	static double fly_power;
@@ -107,7 +109,10 @@ public:
 
 	static void display(void *ptr);
 	static void drive(void *ptr);
-	static void mecanum(int power, int strafe, int turn);
+	static void drive_tune(void *ptr);
+    static int progress_state();
+    static int get_driver_type();
+    static void mecanum(int power, int strafe, int turn);
 	static void intake(std::vector<int> coefficients);
 	static void brake(std::string mode);
 	static void reset_sensors();

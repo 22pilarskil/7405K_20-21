@@ -67,6 +67,8 @@ std::atomic<int> Robot::outtake_opening_delay = 0;
 std::atomic<bool> Robot::close_intakes;
 std::atomic<double> Robot::updateDelay = 5;
 std::atomic<double> Robot::checkDelay = 5;
+std::atomic<int> Robot::driver_type = 0;
+std::atomic<int> Robot::progress = 0;
 /* Static member variables used to store information about location and number of balls being stored by our bot obtained
 Robot::sensors */
 
@@ -514,6 +516,9 @@ void Robot::drive(void *ptr) {
 	bool flipout_cooldown;
 	int flipout_cooldown_count;
 
+	int last_shoot_count;
+	bool shooting_state;
+	int drive_shoot_count;
 	int time = 0;
 
 	while (true) {
@@ -534,11 +539,12 @@ void Robot::drive(void *ptr) {
 		bool tower1_button = master.get_digital(DIGITAL_UP);
 		bool ejector = master.get_digital(DIGITAL_L2);
 		bool indexer_fly = master.get_digital(DIGITAL_R2);
-		bool front_eject = master.get_digital(DIGITAL_X);
-		//Storing	
+		bool front_eject = master.get_digital(DIGITAL_A);
+		bool shoot2 = master.get_digital(DIGITAL_X);
+
+		//Storing
 		bool store1 = master.get_digital(DIGITAL_B);
 		bool store2 = master.get_digital(DIGITAL_Y);
-
 
 		bool flipout = master.get_digital(DIGITAL_RIGHT);
 		if ((store1 || store2) && !store_state) {
@@ -556,7 +562,6 @@ void Robot::drive(void *ptr) {
 		} else if (!ejector) ejector_state=false;
 		bool eject = ejector_count%2 == 0;
 
-
 		int cur_tower1_count = tower1_count;
 		if(tower1_button && !tower1) {
 		    tower1 = true;
@@ -569,14 +574,31 @@ void Robot::drive(void *ptr) {
 		    flipout_count++;
 		} else if (!flipout) flipout_state = false;
 		bool activate_flipout = flipout_count == 2;
-		
+
+        if(shoot2 && !shooting_state) {
+            shooting_state = true;
+            drive_shoot_count++;
+            last_shoot_count=shooting_count;
+            R1 = -127 * .5;
+            R2 = -127 * .1;
+            delay(50);
+        } else if (!shoot2) shooting_state = false;
+
+
+
 		int IL_ = 0;
 		int IR_ = 0;
 		int R1_ = 0;
 		int R2_ = 0;
 		bool activate_intakes = true;
 
-
+        if(shoot2) {
+            if(shooting_count-last_shoot_count < 2) {
+                R1_ = 127 * .4;
+                R2_ = 127;
+                delay(150);
+            }
+        }
 
 		if (front_eject) R1_ = -127;
 		if (activate_flipout) {
@@ -636,7 +658,19 @@ void Robot::drive(void *ptr) {
 	lcd::print(1, "%d", 0);
 }
 
+void Robot::drive_tune(void *ptr) {
+    while (true) {
+        bool progress_button = master.get_digital(DIGITAL_A);
+        progress = int(progress_button);;
+    }
+}
+int Robot::progress_state() {
+    return int(progress);
+}
 
+int Robot::get_driver_type() {
+    return int(driver_type);
+}
 /**
  * @desc: The equation for holonomic driving (feeding values to our drivtrain motors to allow us to move axially, laterally, 
 	or turn)
