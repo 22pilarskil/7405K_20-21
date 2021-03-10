@@ -156,8 +156,6 @@ void Robot::fps(void *ptr) {
 		y = (float)y + global_dy;
 		x = (float)x + global_dx;
 
-		lcd::print(3, "IMU value: %f", IMU.get_rotation());
-		lcd::print(5, "Y: %f - X: %f", (float)y, (float)x);
 		// printf("Y: %f - X: %f - IMU value: %f\n", (float)y, (float)x, IMU.get_rotation());
 
 		last_y = cur_y;
@@ -403,7 +401,7 @@ void Robot::display(void *ptr)
         lcd::print(2, "Back Encoder: %d", BE.get_value());
         lcd::print(3, "IMU value: %f", IMU.get_rotation());
         lcd::print(4, "LF1: %d LF2: %d LB1: %d", LF1.get_value(), LF2.get_value(), LB1.get_value());
-        //lcd::print(5, "UF: %d UT: %d SC: %d %d", UF.get_value(), UT.get_value(), (int) storing_count, (int) shooting_count);
+		lcd::print(5, "Y: %f - X: %f", (float)y, (float)x);
         lcd::print(6, "Intake: %d shoot: %d UF: %d", (int) intake_count, (int) shooting_count, UF.get_value());
         lcd::print(7, "EjectorSensors: %d %d", (int) ejector_count, (int) BallsBackAverage);
 
@@ -431,7 +429,7 @@ void Robot::shoot_store(int shoot, int store, bool outtake){
         delay(time2);
     }
 
-    double R1_coefficient = .35;
+    double R1_coefficient = .5;
     double R2_coefficient = (store == 3) ? .7 : 1;
 
     int last_shooting_count = shooting_count;
@@ -483,11 +481,9 @@ void Robot::shoot_store_thread(void *ptr) {
 	lcd::print(1, "DONE");
 }
 
-void Robot::flipout(void *ptr) {
-	intake({127, 127, 0, int(-127 * 0.5)});
-	delay(750);
-	intake({0,0,0,0});
-}
+
+
+
 
 /**
  * @desc:
@@ -520,6 +516,11 @@ void Robot::drive(void *ptr) {
 	bool shooting_state;
 	int drive_shoot_count;
 	int time = 0;
+	bool activate = false;
+
+	Robot::intake({0, 0, 0, -127});
+	delay(100);
+	Robot::intake({0, 0, 0, 0});
 
 	while (true) {
 	    time += 1;
@@ -552,7 +553,7 @@ void Robot::drive(void *ptr) {
 			store_state=true;
 			R1 = -127 * .5;
 			R2 = -127 * .1;
-			delay(50);
+			delay(75);
 		} else if (!(store1 || store2)) store_state=false;
 
 
@@ -601,14 +602,7 @@ void Robot::drive(void *ptr) {
         }
 
 		if (front_eject) R1_ = -127;
-		if (activate_flipout) {
-			Robot::start_task("FLIPOUT", Robot::flipout);
-			flipout_count++;
-			flipout_cooldown = true;
-		} else if (flipout_cooldown && flipout_cooldown_count < 200) {
-			activate_intakes = false;
-			flipout_cooldown_count++;
-		} 
+		
 
 		if (indexer_fly) {
             R1_ = 127;
@@ -650,8 +644,11 @@ void Robot::drive(void *ptr) {
             R2_ = 127;
             R1_ = 127 * .40;
         }
-    
-        if(activate_intakes) intake({IL_, IR_, R1_, R2_});
+		bool past_beginning = (IL_ + IR_ + R1_ + R2_) != 0;
+
+		if (past_beginning) activate = true;
+		
+        if(activate_intakes && activate) intake({IL_, IR_, R1_, R2_});
 		delay(5);
 		
 	}
@@ -661,7 +658,8 @@ void Robot::drive(void *ptr) {
 void Robot::drive_tune(void *ptr) {
     while (true) {
         bool progress_button = master.get_digital(DIGITAL_A);
-        progress = int(progress_button);;
+        progress = int(progress_button);
+		delay(5);
     }
 }
 int Robot::progress_state() {
