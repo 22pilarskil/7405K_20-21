@@ -15,9 +15,9 @@ using namespace std;
 /* Lambda function to convert number in degrees to radians. */
 
 Controller Robot::master(E_CONTROLLER_MASTER);
-Motor Robot::FL(15);
+Motor Robot::FL(12);
 Motor Robot::FR(10, true);
-Motor Robot::BL(12);
+Motor Robot::BL(3);
 Motor Robot::BR(18, true);
 Motor Robot::IL(5, true);
 Motor Robot::IR(21);
@@ -78,6 +78,8 @@ double Robot::fly_cap = 1;
 bool Robot::pass = false;
 bool Robot::driver = false;
 /* Static member variables for flywheel control */
+std::string Robot::recorded_points = "";
+
 
 std::map<std::string, std::unique_ptr<pros::Task>> Robot::tasks;
 /* Mapping of tasks instantiated during the program */
@@ -117,6 +119,11 @@ void Robot::kill_task(std::string name) {
 	}
 }
 
+void Robot::record_points(){
+    recorded_points += "Robot::move_to({"+ std::to_string(x) +","+   std::to_string(y) + "," + std::to_string(Robot::IMU.get_rotation()) +"});\n";
+    printf("\n------------------\n");
+    printf("%s", record_points);
+}
 /**
  * @desc: Threaded function that performs our odometry calculations at all times, updating Robot::x and Robot::y to
  	provide us an accurate depiction of our robot's real time positioning. Since Robot::x and Robot::y are static 
@@ -662,6 +669,30 @@ void Robot::drive_tune(void *ptr) {
 		delay(5);
     }
 }
+
+void Robot::save_point(void *ptr) {
+    bool start_task_state=1;
+    int start_task_count;
+
+
+    while(true) {
+        bool save = master.get_digital(DIGITAL_A);
+        bool start_auton = master.get_digital(DIGITAL_B);
+        bool end_auton = master.get_digital(DIGITAL_X);
+        if(save) record_points();
+        
+        if(start_auton && !start_task_state) {
+            start_task_state=true;
+            start_task_count++;
+        } else if (start_task_state) start_task_state = false;
+        start_auton = start_task_count == 2; 
+
+        if(start_auton) Robot::start_task("AUTON", skills_auton);
+        else if(end_auton) Robot::kill_task("AUTON");
+        delay(500);
+    }
+}
+
 int Robot::progress_state() {
     return int(progress);
 }

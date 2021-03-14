@@ -15,7 +15,7 @@ void opcontrol() {
 	Robot::start_task("DISPLAY", Robot::display);
 	if(Robot::get_driver_type() == 1) {
 		Robot::start_task("TUNEDRIVER", Robot::drive_tune);
-		skills_driver_auton();
+		// skills_driver_auton();
 	} else {
 		Robot::start_task("DRIVE", Robot::drive);
 	}

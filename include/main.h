@@ -65,7 +65,7 @@ extern "C" {
 //autonomous
 void autonomous(void);
 void match_auton(void);
-void skills_auton(void);
+void skills_auton(void *ptr);
 void skills_driver_auton(void);
 
 

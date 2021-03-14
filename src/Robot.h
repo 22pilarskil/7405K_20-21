@@ -74,6 +74,7 @@ public:
 	static double fly_cap;
 	static bool pass;
 	static bool driver;
+	static std::string recorded_points;
 	/* Static member variables for flywheel control */
 
 	static std::map<std::string, std::unique_ptr<pros::Task>> tasks;
@@ -110,6 +111,7 @@ public:
 	static void display(void *ptr);
 	static void drive(void *ptr);
 	static void drive_tune(void *ptr);
+	static void save_point(void *ptr);
     static int progress_state();
     static int get_driver_type();
     static void mecanum(int power, int strafe, int turn);
@@ -117,6 +119,7 @@ public:
 	static void brake(std::string mode);
 	static void reset_sensors();
 	static void reset_PD();
+	static void record_points();
 	/* Driver control functions */
 
 	static void collectData(void *ptr);
