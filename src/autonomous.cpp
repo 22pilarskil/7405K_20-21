@@ -10,16 +10,15 @@ same way every time, we simply use odometry to find the points on the field wher
 single, uniform sequence each run. In effect, if the field is set up incorrectly (say a ball is shifted to the left 
 or right by a significant margin) the odometry points will not work, and our skills path will fail. */
 
-void autonomous()
-{
-	Robot::start_task("FPS", Robot::fps);
-	Robot::start_task("DISPLAY", Robot::display);
+void autonomous() {
+    Robot::start_task("FPS", Robot::fps);
+    Robot::start_task("DISPLAY", Robot::display);
     Robot::start_task("SENSORCHECKING", Robot::balls_checking);
-	//intake format: index 0,1 is the intakes, index 2 is the indexer, index 3 is the fly
-	//every tower after 3 is inconsistent
+    //intake format: index 0,1 is the intakes, index 2 is the indexer, index 3 is the fly
+    //every tower after 3 is inconsistent
+//    Robot::start_task("SAVEPOINTS", Robot::save_point);
+    skills_auton();
 }
-
-
 
 void match_auton() {
     //Tower 1
@@ -54,55 +53,55 @@ void match_auton() {
 }
 
 
-void skills_auton(void *ptr) {
+void skills_auton() {
     Robot::set_pass(false);
     //Tower 1 -------------------------------------------------------------------------------------------------------
     //intaking
     Robot::intake({0, 0, 0, -90});
     delay(100);
     Robot::intake({127, 127, 80, 0}); //turning on intakes for the next two balls
-    Robot::move_to_pure_pursuit({{0, 0}, {800, 1}, {1000, 0}}, {1590, -150, 43}, {1.5, 1.5, 1.5}); //pp for first two balls
+    Robot::move_to_pure_pursuit({{0, 0}, {800, 1}, {1000, 0}}, {1630, -170, 46}, {1.5, 1.5, 1.5}); //pp for first two balls
     Robot::intake({127, 127, 30, 0});
     delay(100);
-    Robot::move_to({1220, -580, 94}); //tower prelim
+    Robot::move_to({1120, -540, 90}); //tower prelim
     Robot::intake({0, 0, 0, 0});
-    Robot::move_to({1200, -820, 94}); //tower 1
+    Robot::move_to({1110, -850, 90}); //tower 1
     Robot::shoot_store(3, 2); //shooting 3, storing 2
 
     //Tower 2 -------------------------------------------------------------------------------------------------------
     //pooping
     Robot::balls_intake_toggle(600, 0);
     Robot::start_task("OUTTAKE0", Robot::balls_intake);
-    Robot::move_to({1020, 0, 90}, {2, 2, 2}); //backout
-    Robot::move_to({1020, 0, 238}); //turning
+    Robot::move_to({1140, -480, 90}, {2, 2, 2}); //backout
+    Robot::move_to({1140, -480, 238}); //turning
     Robot::intake({0, 0, 0, -90});
     Robot::kill_task("OUTTAKE0");
     Robot::intake({0, 0, 127, -127});
 
     //first ball
-    Robot::move_to({550, 1290, 238}, {1, 1, 1}, {1, 1, 2}); //ball point
+    Robot::move_to({550, 1170, 253}, {1, 1, 1}, {1, 1, 2}); //ball point
     Robot::shoot_store(0, 1);
     Robot::intake({0, 0, 127, 0});
     //tower
-    Robot::move_to({-470, 870, 132}, {1, 1, 1}, {1, 1, 2}); //tower 2
+    Robot::move_to({-490, 940, 133}, {1, 1, 1}, {1, 1, 2}); //tower 2
     Robot::shoot_store(1, 1); //shoot 1, store 1
 
 
     //Tower 3 -------------------------------------------------------------------------------------------------------
     //pooping
     Robot::intake({0, 0, 127, -90});
-    Robot::move_to({-380, 960, 221}, {1, 1, 1}, {3, 3, 1}); //back out
+    Robot::move_to({-250, 1100, 221}, {1, 1, 1}, {3, 3, 1}); //back out
 
     //first ball
     Robot::balls_intake_toggle(600, 300, true); //thread delay
     Robot::start_task("OUTTAKE2", Robot::balls_intake);
-    Robot::move_to_pure_pursuit({{-380, 960}, {-1190, 1690}, {-1800, 2560}}, {-2000, 2710, 247});
+    Robot::move_to_pure_pursuit({{-250, 1100}, {-1190, 1690}, {-1800, 2560}}, {-1760, 2980, 245});
     delay(100);
     Robot::kill_task("OUTTAKE2");
     //tower
-    Robot::move_to({-2120, 2330, 178}); //prelim point
+    Robot::move_to({-1940, 2590, 179}); //prelim point
     Robot::intake({0, 0, 0, 0});
-    Robot::move_to({-2360, 2330, 178}); //tower 3
+    Robot::move_to({-2210, 2590, 179}); //tower 3
     Robot::shoot_store(2, 2); //shoot 2, store 2
 
 
@@ -113,14 +112,14 @@ void skills_auton(void *ptr) {
     Robot::intake({0, 0, 127, -127});
     Robot::balls_intake_toggle(600, 0);
     Robot::start_task("OUTTAKE3", Robot::balls_intake);
-    Robot::move_to({-1870, 2380, 200}); //backout
-    Robot::move_to({-1870, 2380, 334}); //turning
+    Robot::move_to({-1750, 2380, 180}); //backout
+    Robot::move_to({-1780, 2400, 337}); //turning
     Robot::intake({0, 0, -127, -127});
     delay(200);
     Robot::intake({0, 0, 127, -127});
 
     //first ball
-    Robot::move_to({-215, 2920, 333}, {1, 1, 1}, {1, 1, 3}); //ball point
+    Robot::move_to({-215, 3020, 337}, {1, 1, 1}, {1, 1, 3}); //ball point
     Robot::kill_task("OUTTAKE3");
     Robot::shoot_store(0, 1);
     Robot::intake({0, 0, 127, 0});
@@ -128,13 +127,13 @@ void skills_auton(void *ptr) {
     //second ball
     Robot::balls_intake_toggle(600, 0); //thread delay
     Robot::start_task("OUTTAKE4", Robot::balls_intake);
-    Robot::move_to({-177, 3460, 222}, {1, 1, 1}, {1, 1, 3}); //ball point
+    Robot::move_to({20, 3470, 226}, {1, 1, 1}, {1, 1, 3}); //ball point
     Robot::kill_task("OUTTAKE4");
     Robot::shoot_store(0, 1);
     Robot::intake({127, 127, 127, 0});
     delay(200);
     //tower
-    Robot::move_to({-690, 3960, 223}); //tower 4
+    Robot::move_to({-500, 4010, 224}); //tower 4
     Robot::intake({0, 0, 0, 0});
     Robot::shoot_store(2, 1); //shoot 2, store 1
 
@@ -143,7 +142,7 @@ void skills_auton(void *ptr) {
     Robot::balls_intake_toggle(600, 0);
     Robot::intake({0, 0, 127, -127});
     Robot::start_task("OUTTAKE5", Robot::balls_intake);
-    Robot::move_to({-350, 3640, 222}); //backout
+    Robot::move_to({-310, 3800, 222}); //backout
     //first ball
     Robot::move_to({-350, 3640, 320}); //turning
     Robot::R2.set_brake_mode(E_MOTOR_BRAKE_HOLD);
@@ -151,12 +150,12 @@ void skills_auton(void *ptr) {
     Robot::intake({127, 127, 127, 0});
     delay(400);
     //wall ball
-    Robot::move_to({300, 5120, 220}, {1, 1, 1}, {1, 1, 3});
+    Robot::move_to({520, 5290, 225}, {1, 1, 1}, {1, 1, 3});
     Robot::kill_task("OUTTAKE5");
     //tower
-    Robot::move_to({650, 5440, 268}); //prelim point
+    Robot::move_to({830, 5360, 268}); //prelim point
     Robot::intake({0, 0, 0, 0});
-    Robot::move_to({770, 5760, 268}); //tower 5 very inconsistent
+    Robot::move_to({840, 5810, 267}); //tower 5 very inconsistent
     Robot::shoot_store(2, 2); //shoot 1, store 2
 
 
@@ -166,7 +165,7 @@ void skills_auton(void *ptr) {
     int last_ejector = Robot::count();
     Robot::balls_intake_toggle(600, 0);
     Robot::start_task("OUTTAKE7", Robot::balls_intake);
-    Robot::move_to({830, 5210, 268}); //backout
+    Robot::move_to({880, 5450, 268}); //backout
     Robot::kill_task("OUTTAKE7");
     Robot::move_to({830, 5350, 435}); //turning
     if (Robot::count() - last_ejector < 2){
@@ -246,4 +245,8 @@ void skills_auton(void *ptr) {
     Robot::balls_intake_toggle(400, 0);
     Robot::start_task("OUTTAKE8", Robot::balls_intake);
     Robot::move_to({1520, 1970, 586});
+}
+
+void threaded_auton(void *ptr) {
+    skills_auton();
 }

@@ -53,6 +53,7 @@ double Robot::offset_back = 7;
 double Robot::offset_middle = 7;
 double Robot::wheel_circumference = 2.75 * M_PI;
 int Robot::radius = 300;
+int counter = 0;
 /* Presets for odometry and pure pursuit calculations */
 
 std::atomic<int> Robot::ejector_count = -1;
@@ -120,9 +121,11 @@ void Robot::kill_task(std::string name) {
 }
 
 void Robot::record_points(){
-    recorded_points += "Robot::move_to({"+ std::to_string(x) +","+   std::to_string(y) + "," + std::to_string(Robot::IMU.get_rotation()) +"});\n";
-    printf("\n------------------\n");
-    printf("%s", record_points);
+
+    recorded_points = "\nRobot::move_to({"+ std::to_string(x) +","+   std::to_string(y) + "," + std::to_string(Robot::IMU.get_rotation()) +"});";
+    printf("\n------------------");
+    counter++;
+    printf("%s, counter: %d", const_cast<char*>(recorded_points.c_str()), counter);
 }
 /**
  * @desc: Threaded function that performs our odometry calculations at all times, updating Robot::x and Robot::y to
@@ -555,6 +558,12 @@ void Robot::drive(void *ptr) {
 		bool store2 = master.get_digital(DIGITAL_Y);
 
 		bool flipout = master.get_digital(DIGITAL_RIGHT);
+		bool record = master.get_digital(DIGITAL_DOWN);
+
+		if (record) {
+		    record_points();
+		    delay(1000);
+		}
 		if ((store1 || store2) && !store_state) {
 			last_store_count=intake_count;
 			store_state=true;
@@ -672,24 +681,25 @@ void Robot::drive_tune(void *ptr) {
 
 void Robot::save_point(void *ptr) {
     bool start_task_state=1;
+    bool start_toggle=false;
     int start_task_count;
-
 
     while(true) {
         bool save = master.get_digital(DIGITAL_A);
-        bool start_auton = master.get_digital(DIGITAL_B);
-        bool end_auton = master.get_digital(DIGITAL_X);
+        bool start = master.get_digital(DIGITAL_B);
+        bool end = master.get_digital(DIGITAL_X);
         if(save) record_points();
-        
-        if(start_auton && !start_task_state) {
-            start_task_state=true;
-            start_task_count++;
-        } else if (start_task_state) start_task_state = false;
-        start_auton = start_task_count == 2; 
 
-        if(start_auton) Robot::start_task("AUTON", skills_auton);
-        else if(end_auton) Robot::kill_task("AUTON");
-        delay(500);
+
+
+        printf("%d", start);
+        if(start && !start_toggle) {
+            Robot::start_task("AUTON", threaded_auton);
+            start_toggle= true;
+        }
+
+        if(end) Robot::kill_task("AUTON");
+        delay(5);
     }
 }
 
