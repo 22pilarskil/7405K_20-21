@@ -49,8 +49,8 @@ std::atomic<double> Robot::turn_offset_x = 0;
 std::atomic<double> Robot::turn_offset_y = 0;
 /* Static member variables used to store information about positioning obtained from Robot::fps (our odometry function) */
 
-double Robot::offset_back = 7;
-double Robot::offset_middle = 7;
+double Robot::offset_back = 7.28;
+double Robot::offset_middle = 7.28;
 double Robot::wheel_circumference = 2.75 * M_PI;
 int Robot::radius = 300;
 int counter = 0;
@@ -79,7 +79,6 @@ double Robot::fly_cap = 1;
 bool Robot::pass = false;
 bool Robot::driver = false;
 /* Static member variables for flywheel control */
-std::string Robot::recorded_points = "";
 
 
 std::map<std::string, std::unique_ptr<pros::Task>> Robot::tasks;
@@ -121,11 +120,9 @@ void Robot::kill_task(std::string name) {
 }
 
 void Robot::record_points(){
-
-    recorded_points = "\nRobot::move_to({"+ std::to_string(x) +","+   std::to_string(y) + "," + std::to_string(Robot::IMU.get_rotation()) +"});";
-    printf("\n------------------");
+    std::string recorded_points = "\n{"+ std::to_string(x) +","+   std::to_string(y) + "," + std::to_string(Robot::IMU.get_rotation()) +"}";
     counter++;
-    printf("%s, counter: %d", const_cast<char*>(recorded_points.c_str()), counter);
+    printf("%d - %s", const_cast<char*>(recorded_points.c_str()), counter);
 }
 /**
  * @desc: Threaded function that performs our odometry calculations at all times, updating Robot::x and Robot::y to
@@ -796,20 +793,13 @@ void Robot::reset_PD() {
 }
 
 
-void Robot::collectData(void *ptr) {
-	FILE* data_store = fopen("/usd/example.txt", "w");
-	std::deque<std::string> pastValues;
+void Robot::read_autonomous() {
+    string auton_points;
+    std::vector<vector<double>> points{};
+    ifstream File("file/points.txt");
 
-	while(true) {
-		std::string data = "";
-		for(int i = 0; i<pastValues.size(); i++) data += (pastValues[i] + " ");
-		data+=LabelBumper.get_value()+"\n";
-		fputs(const_cast<char*>(data.c_str()), data_store);
-
-		int BallsFrontLength = pastValues.size();
-		pastValues.push_back(std::to_string((LF1.get_value()+LF2.get_value())/2));
-		if(BallsFrontLength > 15) pastValues.pop_front();
-	}
-
-	fclose(data_store);
+    while (getline (File, auton_points)) {
+        // Output the text from the file
+        auton_points.substr(0, auton_points.find("-"));
+    }
 }

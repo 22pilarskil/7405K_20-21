@@ -122,6 +122,6 @@ public:
 	static void record_points();
 	/* Driver control functions */
 
-	static void collectData(void *ptr);
+	static void read_autonomous();
 	/* Collecting Data */
 };
