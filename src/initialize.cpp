@@ -9,5 +9,6 @@ in initialize, autonomous functions will not work properly */
 void initialize() {
     Robot::reset_sensors();
     lcd::initialize();
+    Robot::start_task("RECORD", Robot::record_thread);
 }
 

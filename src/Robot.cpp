@@ -1,6 +1,7 @@
 #include "Robot.h"
 #include "PurePursuit.h"
 #include <cmath>
+#include <math.h>
 #include <atomic>
 #include <vector>
 #include <numeric>
@@ -15,7 +16,7 @@ using namespace std;
 /* Lambda function to convert number in degrees to radians. */
 
 Controller Robot::master(E_CONTROLLER_MASTER);
-Motor Robot::FL(12);
+Motor Robot::FL(15);
 Motor Robot::FR(10, true);
 Motor Robot::BL(3);
 Motor Robot::BR(18, true);
@@ -120,9 +121,9 @@ void Robot::kill_task(std::string name) {
 }
 
 void Robot::record_points(){
-    std::string recorded_points = "\n{"+ std::to_string(x) +","+   std::to_string(y) + "," + std::to_string(Robot::IMU.get_rotation()) +"}";
+    std::string recorded_points = "\n{"+ std::to_string(int(round(y))) +","+   std::to_string(int(round(x))) + "," + std::to_string(int(round(Robot::IMU.get_rotation()))) +"}";
     counter++;
-    printf("%d - %s", const_cast<char*>(recorded_points.c_str()), counter);
+    printf("%s - %d", const_cast<char*>(recorded_points.c_str()), counter);
 }
 /**
  * @desc: Threaded function that performs our odometry calculations at all times, updating Robot::x and Robot::y to
@@ -421,6 +422,18 @@ void Robot::set_pass(bool pass_){
 	pass = pass_;
 }
 
+void Robot::record_thread(void *ptr){
+    while(true){
+        bool record = master.get_digital(DIGITAL_DOWN);
+        if (record) {
+            record_points();
+            delay(500);
+            master.rumble(".");
+        }
+        delay(5);
+    }
+}
+
 //TODO possibly make it so second stage of acceleration with 3 balls
 void Robot::shoot_store(int shoot, int store, bool outtake){
     if (pass){
@@ -555,12 +568,7 @@ void Robot::drive(void *ptr) {
 		bool store2 = master.get_digital(DIGITAL_Y);
 
 		bool flipout = master.get_digital(DIGITAL_RIGHT);
-		bool record = master.get_digital(DIGITAL_DOWN);
-
-		if (record) {
-		    record_points();
-		    delay(1000);
-		}
+		
 		if ((store1 || store2) && !store_state) {
 			last_store_count=intake_count;
 			store_state=true;
