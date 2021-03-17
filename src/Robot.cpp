@@ -16,9 +16,9 @@ using namespace std;
 /* Lambda function to convert number in degrees to radians. */
 
 Controller Robot::master(E_CONTROLLER_MASTER);
-Motor Robot::FL(15);
+Motor Robot::FL(16);
 Motor Robot::FR(10, true);
-Motor Robot::BL(3);
+Motor Robot::BL(4);
 Motor Robot::BR(18, true);
 Motor Robot::IL(5, true);
 Motor Robot::IR(21);
@@ -27,7 +27,7 @@ Motor Robot::R2(8, true);
 ADIEncoder Robot::LE(5, 6);
 ADIEncoder Robot::RE(1, 2, true);
 ADIEncoder Robot::BE(3, 4);
-Imu Robot::IMU(4);
+Imu Robot::IMU(3);
 ADIAnalogIn Robot::LB1({{6, 6}});
 ADIAnalogIn Robot::LF2({{6, 7}});
 ADIAnalogIn Robot::LF1({{6, 8}});
@@ -642,7 +642,7 @@ void Robot::drive(void *ptr) {
 			R2_ = -127;
 			R1_ = 127;
 		}
-		lcd::print(6, "%d %d", tower1_count, tower1_button);
+//		lcd::print(6, "%d %d", tower1_count, tower1_button);
         if(tower_1 && tower1_button) {
 			Robot::shoot_store(3, 2);
 			tower1_count++;

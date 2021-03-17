@@ -182,7 +182,7 @@ void skills_auton() {
     Robot::move_to({1900, 3440, 313}); //turning
     Robot::intake({0, 0, 127, 0}); //indexing while moving
     //tower
-    Robot::move_to({2420, 4120, 313}, {1, 1, 1}); //tower 6
+    Robot::move_to({2540, 4100, 313}, {1, 1, 1}); //tower 6
     Robot::shoot_store(1,1); //shoot 2, store 1
 
 
