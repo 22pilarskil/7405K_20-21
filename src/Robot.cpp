@@ -423,13 +423,16 @@ void Robot::set_pass(bool pass_){
 }
 
 void Robot::record_thread(void *ptr){
+	bool pressed = true;
     while(true){
         bool record = master.get_digital(DIGITAL_DOWN);
-        if (record) {
-            record_points();
-            delay(500);
-            master.rumble(".");
+        if (record && pressed) {
+			record_points();
+			pressed = false;
         }
+		if (!record){
+			pressed = true;
+		}
         delay(5);
     }
 }
@@ -450,7 +453,7 @@ void Robot::shoot_store(int shoot, int store, bool outtake){
     }
 
     double R1_coefficient = .5;
-    double R2_coefficient = (store == 3) ? .7 : 1;
+    double R2_coefficient = (store == 3) ? .8 : 1;
 
     int last_shooting_count = shooting_count;
     int last_intake_count = int(intake_count);
@@ -461,7 +464,7 @@ void Robot::shoot_store(int shoot, int store, bool outtake){
     while(shooting_count - last_shooting_count < shoot || intake_count - last_intake_count < store){
 		lcd::print(5, "IN TASK");
 		if (shooting_count - last_shooting_count >= shoot && off_1){
-		    R1_coefficient = .5;
+		    R1_coefficient = (shoot == 3) ? .3 : .5;
 		    off_1 = false;
 		}
 

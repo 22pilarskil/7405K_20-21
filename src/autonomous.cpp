@@ -67,7 +67,7 @@ void skills_auton() {
     delay(100);
     Robot::move_to({1075,-580,90}); //tower prelim
     Robot::intake({0, 0, 0, 0});
-    Robot::move_to({1165,-839,96}); //tower 1
+    Robot::move_to({1128,-858,90}); //tower 1
     Robot::shoot_store(3, 2); //shooting 3, storing 2
 
     //Tower 2 -------------------------------------------------------------------------------------------------------
@@ -106,8 +106,6 @@ void skills_auton() {
     Robot::move_to({-2360, 2330, 178}); //tower 3
     Robot::shoot_store(2, 2); //shoot 2, store 2
 
-
-    Robot::set_pass(false);
 
     //Tower 4 -------------------------------------------------------------------------------------------------------
     //pooping
@@ -155,7 +153,7 @@ void skills_auton() {
     Robot::move_to({460, 5320, 215}, {1, 1, 1}, {1, 1, 3});
     Robot::kill_task("OUTTAKE5");
     //tower
-    Robot::move_to({924,5602,264}); //prelim point
+    Robot::move_to({940,5520,268}); //prelim point
     Robot::intake({0, 0, 0, 0});
     Robot::move_to({890,5828,268}); //tower 5 very inconsistent
     Robot::shoot_store(2, 2); //shoot 1, store 2
@@ -186,9 +184,11 @@ void skills_auton() {
     Robot::shoot_store(1,1); //shoot 2, store 1
 
 
+    Robot::set_pass(false);
     //Tower 7 -------------------------------------------------------------------------------------------------------
     //pooping
     Robot::intake({0, 0, 127, -127});
+    delay(200);
     Robot::balls_intake_toggle(600, 0);
     Robot::start_task("OUTTAKE7", Robot::balls_intake);
     Robot::move_to({2160, 3860, 312});
@@ -201,9 +201,9 @@ void skills_auton() {
     //second ball
     Robot::move_to({3750, 2110, 401}, {1, 1, 1}, {1, 1, 1}); //ball point
     //tower
-    Robot::move_to({3750, 2580, 356}); //prelim tower
+    Robot::move_to({3931,2574,358}); //prelim tower
     Robot::intake({0, 0, 0, 0}); //intake shut off
-    Robot::move_to({4280, 2630, 356}); //tower 7
+    Robot::move_to({4351,2596,358}); //tower 7
     Robot::shoot_store(2, 2); //shoot 2, store 2
 
 
@@ -222,7 +222,7 @@ void skills_auton() {
     Robot::intake({0, 0, 127, 0}); //indexer
     //tower
     Robot::move_to({2500, 1140, 400}); //prelim point
-    Robot::move_to({2670, 1030, 400}); //tower 8
+    Robot::move_to({2700,995,401}); //tower 8
     Robot::shoot_store(1, 1); //shoot 1, store 1
 
 
