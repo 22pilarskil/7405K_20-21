@@ -55,6 +55,11 @@ double Robot::offset_middle = 7.28;
 double Robot::wheel_circumference = 2.75 * M_PI;
 int Robot::radius = 300;
 int counter = 0;
+int shoot_var = 0;
+int store_var = 0;
+bool combined = true;
+bool outtake_var = true;
+bool Robot::time_end = false;
 /* Presets for odometry and pure pursuit calculations */
 
 std::atomic<int> Robot::ejector_count = -1;
@@ -406,7 +411,7 @@ void Robot::display(void *ptr)
 
         master.print(0, 0, "Joystick %d", master.get_analog(ANALOG_LEFT_X));
         lcd::print(1, "LE: %d - RE: %d", LE.get_value(), RE.get_value());
-        lcd::print(2, "Back Encoder: %d", BE.get_value());
+        //lcd::print(2, "Back Encoder: %d", BE.get_value());
         lcd::print(3, "IMU value: %f", IMU.get_rotation());
         lcd::print(4, "LF1: %d LF2: %d LB1: %d", LF1.get_value(), LF2.get_value(), LB1.get_value());
 		lcd::print(5, "Y: %f - X: %f", (float)y, (float)x);
@@ -438,14 +443,39 @@ void Robot::record_thread(void *ptr){
 }
 
 //TODO possibly make it so second stage of acceleration with 3 balls
-void Robot::shoot_store(int shoot, int store, bool outtake){
+
+void Robot::set_shoot_store(int shoot, int store, bool combined, bool outtake){
+    shoot_var = shoot;
+    store_var = store;
+    combined = combined;
+    outtake_var = outtake;
+}
+
+void Robot::move_down(void *ptr){
     if (pass){
         return;
     }
-    int time1 = (shoot > 1) ? 100 : 0;
-    int time2 = (shoot == 2) ? 200 : 100;
+    int time1 = (shoot_var > 1) ? 100 : 0;
+    int time2 = (shoot_var == 2) ? 200 : 100;
+    if (outtake_var){
+        R1 = -127 * .5;
+        delay(time1);
+        R2 = -127 * .1;
+        delay(time2);
+    }
 
-    if (outtake) {
+    R1.set_brake_mode(E_MOTOR_BRAKE_HOLD);
+    R2.set_brake_mode(E_MOTOR_BRAKE_HOLD);
+}
+
+void Robot::shoot_store(){
+    if (pass){
+        return;
+    }
+    if (combined && outtake_var){
+        int time1 = (shoot_var > 1) ? 100 : 0;
+        int time2 = (shoot_var == 2) ? 200 : 100;
+
         R1 = -127 * .5;
         delay(time1);
         R2 = -127 * .1;
@@ -453,7 +483,7 @@ void Robot::shoot_store(int shoot, int store, bool outtake){
     }
 
     double R1_coefficient = .5;
-    double R2_coefficient = (store == 3) ? .8 : 1;
+    double R2_coefficient = (store_var == 3) ? .8 : 1;
 
     int last_shooting_count = shooting_count;
     int last_intake_count = int(intake_count);
@@ -461,10 +491,10 @@ void Robot::shoot_store(int shoot, int store, bool outtake){
     bool off_1 = true;
     bool off_2 = true;
 
-    while(shooting_count - last_shooting_count < shoot || intake_count - last_intake_count < store){
+    while(shooting_count - last_shooting_count < shoot_var || intake_count - last_intake_count < store_var){
 		lcd::print(5, "IN TASK");
-		if (shooting_count - last_shooting_count >= shoot && off_1){
-		    R1_coefficient = (shoot == 3) ? .3 : .5;
+		if (shooting_count - last_shooting_count >= shoot_var && off_1){
+		    R1_coefficient = (shoot_var == 3) ? .3 : .5;
 		    off_1 = false;
 		}
 
@@ -474,18 +504,18 @@ void Robot::shoot_store(int shoot, int store, bool outtake){
 		    delay(200);
 		}
 
-        if (intake_count - last_intake_count < store){
+        if (intake_count - last_intake_count < store_var){
             IL = 127;
             IR = 127;
             R1 = 127 * R1_coefficient;
         }
         else {
-            if (shooting_count - last_shooting_count == shoot) R1_coefficient = 1;
+            if (shooting_count - last_shooting_count == shoot_var) R1_coefficient = 1;
             IL = 0;
             IR = 0;
         }
 
-        if (shooting_count - last_shooting_count < shoot){
+        if (shooting_count - last_shooting_count < shoot_var){
             R1 = 127 * R1_coefficient;
             R2 = 127 * R2_coefficient;
         }
@@ -500,7 +530,7 @@ void Robot::shoot_store(int shoot, int store, bool outtake){
 
 
 void Robot::shoot_store_thread(void *ptr) {
-	Robot::shoot_store(3, 2);
+	//Robot::shoot_store(3, 2);
 	lcd::print(1, "DONE");
 }
 
@@ -647,7 +677,11 @@ void Robot::drive(void *ptr) {
 		}
 //		lcd::print(6, "%d %d", tower1_count, tower1_button);
         if(tower_1 && tower1_button) {
-			Robot::shoot_store(3, 2);
+            Robot::set_shoot_store(3, 2);
+            Robot::start_task("MOVEDOWN", Robot::move_down);
+            delay(300);
+            Robot::kill_task("MOVEDOWN");
+			Robot::shoot_store();
 			tower1_count++;
 
         }
@@ -813,4 +847,20 @@ void Robot::read_autonomous() {
         // Output the text from the file
         auton_points.substr(0, auton_points.find("-"));
     }
+}
+
+
+void Robot::time_run(void *ptr) {
+    auto start_time = chrono::steady_clock::now();
+    double last_timer;
+    int time = 0;
+    while(true) {
+        if (!Robot::time_end) time += 5;
+        lcd::print(2, "Timer %d", time);
+        delay(5);
+    }
+}
+
+void Robot::end_timer() {
+    Robot::time_end = true;
 }

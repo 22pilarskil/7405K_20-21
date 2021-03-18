@@ -74,6 +74,7 @@ public:
 	static double fly_cap;
 	static bool pass;
 	static bool driver;
+	static bool time_end;
 	static std::string recorded_points;
 	/* Static member variables for flywheel control */
 
@@ -104,7 +105,9 @@ public:
     static void record_thread(void *ptr);
 	static void toggle_storing_count(int storing_numb);
 	static void get_storing_count();
-    static void shoot_store(int shoot, int store, bool outtake=true);
+	static void set_shoot_store(int shoot, int store, bool combined=true, bool outtake=true);
+	static void move_down(void *ptr);
+    static void shoot_store();
 	static void shoot_store_thread(void *ptr);
 	static void flipout(void *ptr);
     /* Ball storing functions */
@@ -124,5 +127,7 @@ public:
 	/* Driver control functions */
 
 	static void read_autonomous();
+	static void time_run(void *ptr);
+	static void end_timer();
 	/* Collecting Data */
 };
