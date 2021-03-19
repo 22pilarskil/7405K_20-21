@@ -57,19 +57,20 @@ void match_auton() {
 void skills_auton() {
 
     Robot::start_task("TIMER", Robot::time_run);
-    Robot::move_to({1000, 0, 0});
+//    Robot::move_to({1000, 0, 0});
     Robot::set_pass(false);
     //Tower 1 -------------------------------------------------------------------------------------------------------
     //intaking
     Robot::intake({0, 0, 0, -90});
     delay(100);
-    Robot::intake({127, 127, 80, 0}); //turning on intakes for the next two balls
+    Robot::intake({127, 127, 127, 0}); //turning on intakes for the next two balls
     Robot::move_to({1590, -150, 43}); //pp for first two balls
     Robot::intake({127, 127, 127, 0});
     delay(100); 
     Robot::move_to({1128,-580,90}); //tower prelim
+    Robot::intake({0, 0, 127, 0});
     Robot::move_to({1128,-858,90}); //tower 1
-    Robot::set_shoot_store(3, 2);
+    Robot::set_shoot_store(3, 3);
     Robot::shoot_store(); //shooting 3, storing 2
 
     //Tower 2 -------------------------------------------------------------------------------------------------------
@@ -101,7 +102,7 @@ void skills_auton() {
     //first ball
     Robot::balls_intake_toggle(600, 300, true); //thread delay
     Robot::start_task("OUTTAKE2", Robot::balls_intake);
-    Robot::move_to_pure_pursuit({{-380, 960}, {-1190, 1690}, {-1800, 2560}}, {-1734,2913,222});
+    Robot::move_to_pure_pursuit({{-380, 960}, {-1190, 1690}, {-1800, 2560}}, {-1640,3040,222});
     delay(100);
     Robot::kill_task("OUTTAKE2");
     //tower
@@ -123,7 +124,7 @@ void skills_auton() {
     Robot::intake({0, 0, 127, -127});
 
     //first ball
-    Robot::move_to({-215, 2920, 333}, {1, 1, 1}, {1, 1, 3}); //ball point
+    Robot::move_to({-200, 3000, 333}, {1, 1, 1}, {1, 1, 3}); //ball point
     Robot::kill_task("OUTTAKE3");
     Robot::set_shoot_store(0, 1);
     Robot::shoot_store();
@@ -160,9 +161,9 @@ void skills_auton() {
     Robot::move_to({460, 5320, 215}, {1, 1, 1}, {1, 1, 3});
     Robot::kill_task("OUTTAKE5");
     //tower
-    Robot::move_to({920,5470,272}); //prelim point
+    Robot::move_to({840, 5430, 269}); //prelim point
     Robot::intake({0, 0, 0, 0});
-    Robot::move_to({912,5770,272}); //tower 5 very inconsistent
+    Robot::move_to({820, 5770, 269}); //tower 5 very inconsistent
     Robot::set_shoot_store(2, 2);
     Robot::shoot_store(); //shoot 1, store 2
 
