@@ -24,15 +24,9 @@ public:
 	static ADIEncoder RE;
 	static ADIEncoder BE;
 	static Imu IMU;
+    static ADIAnalogIn LSS;
     static ADIDigitalIn LM1;
-    static ADIAnalogIn LB1;
-	static ADIAnalogIn LF1;
-	static ADIAnalogIn LF2;
-	static ADIUltrasonic UF;
-	static ADIUltrasonic UT;
-	static ADIUltrasonic UF_DRIVER;
-	static ADIDigitalIn LabelBumper;
-	/* Initializing motors, sensors, controller */
+    /* Initializing motors, sensors, controller */
 
 	static PD power_PD;
 	static PD strafe_PD;
@@ -56,14 +50,12 @@ public:
 	static std::atomic<int> intake_count;
 	static std::atomic<int> shooting_count;
     static std::atomic<int> storing_count;
-	static std::atomic<double> BallsFrontAverage;
-	static std::atomic<double> BallsBackAverage;
+
 	static std::atomic<bool> intaking;
 	static std::atomic<int> outtake_delay;
     static std::atomic<int> outtake_opening_delay;
     static std::atomic<bool> close_intakes;
-    static std::atomic<double> checkDelay;
-    static std::atomic<double> updateDelay;
+
     static std::atomic<int> driver_type;
     static std::atomic<int> progress;
     /* Static member variables used to store information about location and number of balls being stored by our bot obtained
