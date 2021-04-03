@@ -23,18 +23,18 @@ Motor Robot::IR(19);
 Motor Robot::R1(13, true);
 Motor Robot::R2(17, true);
 ADIEncoder Robot::LE(5, 6);
-ADIEncoder Robot::RE(1, 2, true);
-ADIEncoder Robot::BE(3, 4);
-Imu Robot::IMU(3);
+ADIEncoder Robot::RE(3, 4);
+ADIEncoder Robot::BE(7, 8);
+Imu Robot::IMU(2);
 ADIAnalogIn Robot::LSS({{1, 8}});
 ADIDigitalIn Robot::LM1({{1, 1}});
 /* Initializing motors, sensors, controller */
 
 //.4, 0.1, 5
 //.4, 0.1, 5
-PD Robot::power_PD(.45, 0.1, 5);
-PD Robot::strafe_PD(.45, 0.1, 5);
-PD Robot::turn_PD(3, 0, 5);
+PD Robot::power_PD(.19, 5, 0);
+PD Robot::strafe_PD(.17, .3, 0);
+PD Robot::turn_PD(1.2, 1, 0);
 /* Initializing Our PD Instances */
 
 std::atomic<double> Robot::y = 0;
@@ -50,8 +50,8 @@ int Robot::radius = 300;
 int counter = 0;
 int shoot_var = 0;
 int store_var = 0;
-bool combined = true;
-bool outtake_var = true;
+bool shooting_end;
+bool store_end;
 bool Robot::time_end = false;
 /* Presets for odometry and pure pursuit calculations */
 
@@ -129,48 +129,48 @@ void Robot::record_points(){
  * @param ptr: Required for compatibility with pros threading
  */
 void Robot::fps(void *ptr) {
-	double last_x = 0;
-	double last_y = 0;
-	double last_phi = 0;
-	while (true) {
-		double cur_phi = TO_RAD(IMU.get_rotation());
-		double dphi = cur_phi - last_phi;
+    double last_x = 0;
+    double last_y = 0;
+    double last_phi = 0;
+    while (true) {
+        double cur_phi = TO_RAD(IMU.get_rotation());
+        double dphi = cur_phi - last_phi;
 
-		double cur_turn_offset_x = 360 * (offset_back * dphi) / wheel_circumference;
-		double cur_turn_offset_y = 360 * (offset_middle * dphi) / wheel_circumference;
-		/* Calculate how much the encoders have turned as a result of turning ONLY in order to
-		isolate readings representing lateral or axial movement from readings representing
-		turning in place */
+        double cur_turn_offset_x = 360 * (offset_back * dphi) / wheel_circumference;
+        double cur_turn_offset_y = 360 * (offset_middle * dphi) / wheel_circumference;
+        /* Calculate how much the encoders have turned as a result of turning ONLY in order to
+        isolate readings representing lateral or axial movement from readings representing
+        turning in place */
 
-		turn_offset_x = (float)turn_offset_x + cur_turn_offset_x;
-		turn_offset_y = (float)turn_offset_y + cur_turn_offset_y;
+        turn_offset_x = (float)turn_offset_x + cur_turn_offset_x;
+        turn_offset_y = (float)turn_offset_y + cur_turn_offset_y;
 
-		double cur_y = ((LE.get_value() - turn_offset_y) + (RE.get_value() + turn_offset_y)) / 2;
-		double cur_x = BE.get_value() - turn_offset_x;
+        double cur_y = ((LE.get_value() - turn_offset_y) + (RE.get_value() + turn_offset_y)) / 2;
+        double cur_x = BE.get_value() - turn_offset_x;
 
-		double dy = cur_y - last_y;
-		double dx = cur_x - last_x;
+        double dy = cur_y - last_y;
+        double dx = cur_x - last_x;
 
-		double global_dy = dy * std::cos(cur_phi) + dx * std::sin(cur_phi);
-		double global_dx = dx * std::cos(cur_phi) - dy * std::sin(cur_phi);
-		/* Apply rotation matrix to dx and dy to calculate global_dy and global_dx. Is required because if the Robot moves
-		on an orientation that is not a multiple of 90 (i.e. 22 degrees), x and y encoder values do not correspond 
-		exclusively to either x or y movement, but rather a little bit of both */
+        double global_dy = dy * std::cos(cur_phi) + dx * std::sin(cur_phi);
+        double global_dx = dx * std::cos(cur_phi) - dy * std::sin(cur_phi);
+        /* Apply rotation matrix to dx and dy to calculate global_dy and global_dx. Is required because if the Robot moves
+        on an orientation that is not a multiple of 90 (i.e. 22 degrees), x and y encoder values do not correspond
+        exclusively to either x or y movement, but rather a little bit of both */
 
-		y = (float)y + global_dy;
-		x = (float)x + global_dx;
+        y = (float)y + global_dy;
+        x = (float)x + global_dx;
 
-		// printf("Y: %f - X: %f - IMU value: %f\n", (float)y, (float)x, IMU.get_rotation());
+        // printf("Y: %f - X: %f - IMU value: %f\n", (float)y, (float)x, IMU.get_rotation());
 
-		last_y = cur_y;
-		last_x = cur_x;
-		last_phi = cur_phi;
+        last_y = cur_y;
+        last_x = cur_x;
+        last_phi = cur_phi;
 
-		delay(5);
-		/* All of these calculations assume that the Robot is moving in a straight line at all times. However, while this 
-		is not always the case, a delay of 5 milliseconds between each calculation makes dx and dy (distance traveled on 
-		x and y axes) so small that any curvature is insignificant. */
-	}
+        delay(5);
+        /* All of these calculations assume that the Robot is moving in a straight line at all times. However, while this
+        is not always the case, a delay of 5 milliseconds between each calculation makes dx and dy (distance traveled on
+        x and y axes) so small that any curvature is insignificant. */
+    }
 }
 
 
@@ -212,7 +212,7 @@ void Robot::move_to(std::vector<double> pose, std::vector<double> margin, std::v
     example, moving to -358 deg would require almost a full 360 degree turn from 1 degree, but from its equivalent of -359
     deg, it only takes a minor shift in position */
 
-    while (abs(y_error) > 30 * margin[0] || abs(x_error) > 30 * margin[1] || abs(imu_error) > 1 * margin[2])
+    while (abs(y_error) > 10 * margin[0] || abs(x_error) > 10 * margin[1] || abs(imu_error) > 1 * margin[2])
     { /* while Robot::y, Robot::x and IMU heading are all more than the specified margin away from the target */
 
         if ((int)motion.size() == 10) motion.pop_front();
@@ -246,7 +246,7 @@ void Robot::move_to(std::vector<double> pose, std::vector<double> margin, std::v
         time += 5;
     }
     reset_PD();
-    //lcd::print(6, "DONE");
+    lcd::print(6, "DONE");
     brake("stop");
 	//lcd::print(6, "DONE");
 	brake("stop");
@@ -315,8 +315,8 @@ void Robot::display(void *ptr)
         lcd::print(1, "IMU value: %f", IMU.get_rotation());
         lcd::print(2, "Y: %f - X: %f", (float)y, (float)x);
         lcd::print(3, "LM1: %d LSS: %d", LM1.get_value(), LSS.get_value());
-        lcd::print(4, "intake: %d shoot: %d store: %d", (int) intake_count, (int) shooting_count, (int) storing_count);
-
+//        lcd::print(4, "intake: %d shoot: %d store: %d", (int) intake_count, (int) shooting_count, (int) storing_count);
+        lcd::print(4, "LE: %d - RE: %d - BE %d", LE.get_value(), RE.get_value(), BE.get_value());
         delay(10);
     }
 }
@@ -346,24 +346,6 @@ void Robot::record_thread(void *ptr){
 }
 
 
-
-void Robot::move_down(void *ptr){
-    if (pass){
-        return;
-    }
-    int time1 = (shoot_var > 1) ? 100 : 0;
-    int time2 = (shoot_var == 2) ? 200 : 100;
-    if (outtake_var){
-        R1 = -127 * .5;
-        delay(time1);
-        R2 = -127 * .1;
-        delay(time2);
-    }
-
-    R1.set_brake_mode(E_MOTOR_BRAKE_HOLD);
-    R2.set_brake_mode(E_MOTOR_BRAKE_HOLD);
-}
-
 void Robot::balls_checking(void *ptr) {
     const int length_ = 100;
     int intake_toggle = 0;
@@ -374,7 +356,6 @@ void Robot::balls_checking(void *ptr) {
     while (true) {
         BallsShoot.push_back(LSS.get_value());
         if(BallsShoot.size() == length_) {
-            lcd::print(6, "ACTIVATED");
             BallsShoot.pop_front();
             int sum = 0;
             for(int i = 0; i<BallsShoot.size(); i++) sum += BallsShoot[i];
@@ -382,11 +363,11 @@ void Robot::balls_checking(void *ptr) {
         }
         lcd::print(5, "shooting average: %d", BallsShootAverage);
 
-        bool shoot_ball = LSS.get_value() < BallsShootAverage;
+        bool shoot_ball = abs(BallsShootAverage-LSS.get_value()) > 100;
         if(shoot_ball && !shoot_toggle) {
             shooting_count++;
             shoot_toggle = true;
-            delay(100);
+            delay(60);
         } else if (!shoot_ball && shoot_toggle) shoot_toggle = false;
 
         bool intake_ball = LM1.get_value();
@@ -438,25 +419,16 @@ void Robot::balls_intake_toggle(int outtake_delay_, int outtake_opening_delay_, 
     close_intakes = close_intakes_;
 }
 
-void Robot::set_shoot_store(int shoot, int store, bool combined, bool outtake){
-    shoot_var = shoot;
-    store_var = store;
-    combined = combined;
-    outtake_var = outtake;
-}
 
-void Robot::shoot_store() {
+void Robot::shoot(void *ptr) {
     int last_shooting_count = (int) shooting_count;
-    int last_intake_count = (int) intake_count;
 
     int prev_shooting_diff=0;
     bool shooting_change;
 
-    while((shooting_count-last_shooting_count < shoot_var) || (intake_count-last_intake_count < store_var) ) {
+    while((shooting_count-last_shooting_count < shoot_var)) {
         //Rollers/Intake Coefficients
-        double IL_coefficient = 1;
-        double IR_coefficient = 1;
-        double R1_coefficient = 1;
+        double R1_coefficient = 0;
         double R2_coefficient = 1;
         int delay_length = 5;
 
@@ -469,25 +441,52 @@ void Robot::shoot_store() {
          * if it has changed, then it will toggle
          */
         if(shooting_change) {
-            R1_coefficient=0;
-            delay_length=400;
-            shooting_change=false;
-        } else if (!shooting_change && prev_shooting_diff!=cur_shooting_diff) shooting_change=true;
+            R1_coefficient=1;
+            if(cur_shooting_diff == 2) delay_length=1000;
+            else delay_length=200;
 
+            shooting_change=false;
+        }
+        else if (!shooting_change && prev_shooting_diff!=cur_shooting_diff) {
+            shooting_change=true;
+            prev_shooting_diff=cur_shooting_diff;
+        }
+
+        lcd::print(6, "prev: %d cur: %d", (int) prev_shooting_diff, (int) cur_shooting_diff);
 
         //Sets intake values/updates prev_shooting_diff/
-        intake({
-            (int) IL_coefficient*127,
-            (int) IR_coefficient*127,
-            (int) R1_coefficient*127,
-            (int) R2_coefficient*127,
-        });
-        prev_shooting_diff = cur_shooting_diff;
+
+        R1 = (int) R1_coefficient*127;
+        R2 = (int) R2_coefficient*127;
         delay(delay_length);
     }
-
-    intake({0, 0, 0, 0});
+    R1 = R2 = 0;
+    shooting_end=true;
     lcd::print(2, "DONE");
+}
+
+void Robot::store(void *ptr) {
+    int last_intake_count = (int) intake_count;
+    store_end = false;
+    while(intake_count-last_intake_count < store_var) {
+        if(shooting_end) R1=127;
+        IL = IR = 127;
+        delay(5);
+    }
+    IL = IR = 0;
+    store_end = true;
+}
+
+void Robot::shoot_store(int shoot, int store) {
+    shoot_var = shoot;
+    store_var = store;
+    if(shoot_var) Robot::start_task("SHOOT", Robot::shoot);
+    if(store_var) Robot::start_task("STORE", Robot::store);
+    while (!(shooting_end && store_end)){
+        if (shooting_end) Robot::kill_task("SHOOT");
+        if (store_end) Robot::kill_task("STORE");
+    }
+    IL = IR = R1 = R2 = 0;
 }
 
 
@@ -585,7 +584,7 @@ void Robot::drive(void *ptr) {
             last_shoot_count=shooting_count;
             R1 = -127 * .5;
             R2 = -127 * .1;
-            delay(50);
+//            delay(50);
         } else if (!shoot2) shooting_state = false;
 
 
@@ -608,7 +607,7 @@ void Robot::drive(void *ptr) {
 		
 
 		if (indexer_fly) {
-            R1_ = 127 * 0.73;
+//            R1_ = 127 * 0.73;
             R2_ = 127;
 		}
 
@@ -625,11 +624,7 @@ void Robot::drive(void *ptr) {
 		}
 //		lcd::print(6, "%d %d", tower1_count, tower1_button);
         if(tower_1 && tower1_button) {
-            Robot::set_shoot_store(3, 2);
-            Robot::start_task("MOVEDOWN", Robot::move_down);
-            delay(300);
-            Robot::kill_task("MOVEDOWN");
-			Robot::shoot_store();
+			Robot::shoot_store(2, 2);
 			tower1_count++;
 
         }
@@ -651,8 +646,7 @@ void Robot::drive(void *ptr) {
             R1_ = 127 * 0.73;
         }
         if(test_shoot_store && !test_shoot_store_toggle) {
-            set_shoot_store(2, 0);
-            shoot_store();
+            shoot_store(2, 2);
             test_shoot_store_toggle=true;
         } else if (!test_shoot_store) test_shoot_store_toggle=false;
 
