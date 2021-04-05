@@ -50,6 +50,7 @@ public:
 	static std::atomic<int> intake_count;
 	static std::atomic<int> shooting_count;
     static std::atomic<int> storing_count;
+    static std::atomic<int> BallsShootAverage;
 
 	static std::atomic<bool> intaking;
 	static std::atomic<int> outtake_delay;
@@ -89,7 +90,8 @@ public:
     static int count();
     static bool check_intaking();
 	static void balls_checking(void *ptr);
-	static void balls_intake_toggle(int outtake_delay_=0, int outtake_opening_delay_=0, bool close_intakes_=false);
+    static void sensing(void *ptr);
+    static void balls_intake_toggle(int outtake_delay_=0, int outtake_opening_delay_=0, bool close_intakes_=false);
     static void balls_outtake(void *ptr);
 
     static void balls_intake(void *ptr);

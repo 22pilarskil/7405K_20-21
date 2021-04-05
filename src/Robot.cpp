@@ -59,6 +59,7 @@ std::atomic<int> Robot::ejector_count = -1;
 std::atomic<int> Robot::intake_count = 0;
 std::atomic<int> Robot::shooting_count = 0;
 std::atomic<int> Robot::storing_count = 0;
+std::atomic<int> Robot::BallsShootAverage;
 
 std::atomic<bool> Robot::intaking = false;
 std::atomic<int> Robot::outtake_delay = 0;
@@ -314,9 +315,9 @@ void Robot::display(void *ptr)
         master.print(0, 0, "Joystick %d", master.get_analog(ANALOG_LEFT_X));
         lcd::print(1, "IMU value: %f", IMU.get_rotation());
         lcd::print(2, "Y: %f - X: %f", (float)y, (float)x);
-        lcd::print(3, "LM1: %d LSS: %d", LM1.get_value(), LSS.get_value());
-//        lcd::print(4, "intake: %d shoot: %d store: %d", (int) intake_count, (int) shooting_count, (int) storing_count);
-        lcd::print(4, "LE: %d - RE: %d - BE %d", LE.get_value(), RE.get_value(), BE.get_value());
+        lcd::print(3, "LM1: %d LSS: %d SA: %d", LM1.get_value(), LSS.get_value(), (int) BallsShootAverage);
+        lcd::print(4, "intake: %d shoot: %d store: %d", (int) intake_count, (int) shooting_count, (int) storing_count);
+//        lcd::print(4, "LE: %d - RE: %d - BE %d", LE.get_value(), RE.get_value(), BE.get_value());
         delay(10);
     }
 }
@@ -347,10 +348,7 @@ void Robot::record_thread(void *ptr){
 
 
 void Robot::balls_checking(void *ptr) {
-    const int length_ = 100;
-    int intake_toggle = 0;
-    bool shoot_toggle = 0;
-    int BallsShootAverage = 0;
+    const int length_ = 200;
     std::deque<double> BallsShoot;
 
     while (true) {
@@ -360,15 +358,28 @@ void Robot::balls_checking(void *ptr) {
             int sum = 0;
             for(int i = 0; i<BallsShoot.size(); i++) sum += BallsShoot[i];
             BallsShootAverage = sum/length_;
+            delay(100);
         }
-        lcd::print(5, "shooting average: %d", BallsShootAverage);
+        delay(5);
+    }
+}
 
-        bool shoot_ball = abs(BallsShootAverage-LSS.get_value()) > 100;
-        if(shoot_ball && !shoot_toggle) {
-            shooting_count++;
-            shoot_toggle = true;
-            delay(60);
-        } else if (!shoot_ball && shoot_toggle) shoot_toggle = false;
+void Robot::sensing(void *ptr) {
+    int intake_toggle = 0;
+    bool shoot_toggle;
+
+    start_task("CHECKING", Robot::balls_checking);
+
+    while (true) {
+
+        if((int) BallsShootAverage!=0) {
+            bool shoot_ball = BallsShootAverage-LSS.get_value() > 50;
+            if(shoot_ball && !shoot_toggle) {
+                shooting_count++;
+                shoot_toggle = true;
+            } else if (!shoot_ball && shoot_toggle) shoot_toggle = false;
+        }
+
 
         bool intake_ball = LM1.get_value();
         if(intake_ball && intake_toggle==8) {
@@ -441,10 +452,14 @@ void Robot::shoot(void *ptr) {
          * if it has changed, then it will toggle
          */
         if(shooting_change) {
-            R1_coefficient=1;
-            if(cur_shooting_diff == 2) delay_length=1000;
-            else delay_length=200;
-
+            if(cur_shooting_diff == 0) delay_length=100;
+            else if (cur_shooting_diff == 1){
+                R1_coefficient=1;
+                delay_length=50;
+            } else if (cur_shooting_diff == 2) {
+                R1_coefficient=1;
+                delay_length=400;
+            }
             shooting_change=false;
         }
         else if (!shooting_change && prev_shooting_diff!=cur_shooting_diff) {
@@ -452,7 +467,7 @@ void Robot::shoot(void *ptr) {
             prev_shooting_diff=cur_shooting_diff;
         }
 
-        lcd::print(6, "prev: %d cur: %d", (int) prev_shooting_diff, (int) cur_shooting_diff);
+        lcd::print(7, "prev: %d cur: %d", (int) prev_shooting_diff, (int) cur_shooting_diff);
 
         //Sets intake values/updates prev_shooting_diff/
 
@@ -460,7 +475,9 @@ void Robot::shoot(void *ptr) {
         R2 = (int) R2_coefficient*127;
         delay(delay_length);
     }
-    R1 = R2 = 0;
+    delay(200);
+    R1 = 0;
+    R2 = 0;
     shooting_end=true;
     lcd::print(2, "DONE");
 }
@@ -470,23 +487,27 @@ void Robot::store(void *ptr) {
     store_end = false;
     while(intake_count-last_intake_count < store_var) {
         if(shooting_end) R1=127;
-        IL = IR = 127;
+        IL = 127;
+        IR = 127;
         delay(5);
     }
     IL = IR = 0;
+    R1 = 0;
     store_end = true;
 }
 
 void Robot::shoot_store(int shoot, int store) {
     shoot_var = shoot;
     store_var = store;
+
     if(shoot_var) Robot::start_task("SHOOT", Robot::shoot);
     if(store_var) Robot::start_task("STORE", Robot::store);
-    while (!(shooting_end && store_end)){
-        if (shooting_end) Robot::kill_task("SHOOT");
-        if (store_end) Robot::kill_task("STORE");
-    }
-    IL = IR = R1 = R2 = 0;
+
+    while (!(shooting_end && store_end)) delay(5);
+
+    if(shooting_end) Robot::kill_task("SHOOT");
+    if(store_end) Robot::kill_task("STORE");
+
 }
 
 
@@ -646,7 +667,7 @@ void Robot::drive(void *ptr) {
             R1_ = 127 * 0.73;
         }
         if(test_shoot_store && !test_shoot_store_toggle) {
-            shoot_store(2, 2);
+            shoot_store(3, 2);
             test_shoot_store_toggle=true;
         } else if (!test_shoot_store) test_shoot_store_toggle=false;
 
