@@ -566,21 +566,11 @@ void Robot::drive(void *ptr) {
 		bool front_eject = master.get_digital(DIGITAL_A);
 		bool shoot2 = master.get_digital(DIGITAL_X);
 
-		//Storing
+		//Storing/shooting
 		bool store1 = master.get_digital(DIGITAL_B);
 		bool store2 = master.get_digital(DIGITAL_Y);
 
 
-		bool flipout = master.get_digital(DIGITAL_RIGHT);
-		bool test_shoot_store = master.get_digital(DIGITAL_LEFT);
-		
-		if ((store1 || store2) && !store_state) {
-			last_store_count=intake_count;
-			store_state=true;
-			R1 = -127 * .5;
-			R2 = -127 * .1;
-			delay(75);
-		} else if (!(store1 || store2)) store_state=false;
 
 
 		if((ejector || intakes_indexer) && !ejector_state) {
@@ -589,28 +579,11 @@ void Robot::drive(void *ptr) {
 		} else if (!ejector) ejector_state=false;
 		bool eject = ejector_count%2 == 0;
 
-		int cur_tower1_count = tower1_count;
 		if(tower1_button && !tower1) {
 		    tower1 = true;
 		    tower1_count++;
 		} else if (!tower1_button) tower1 = false;
 		bool tower_1 = tower1_count == 2;
-
-		if(flipout && !flipout_state) {
-		    flipout_state = true;
-		    flipout_count++;
-		} else if (!flipout) flipout_state = false;
-		bool activate_flipout = flipout_count == 2;
-
-        if(shoot2 && !shooting_state) {
-            shooting_state = true;
-            drive_shoot_count++;
-            last_shoot_count=shooting_count;
-            R1 = -127 * .5;
-            R2 = -127 * .1;
-//            delay(50);
-        } else if (!shoot2) shooting_state = false;
-
 
 
 		int IL_ = 0;
@@ -631,7 +604,6 @@ void Robot::drive(void *ptr) {
 		
 
 		if (indexer_fly) {
-//            R1_ = 127 * 0.73;
             R2_ = 127;
 		}
 
@@ -642,13 +614,12 @@ void Robot::drive(void *ptr) {
 		if (outtake) IL_ = IR_ = -127 * .5;
 
 		if (eject) {
-//			if (UF_DRIVER.get_value() < 200) IL_ = IR_ = 127;
-			R2_ = -127;
+ 			R2_ = -127;
 			R1_ = 127;
 		}
-//		lcd::print(6, "%d %d", tower1_count, tower1_button);
-        if(tower_1 && tower1_button) {
-			Robot::shoot_store(2, 2);
+
+		if(tower_1 && tower1_button) {
+			Robot::shoot_store(3, 2);
 			tower1_count++;
 
         }
@@ -669,10 +640,6 @@ void Robot::drive(void *ptr) {
             R2_ = 127;
             R1_ = 127 * 0.73;
         }
-        if(test_shoot_store && !test_shoot_store_toggle) {
-            shoot_store(3, 2);
-            test_shoot_store_toggle=true;
-        } else if (!test_shoot_store) test_shoot_store_toggle=false;
 
 		bool past_beginning = (IL_ + IR_ + R1_ + R2_) != 0;
 
