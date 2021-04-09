@@ -25,7 +25,7 @@ public:
 	static ADIEncoder BE;
 	static Imu IMU;
     static ADIAnalogIn LSS;
-    static ADIDigitalIn LM1;
+    static ADIAnalogIn LSI;
     /* Initializing motors, sensors, controller */
 
 	static PD power_PD;
@@ -51,6 +51,7 @@ public:
 	static std::atomic<int> shooting_count;
     static std::atomic<int> storing_count;
     static std::atomic<int> BallsShootAverage;
+    static std::atomic<int> BallsStoreAverage;
 
 	static std::atomic<bool> intaking;
 	static std::atomic<int> outtake_delay;
