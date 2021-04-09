@@ -452,13 +452,13 @@ void Robot::shoot(void *ptr) {
          * if it has changed, then it will toggle
          */
         if(shooting_change) {
-            if(cur_shooting_diff == 0) delay_length=100;
+            if(cur_shooting_diff == 0) delay_length=150;
             else if (cur_shooting_diff == 1){
                 R1_coefficient=1;
                 delay_length=50;
             } else if (cur_shooting_diff == 2) {
                 R1_coefficient=1;
-                delay_length=400;
+                delay_length=200;
             }
             shooting_change=false;
         }
@@ -471,8 +471,11 @@ void Robot::shoot(void *ptr) {
 
         //Sets intake values/updates prev_shooting_diff/
 
-        R1 = (int) R1_coefficient*127;
-        R2 = (int) R2_coefficient*127;
+        int R1P = (int) R1_coefficient*127;
+        int R2P = (int) R2_coefficient*127;
+
+        R1 = R1P;
+        R2 = R2P;
         delay(delay_length);
     }
     delay(200);
