@@ -51,8 +51,8 @@ int Robot::radius = 300;
 int counter = 0;
 int shoot_var = 0;
 int store_var = 0;
-bool shooting_end;
-bool store_end;
+std::atomic<bool> shooting_end;
+std::atomic<bool> store_end;
 bool Robot::time_end = false;
 /* Presets for odometry and pure pursuit calculations */
 
@@ -191,11 +191,16 @@ void Robot::fps(void *ptr) {
  * @param pure_pursuit: A boolean (true or false) that tells us whether or not we are calling this function in the context
  	of Robot::move_to_pure_pursuit
  */
-void Robot::move_to(std::vector<double> pose, std::vector<double> margin, std::vector<double> speeds, bool pure_pursuit)
+void Robot::move_to(std::vector<double> pose, bool tower, bool pure_pursuit)
 {
     double new_y = pose[0];
     double new_x = pose[1];
     double heading = pose[2];
+
+    if (tower){
+        new_y += std::cos(heading) * 30;
+        new_x += std::sin(heading) * 30;
+    }
 
     std::deque<double> motion;
 
@@ -215,7 +220,7 @@ void Robot::move_to(std::vector<double> pose, std::vector<double> margin, std::v
     example, moving to -358 deg would require almost a full 360 degree turn from 1 degree, but from its equivalent of -359
     deg, it only takes a minor shift in position */
 
-    while (abs(y_error) > 10 * margin[0] || abs(x_error) > 10 * margin[1] || abs(imu_error) > 1 * margin[2])
+    while (abs(y_error) > 10 || abs(x_error) > 10 || abs(imu_error) > 1)
     { /* while Robot::y, Robot::x and IMU heading are all more than the specified margin away from the target */
 
         if ((int)motion.size() == 10) motion.pop_front();
@@ -229,9 +234,9 @@ void Robot::move_to(std::vector<double> pose, std::vector<double> margin, std::v
         last_y = y;
 
         double phi = TO_RAD(IMU.get_rotation());
-        double power = power_PD.get_value(y_error * std::cos(phi) + x_error * std::sin(phi)) * speeds[0];
-        double strafe = strafe_PD.get_value(x_error * std::cos(phi) - y_error * std::sin(phi)) * speeds[1];
-        double turn = turn_PD.get_value(imu_error) * 1.5 * speeds[2];
+        double power = power_PD.get_value(y_error * std::cos(phi) + x_error * std::sin(phi));
+        double strafe = strafe_PD.get_value(x_error * std::cos(phi) - y_error * std::sin(phi));
+        double turn = turn_PD.get_value(imu_error) * 1.5;
         mecanum(power, strafe, turn);
         /* Using our PD objects we use the error on each of our degrees of freedom (axial, lateral, and turning movement)
         to obtain speeds to input into Robot::mecanum. We perform a rotation matrix calculation to translate our y and x
@@ -283,12 +288,12 @@ void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, std::v
 			/* Obtain pathing information through functions from PurePursuit.cpp */
 
 			std::vector<double> pose {target[0], target[1], heading};
-			move_to(pose, {1, 1, 1}, speeds, true);
+			move_to(pose, false, true);
 			cur = {(float)y, (float)x};
 			delay(5);
 		}
 	}
-	move_to(final_point, {1, 1, 1});
+	move_to(final_point);
 	brake("stop");
 	reset_PD();
 	//lcd::print(6, "DONE");
@@ -336,7 +341,7 @@ void Robot::set_pass(bool pass_){
 void Robot::record_thread(void *ptr){
 	bool pressed = true;
     while(true){
-        bool record = master.get_digital(DIGITAL_DOWN);
+        bool record = LMR.get_value();
         if (record && pressed) {
 			record_points();
 			pressed = false;
@@ -456,17 +461,34 @@ void Robot::shoot(void *ptr) {
     int prev_shooting_diff=0;
     bool shooting_change;
     R1=-127;
-    delay(50);
+    delay(70);
     R1=0;
 
+    double R1_coefficient = 0;
+    double R2_coefficient = 1;
+    int delay_length= 250;
+
     while((shooting_count-last_shooting_count < shoot_var)) {
+
+
+        int R1P = R1_coefficient*127;
+        int R2P = R2_coefficient*127;
+
+
+
+        R1 = R1P;
+        R2 = R2P;
+        delay(delay_length);
+
         //Rollers/Intake Coefficients
-        double R1_coefficient = 0;
-        double R2_coefficient = 1;
-        int delay_length = 5;
+        R1_coefficient = .5;
+        R2_coefficient = 1;
+        delay_length = 5;
 
         //Sees the difference between teh shotting_count and lass_shotting_count
         int cur_shooting_diff = shooting_count-last_shooting_count;
+
+        lcd::print(7, "shooting: %d", cur_shooting_diff);
 
         /*
          * Uses the same toggle type logic that we use for the macros
@@ -474,18 +496,15 @@ void Robot::shoot(void *ptr) {
          * if it has changed, then it will toggle
          */
         if(shooting_change) {
-            if(cur_shooting_diff == 0) {
-                delay_length= 150;
-                R1_coefficient = 0;
-            }
-            else if(cur_shooting_diff == 1) {
-                delay_length=200;
-                R1_coefficient = 1;
+            if(cur_shooting_diff == 1) {
+                delay_length=50;
+                R1_coefficient = .5;
             }
             else if (cur_shooting_diff == 2) {
+                delay(200);
                 delay_length = 100;
-                R1_coefficient = 1;
-                R2_coefficient = 0.4;
+                R1_coefficient = .5;
+                R2_coefficient = 0.2;
             }
             shooting_change=false;
         }
@@ -497,16 +516,6 @@ void Robot::shoot(void *ptr) {
 
 
         //Sets intake values/updates prev_shooting_diff/
-
-        int R1P = R1_coefficient*127;
-        int R2P = R2_coefficient*127;
-
-        lcd::print(7, "shooting: %d", cur_shooting_diff);
-
-
-        R1 = R1P;
-        R2 = R2P;
-        delay(delay_length);
     }
     delay(200);
     R1 = 0;
@@ -534,14 +543,18 @@ void Robot::shoot_store(int shoot, int store) {
     shoot_var = shoot;
     store_var = store;
 
+    shooting_end = false;
+    store_end = false;
+
     if(shoot_var) Robot::start_task("SHOOT", Robot::shoot);
     if(store_var) Robot::start_task("STORE", Robot::store);
 
     while (!(shooting_end && store_end)) delay(5);
 
-    if(shooting_end) Robot::kill_task("SHOOT");
-    if(store_end) Robot::kill_task("STORE");
+    Robot::kill_task("SHOOT");
+    Robot::kill_task("STORE");
 
+    return;
 }
 
 
@@ -572,9 +585,9 @@ void Robot::drive(void *ptr) {
 	bool activate = false;
 	int test_shoot_store_toggle= false;
 
-	Robot::intake({0, 0, 0, -127});
-	delay(100);
-	Robot::intake({0, 0, 0, 0});
+	// Robot::intake({0, 0, 0, -127});
+	// delay(100);
+	// Robot::intake({0, 0, 0, 0});
 
 	while (true) {
 	    time += 1;
@@ -646,7 +659,7 @@ void Robot::drive(void *ptr) {
 
 		if (eject) {
  			R2_ = -127;
-			R1_ = 127;
+			R1_ = .5 * 127;
 		}
 
 		if(tower_1 && tower1_button) {
