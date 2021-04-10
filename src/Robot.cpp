@@ -28,6 +28,7 @@ ADIEncoder Robot::BE(7, 8);
 Imu Robot::IMU(2);
 ADIAnalogIn Robot::LSS({{1, 8}});
 ADIAnalogIn Robot::LSI({{1, 1}});
+ADIDigitalIn Robot::LMR({{1, 2}});
 /* Initializing motors, sensors, controller */
 
 //.4, 0.1, 5
@@ -377,6 +378,7 @@ void Robot::balls_checking(void *ptr) {
 void Robot::sensing(void *ptr) {
     bool shoot_toggle;
     bool store_toggle;
+    bool record_toggle;
 
     start_task("CHECKING", Robot::balls_checking);
 
@@ -397,6 +399,12 @@ void Robot::sensing(void *ptr) {
                 store_toggle = true;
             } else if (!store_ball && store_toggle) store_toggle = false;
         }
+
+        bool record_val = LMR.get_value();
+        if (record_val && !record_toggle) {
+            record_points();
+            record_toggle=true;
+        } else if (!record_val && record_toggle) record_toggle = false;
 
         storing_count = intake_count-(ejector_count+shooting_count);
         delay(5);
@@ -447,6 +455,9 @@ void Robot::shoot(void *ptr) {
 
     int prev_shooting_diff=0;
     bool shooting_change;
+    R1=-127;
+    delay(50);
+    R1=0;
 
     while((shooting_count-last_shooting_count < shoot_var)) {
         //Rollers/Intake Coefficients
@@ -464,25 +475,34 @@ void Robot::shoot(void *ptr) {
          */
         if(shooting_change) {
             if(cur_shooting_diff == 0) {
-                delay_length=150;
+                delay_length= 150;
                 R1_coefficient = 0;
             }
-            else {
-                R1_coefficient = .2;
+            else if(cur_shooting_diff == 1) {
+                delay_length=200;
+                R1_coefficient = 1;
+            }
+            else if (cur_shooting_diff == 2) {
+                delay_length = 100;
+                R1_coefficient = 1;
+                R2_coefficient = 0.4;
             }
             shooting_change=false;
         }
+
         else if (!shooting_change && prev_shooting_diff!=cur_shooting_diff) {
             shooting_change=true;
             prev_shooting_diff=cur_shooting_diff;
         }
 
-        lcd::print(7, "prev: %d cur: %d", (int) prev_shooting_diff, (int) cur_shooting_diff);
 
         //Sets intake values/updates prev_shooting_diff/
 
-        int R1P = (int) R1_coefficient*127;
-        int R2P = (int) R2_coefficient*127;
+        int R1P = R1_coefficient*127;
+        int R2P = R2_coefficient*127;
+
+        lcd::print(7, "shooting: %d", cur_shooting_diff);
+
 
         R1 = R1P;
         R2 = R2P;
@@ -630,7 +650,7 @@ void Robot::drive(void *ptr) {
 		}
 
 		if(tower_1 && tower1_button) {
-			Robot::shoot_store(2, 2);
+			Robot::shoot_store(3, 2);
 			tower1_count++;
 
         }

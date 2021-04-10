@@ -26,6 +26,7 @@ public:
 	static Imu IMU;
     static ADIAnalogIn LSS;
     static ADIAnalogIn LSI;
+    static ADIDigitalIn LMR;
     /* Initializing motors, sensors, controller */
 
 	static PD power_PD;
