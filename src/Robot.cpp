@@ -409,11 +409,11 @@ void Robot::sensing(void *ptr) {
         }
 
         if((int) BallsStoreAverage!=0) {
-            bool store_ball = BallsStoreAverage-LSI.get_value() > 100;
+            bool store_ball = BallsStoreAverage-LSI.get_value() > 200;
             if(store_ball && !store_toggle) {
                 intake_count++;
                 store_toggle = true;
-            } else if (!store_ball && store_toggle) store_toggle = false;
+            } else if (BallsStoreAverage-LSI.get_value() < 50 && store_toggle) store_toggle = false;
         }
 
         bool record_val = LMR.get_value();
@@ -467,13 +467,16 @@ void Robot::balls_intake_toggle(int outtake_delay_, int outtake_opening_delay_, 
 
 
 void Robot::shoot(void *ptr) {
-    bool shooting_end = false;
+
+    R2 = 127;
+
+    shooting_end = false;
     int last_shooting_count = (int) shooting_count;
 
     int prev_shooting_diff=0;
     bool shooting_change;
     R1=-127;
-    delay(70);
+    delay(40);
     R1=0;
 
     double R1_coefficient = 0;
@@ -493,7 +496,7 @@ void Robot::shoot(void *ptr) {
         delay(delay_length);
 
         //Rollers/Intake Coefficients
-        R1_coefficient = .5;
+        R1_coefficient = .25;
         R2_coefficient = 1;
         delay_length = 5;
 
@@ -510,12 +513,12 @@ void Robot::shoot(void *ptr) {
         if(shooting_change) {
             if(cur_shooting_diff == 1) {
                 delay_length=50;
-                R1_coefficient = .5;
+                R1_coefficient = .25;
             }
             else if (cur_shooting_diff == 2) {
                 delay(200);
                 delay_length = 100;
-                R1_coefficient = .5;
+                R1_coefficient = .25;
                 R2_coefficient = 0.2;
             }
             shooting_change=false;
@@ -529,26 +532,27 @@ void Robot::shoot(void *ptr) {
 
         //Sets intake values/updates prev_shooting_diff/
     }
-    delay(200);
+
     R1 = 0;
+    delay(200);
     R2 = 0;
+    lcd::print(6, "DONE");
     shooting_end=true;
-    lcd::print(2, "DONE");
 }
 
 void Robot::store(void *ptr) {
-    bool store_end = false;
+    store_end = false;
     int last_intake_count = (int) intake_count;
     store_end = false;
     while(intake_count-last_intake_count < store_var) {
-        if(shooting_end) R1=127;
+        if(shooting_end) R1=.5*127;
         IL = 127;
         IR = 127;
         delay(5);
     }
     delay(100);
-    IL = IR = 0;
     R1 = 0;
+    IL = IR = 0;
     store_end = true;
 }
 
@@ -559,6 +563,26 @@ void Robot::shoot_store(int shoot, int store) {
     shooting_end = true;
     store_end = true;
 
+    // last_store_count = intake_count;
+    // last_shooting_count = shooting_count;
+    // R1=-127;
+    // R2=127;
+    // delay(100);
+    // R1=0;
+
+    // if (intake_count - last_store_count < store) {
+    //     IL_ = IR_ = 127;
+    //     delay(150);
+    // }
+    // R2 = 127;
+    // R1 = 127 * 0.73;
+
+    // while(shooting_count - last_shooting_count < shoot){
+    //     delay(5);
+    // }
+
+    // R1 = R2
+
     if(shoot_var != 0) Robot::start_task("SHOOT", Robot::shoot);
     if(store_var != 0) Robot::start_task("STORE", Robot::store);
 
@@ -567,6 +591,8 @@ void Robot::shoot_store(int shoot, int store) {
     Robot::kill_task("SHOOT");
     Robot::kill_task("STORE");
 
+    R1 = 0;
+    lcd::print(5, "HI");
     return;
 }
 
@@ -612,9 +638,9 @@ void Robot::drive(void *ptr) {
 //
 //    bool store2_toggle;
 
-    // Robot::intake({0, 0, 0, -127});
-    // delay(100);
-    // Robot::intake({0, 0, 0, 0});
+    Robot::intake({0, 0, 0, -90});
+    delay(100);
+    Robot::intake({0, 0, 0, 0});
 
     while (true) {
         time += 1;
@@ -680,6 +706,7 @@ void Robot::drive(void *ptr) {
         if ((store1 || store2) && !store_state) {
             last_store_count=intake_count;
             R1=-127;
+            R2=127;
             delay(100);
             R1=0;
             store_state=true;
@@ -718,7 +745,8 @@ void Robot::drive(void *ptr) {
         }
 
         if (tower_1 && tower1_button) {
-            Robot::shoot_store(3, 2);
+            Robot::shoot_store(2, 2);
+            //Robot::shoot_store(1, 0);
             tower1_count++;
 
         }

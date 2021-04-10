@@ -65,20 +65,26 @@ void skills_auton() {
     Robot::intake({0, 0, 0, -90});
     delay(100);
     Robot::intake({127, 127, 60, 0}); //turning on intakes for the next two balls
-    Robot::move_to({1626,-206,43}); //pp for first two balls
+    Robot::move_to({620,43,-9}); //CHANGECHANGECHANGE
     Robot::intake({127, 127, 60, 0});
     delay(100); 
-    Robot::move_to({1127,-401,89}); //tower prelim
+    Robot::move_to({1109,-338,88}); //tower prelim
     Robot::intake({0, 0, 20, 0});
-    Robot::move_to({1128,-850,90}, true); //tower 1
+    Robot::move_to({1131,-801,91}, true); //tower 1
     Robot::shoot_store(3, 2); //shooting 3, storing 2
 
     //Tower 2 -------------------------------------------------------------------------------------------------------
     //pooping
     Robot::balls_intake_toggle(300, 0);
     Robot::start_task("OUTTAKE0", Robot::balls_intake);
-    Robot::move_to({1108,-286,91}); //backout
-    Robot::move_to({1013,-74,248}); //turning
+    Robot::move_to({972,-275,90}); //backout
+    Robot::intake({0, 0, -60, 0});
+    delay(1000);
+    Robot::move_to({1328,57,44});
+    Robot::intake({127, 127, 60, 0});
+    //TURN    Robot::move_to()
+    Robot::move_to({1647,-220,46}); //BALLLLLLLL
+    Robot::move_to({702,1300,-117});
     Robot::intake({0, 0, 0, -90});
     Robot::kill_task("OUTTAKE0");
     Robot::intake({0, 0, 127, -127});
@@ -90,7 +96,7 @@ void skills_auton() {
     Robot::intake({0, 0, 127, 0});
     //tower
     Robot::move_to({-421,920,135}, true); //tower 2
-    Robot::shoot_store(1, 1); //shoot 1, store 1
+    Robot::shoot_store(2, 1); //shoot 1, store 1
 
     delay(10000000);
 

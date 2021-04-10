@@ -61,11 +61,11 @@
             "-funwind-tables",
             "--std=gnu++17",
             "-o",
-            "bin/initialize.cpp.o",
-            "src/initialize.cpp"
+            "bin/PurePursuit.cpp.o",
+            "src/PurePursuit.cpp"
         ],
         "directory": "/Users/michaelpilarski/Desktop/7405K_20-21",
-        "file": "src/initialize.cpp"
+        "file": "src/PurePursuit.cpp"
     },
     {
         "arguments": [
@@ -95,11 +95,11 @@
             "-funwind-tables",
             "--std=gnu++17",
             "-o",
-            "bin/PurePursuit.cpp.o",
-            "src/PurePursuit.cpp"
+            "bin/initialize.cpp.o",
+            "src/initialize.cpp"
         ],
         "directory": "/Users/michaelpilarski/Desktop/7405K_20-21",
-        "file": "src/PurePursuit.cpp"
+        "file": "src/initialize.cpp"
     },
     {
         "arguments": [
@@ -163,11 +163,11 @@
             "-funwind-tables",
             "--std=gnu++17",
             "-o",
-            "bin/autonomous.cpp.o",
-            "src/autonomous.cpp"
+            "bin/Robot.cpp.o",
+            "src/Robot.cpp"
         ],
         "directory": "/Users/michaelpilarski/Desktop/7405K_20-21",
-        "file": "src/autonomous.cpp"
+        "file": "src/Robot.cpp"
     },
     {
         "arguments": [
@@ -197,10 +197,10 @@
             "-funwind-tables",
             "--std=gnu++17",
             "-o",
-            "bin/Robot.cpp.o",
-            "src/Robot.cpp"
+            "bin/autonomous.cpp.o",
+            "src/autonomous.cpp"
         ],
         "directory": "/Users/michaelpilarski/Desktop/7405K_20-21",
-        "file": "src/Robot.cpp"
+        "file": "src/autonomous.cpp"
     }
 ]
