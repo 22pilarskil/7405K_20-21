@@ -64,9 +64,9 @@ void skills_auton() {
     //intaking
     Robot::intake({0, 0, 0, -90});
     delay(100);
-    Robot::intake({127, 127, 127, 0}); //turning on intakes for the next two balls
+    Robot::intake({127, 127, 60, 0}); //turning on intakes for the next two balls
     Robot::move_to({1626,-206,43}); //pp for first two balls
-    Robot::intake({127, 127, 127, 0});
+    Robot::intake({127, 127, 60, 0});
     delay(100); 
     Robot::move_to({1127,-401,89}); //tower prelim
     Robot::intake({0, 0, 20, 0});
@@ -75,7 +75,7 @@ void skills_auton() {
 
     //Tower 2 -------------------------------------------------------------------------------------------------------
     //pooping
-    Robot::balls_intake_toggle(600, 0);
+    Robot::balls_intake_toggle(300, 0);
     Robot::start_task("OUTTAKE0", Robot::balls_intake);
     Robot::move_to({1108,-286,91}); //backout
     Robot::move_to({1013,-74,248}); //turning
@@ -85,6 +85,7 @@ void skills_auton() {
 
     //first ball
     Robot::move_to({614,1381,239}); //ball point
+    Robot::intake({0, 0, 0, 0});
     Robot::shoot_store(0, 1);
     Robot::intake({0, 0, 127, 0});
     //tower

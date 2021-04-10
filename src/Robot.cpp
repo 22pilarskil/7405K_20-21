@@ -197,10 +197,6 @@ void Robot::move_to(std::vector<double> pose, bool tower, bool pure_pursuit)
     double new_x = pose[1];
     double heading = pose[2];
 
-    if (tower){
-        new_y += std::cos(heading) * 30;
-        new_x += std::sin(heading) * 30;
-    }
 
     std::deque<double> motion;
 
@@ -252,6 +248,21 @@ void Robot::move_to(std::vector<double> pose, bool tower, bool pure_pursuit)
         if (pure_pursuit) return;
         delay(5);
         time += 5;
+    }
+    if (tower){
+        std::deque<double> motion2;
+        while (true){
+            FL = 127;
+            FR = 127;
+            BL = 127;
+            BR = 127;
+            if ((int)motion2.size() == 10) motion2.pop_front();
+            motion2.push_back(abs(last_x - x) + abs(last_y - y));
+            double sum = 0;
+            for (int i = 0; i < motion2.size(); i++) sum += motion2[i];
+            double motion_average = sum / 10;
+            if (motion_average < .1 && time > 100) break;
+        }
     }
     reset_PD();
     lcd::print(6, "DONE");
@@ -456,6 +467,7 @@ void Robot::balls_intake_toggle(int outtake_delay_, int outtake_opening_delay_, 
 
 
 void Robot::shoot(void *ptr) {
+    bool shooting_end = false;
     int last_shooting_count = (int) shooting_count;
 
     int prev_shooting_diff=0;
@@ -525,6 +537,7 @@ void Robot::shoot(void *ptr) {
 }
 
 void Robot::store(void *ptr) {
+    bool store_end = false;
     int last_intake_count = (int) intake_count;
     store_end = false;
     while(intake_count-last_intake_count < store_var) {
@@ -543,11 +556,11 @@ void Robot::shoot_store(int shoot, int store) {
     shoot_var = shoot;
     store_var = store;
 
-    shooting_end = false;
-    store_end = false;
+    shooting_end = true;
+    store_end = true;
 
-    if(shoot_var) Robot::start_task("SHOOT", Robot::shoot);
-    if(store_var) Robot::start_task("STORE", Robot::store);
+    if(shoot_var != 0) Robot::start_task("SHOOT", Robot::shoot);
+    if(store_var != 0) Robot::start_task("STORE", Robot::store);
 
     while (!(shooting_end && store_end)) delay(5);
 
