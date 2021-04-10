@@ -570,6 +570,14 @@ void Robot::shoot_store(int shoot, int store) {
     return;
 }
 
+void Robot::driverStore1(void *ptr) {
+    shoot_store(3, 1);
+//    intake({0, 0, 0, 0});
+}
+void Robot::driverStore2(void *ptr) {
+    shoot_store(3, 2);
+//    intake({0, 0, 0, 0});
+}
 
 /**
  * @desc:
@@ -577,107 +585,141 @@ void Robot::shoot_store(int shoot, int store) {
  */
 
 void Robot::drive(void *ptr) {
-	delay(300);
+    delay(300);
 
-	int ejector_count=1;
-	bool ejector_state=false;
+    int ejector_count = 1;
+    bool ejector_state = false;
 
-	bool tower1 = false;
-	int tower1_count=1;
+    bool tower1 = false;
+    int tower1_count = 1;
 
-	bool store_state=false;
-	int last_store_count;
+    bool store_state = false;
+    int last_store_count;
 
-	int flipout_count=1;
-	bool flipout_state=false;
+    int flipout_count = 1;
+    bool flipout_state = false;
 
-	int last_shoot_count;
-	bool shooting_state;
-	int drive_shoot_count;
-	int time = 0;
-	bool activate = false;
-	int test_shoot_store_toggle= false;
+    int last_shoot_count;
+    bool shooting_state;
+    int drive_shoot_count;
+    int time = 0;
+    bool activate = false;
+    int test_shoot_store_toggle = false;
 
-	// Robot::intake({0, 0, 0, -127});
-	// delay(100);
-	// Robot::intake({0, 0, 0, 0});
+//    bool store1_toggle;
+//    int store1_count = 1;
+//    int store1_change;
+//
+//    bool store2_toggle;
 
-	while (true) {
-	    time += 1;
-		int power = master.get_analog(ANALOG_LEFT_Y);
-		int strafe = master.get_analog(ANALOG_LEFT_X);
-		int turn = master.get_analog(ANALOG_RIGHT_X);
+    // Robot::intake({0, 0, 0, -127});
+    // delay(100);
+    // Robot::intake({0, 0, 0, 0});
 
-		if (master.get_digital(DIGITAL_LEFT)) move_to({0, 0, IMU.get_rotation() / 360 * 360});
+    while (true) {
+        time += 1;
+        int power = master.get_analog(ANALOG_LEFT_Y);
+        int strafe = master.get_analog(ANALOG_LEFT_X);
+        int turn = master.get_analog(ANALOG_RIGHT_X);
 
-		mecanum(power, strafe, turn);
+        if (master.get_digital(DIGITAL_LEFT)) move_to({0, 0, IMU.get_rotation() / 360 * 360});
 
-		//Intakes/Outtakes
-		bool outtake = master.get_digital(DIGITAL_L1);
+        mecanum(power, strafe, turn);
+
+        //Intakes/Outtakes
+        bool outtake = master.get_digital(DIGITAL_L1);
         bool intakes_indexer = master.get_digital(DIGITAL_R1);
 
         //Indexer/Flywheel
-		bool tower1_button = master.get_digital(DIGITAL_UP);
-		bool ejector = master.get_digital(DIGITAL_L2);
-		bool indexer_fly = master.get_digital(DIGITAL_R2);
-		bool front_eject = master.get_digital(DIGITAL_A);
-		bool shoot2 = master.get_digital(DIGITAL_X);
+        bool tower1_button = master.get_digital(DIGITAL_UP);
+        bool ejector = master.get_digital(DIGITAL_L2);
+        bool indexer_fly = master.get_digital(DIGITAL_R2);
+        bool front_eject = master.get_digital(DIGITAL_A);
+        bool shoot2 = master.get_digital(DIGITAL_X);
 
-		//Storing/shooting
-		bool store1 = master.get_digital(DIGITAL_B);
-		bool store2 = master.get_digital(DIGITAL_Y);
-
-
+        //Storing/shooting
+        bool store1 = master.get_digital(DIGITAL_B);
+        bool store2 = master.get_digital(DIGITAL_Y);
 
 
-		if((ejector || intakes_indexer) && !ejector_state) {
-			ejector_state=true;
-			if ((intakes_indexer && ejector_count%2 == 0) || ejector) ejector_count++;
-		} else if (!ejector) ejector_state=false;
-		bool eject = ejector_count%2 == 0;
-
-		if(tower1_button && !tower1) {
-		    tower1 = true;
-		    tower1_count++;
-		} else if (!tower1_button) tower1 = false;
-		bool tower_1 = tower1_count == 2;
 
 
-		int IL_ = 0;
-		int IR_ = 0;
-		int R1_ = 0;
-		int R2_ = 0;
-		bool activate_intakes = true;
 
-        if(shoot2) {
-            if(shooting_count-last_shoot_count < 2) {
+//            if(store1_activate && store1_toggle) Robot::start_task("STORE1", Robot::driverStore1);
+//            else if (!store1_activate && store1_toggle) {
+//                Robot::kill_task("STORE1");
+//                intake({0, 0, 0, 0});
+//            }
+//
+//            Robot::kill_task("STORE1");
+//            intake({0, 0, 0, 0});
+//            store1_toggle=false;
+
+//        if (store2 && store2_toggle==false) {
+//            Robot::start_task("STORE2", Robot::driverStore2);
+//            store2_toggle=true;
+//        } else if (!store2 && store2_toggle==true) {
+//            Robot::kill_task("STORE2");
+//            intake({0, 0, 0, 0});
+//            store2_toggle=false;
+//        }
+//
+
+        if ((ejector || intakes_indexer) && !ejector_state) {
+            ejector_state = true;
+            if ((intakes_indexer && ejector_count % 2 == 0) || ejector) ejector_count++;
+        } else if (!ejector) ejector_state = false;
+        bool eject = ejector_count % 2 == 0;
+
+        if (tower1_button && !tower1) {
+            tower1 = true;
+            tower1_count++;
+        } else if (!tower1_button) tower1 = false;
+        bool tower_1 = tower1_count == 2;
+
+        if ((store1 || store2) && !store_state) {
+            last_store_count=intake_count;
+            R1=-127;
+            delay(100);
+            R1=0;
+            store_state=true;
+        } else if (!(store1 || store2)) store_state=false;
+
+        int IL_ = 0;
+        int IR_ = 0;
+        int R1_ = 0;
+        int R2_ = 0;
+        bool activate_intakes = true;
+
+        if (shoot2) {
+            if (shooting_count - last_shoot_count < 2) {
                 R1_ = 127 * 0.73;
                 R2_ = 127;
                 delay(150);
             }
         }
 
-		if (front_eject) R1_ = -127;
-		
+        if (front_eject) R1_ = -127;
 
-		if (indexer_fly) {
+
+        if (indexer_fly) {
             R2_ = 127;
-		}
+        }
 
-		if (intakes_indexer) {
-			IL_ = IR_ = R1_ = 127;
-		}
+        if (intakes_indexer) {
+            IL_ = IR_ = R1_ = 127;
+        }
 
-		if (outtake) IL_ = IR_ = -127 * .5;
+        if (outtake) IL_ = IR_ = -127 * .5;
 
-		if (eject) {
- 			R2_ = -127;
-			R1_ = .5 * 127;
-		}
+        if (eject) {
+            R2_ = -127;
+            R1_ = .5 * 127;
+        }
 
-		if(tower_1 && tower1_button) {
-			Robot::shoot_store(3, 2);
-			tower1_count++;
+        if (tower_1 && tower1_button) {
+            Robot::shoot_store(3, 2);
+            tower1_count++;
 
         }
         if (store1) {
@@ -698,11 +740,30 @@ void Robot::drive(void *ptr) {
             R1_ = 127 * 0.73;
         }
 
-		bool past_beginning = (IL_ + IR_ + R1_ + R2_) != 0;
+//        if (store1 && store1_toggle==false) {
+//            store1_count++;
+//            store1_toggle=true;
+//        } else if (!store1) store1_toggle=false;
+//        bool store1_activate = store1_count%2 == 0;
+//
+//        if(store1_activate && store1_toggle) Robot::start_task("STORE1", Robot::driverStore1);
+//        else if (!store1_activate && store1_toggle) {
+//            Robot::kill_task("STORE1");
+//            intake({0, 0, 0, 0});
+//            lcd::print(5, "sussadness");
+//
+//        }
 
-		if (past_beginning) activate = true;
-		
-        if(activate_intakes && activate) intake({IL_, IR_, R1_, R2_});
+//        lcd::print(6, "act: %d count: %d tgl: %d", store1_activate, store1_count, store1_toggle);
+
+        bool past_beginning = (IL_ + IR_ + R1_ + R2_) != 0;
+
+        if (past_beginning) activate = true;
+        if (activate_intakes && activate) intake({IL_, IR_, R1_, R2_});
+
+
+
+
 		delay(5);
 		
 	}

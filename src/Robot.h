@@ -104,8 +104,9 @@ public:
     static void shoot(void *ptr);
     static void store(void *ptr);
     static void shoot_store(int shoot, int store);
-	static void shoot_store_thread(void *ptr);
-	static void flipout(void *ptr);
+	static void driverStore1(void *ptr);
+    static void driverStore2(void *ptr);
+    static void flipout(void *ptr);
     /* Ball storing functions */
 
 	static void display(void *ptr);
