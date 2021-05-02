@@ -26,8 +26,8 @@ ADIEncoder Robot::LE(5, 6);
 ADIEncoder Robot::RE(3, 4);
 ADIEncoder Robot::BE(7, 8);
 Imu Robot::IMU(2);
-ADIAnalogIn Robot::LSS({{1, 8}});
-ADIAnalogIn Robot::LSI({{1, 1}});
+ADIUltrasonic Robot::USF({{1, 5, 6}});
+ADIAnalogIn Robot::LSI({{1, 8}});
 ADIDigitalIn Robot::LMR({{1, 2}});
 /* Initializing motors, sensors, controller */
 
@@ -60,7 +60,6 @@ std::atomic<int> Robot::ejector_count = -1;
 std::atomic<int> Robot::intake_count = 0;
 std::atomic<int> Robot::shooting_count = 0;
 std::atomic<int> Robot::storing_count = 0;
-std::atomic<int> Robot::BallsShootAverage;
 std::atomic<int> Robot::BallsStoreAverage;
 
 std::atomic<bool> Robot::intaking = false;
@@ -333,7 +332,7 @@ void Robot::display(void *ptr)
         master.print(0, 0, "Joystick %d", master.get_analog(ANALOG_LEFT_X));
         lcd::print(1, "IMU value: %f", IMU.get_rotation());
         lcd::print(2, "Y: %f - X: %f", (float)y, (float)x);
-        lcd::print(3, "LSI: %d LSS: %d SA: %d", LSI.get_value(), LSS.get_value(), (int) BallsShootAverage);
+        lcd::print(3, "LSI: %d USF: %d SA: %d", LSI.get_value(), USF.get_value(), (int) BallsStoreAverage);
         lcd::print(4, "intake: %d shoot: %d store: %d", (int) intake_count, (int) shooting_count, (int) storing_count);
 //        lcd::print(4, "LE: %d - RE: %d - BE %d", LE.get_value(), RE.get_value(), BE.get_value());
         delay(10);
@@ -367,18 +366,9 @@ void Robot::record_thread(void *ptr){
 
 void Robot::balls_checking(void *ptr) {
     const int length_ = 200;
-    std::deque<double> BallsShoot;
     std::deque<double> BallsStore;
 
     while (true) {
-        BallsShoot.push_back(LSS.get_value());
-        if(BallsShoot.size() == length_) {
-            BallsShoot.pop_front();
-            int sum = 0;
-            for(int i = 0; i<BallsShoot.size(); i++) sum += BallsShoot[i];
-            BallsShootAverage = sum/length_;
-            delay(100);
-        }
         BallsStore.push_back(LSI.get_value());
         if(BallsStore.size() == length_) {
             BallsStore.pop_front();
@@ -400,21 +390,19 @@ void Robot::sensing(void *ptr) {
 
     while (true) {
 
-        if((int) BallsShootAverage!=0) {
-            bool shoot_ball = BallsShootAverage-LSS.get_value() > 50;
-            if(shoot_ball && !shoot_toggle) {
-                shooting_count++;
-                shoot_toggle = true;
-            } else if (!shoot_ball && shoot_toggle) shoot_toggle = false;
-        }
+        bool shoot_ball =  USF.get_value() < 150;;
+        if(shoot_ball && !shoot_toggle) {
+            shooting_count++;
+            shoot_toggle = true;
+        } else if (!shoot_ball && shoot_toggle) shoot_toggle = false;
 
-        if((int) BallsStoreAverage!=0) {
-            bool store_ball = BallsStoreAverage-LSI.get_value() > 200;
-            if(store_ball && !store_toggle) {
-                intake_count++;
-                store_toggle = true;
-            } else if (BallsStoreAverage-LSI.get_value() < 50 && store_toggle) store_toggle = false;
-        }
+
+        bool store_ball = BallsStoreAverage-LSI.get_value() > 200;
+        if(store_ball && !store_toggle) {
+            intake_count++;
+            store_toggle = true;
+        } else if (BallsStoreAverage-LSI.get_value() < 50 && store_toggle) store_toggle = false;
+
 
         bool record_val = LMR.get_value();
         if (record_val && !record_toggle) {
@@ -737,7 +725,7 @@ void Robot::drive(void *ptr) {
             IL_ = IR_ = R1_ = 127;
         }
 
-        if (outtake) IL_ = IR_ = -127 * .5;
+        if (outtake) IL_ = IR_ = -127 * .6;
 
         if (eject) {
             R2_ = -127;
