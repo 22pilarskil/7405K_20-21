@@ -28,6 +28,7 @@ ADIEncoder Robot::BE(7, 8);
 Imu Robot::IMU(2);
 ADIUltrasonic Robot::USF({{1, 5, 6}});
 ADIAnalogIn Robot::LSI({{1, 8}});
+ADIAnalogIn Robot::LSS({{1, 7}});
 ADIDigitalIn Robot::LMR({{1, 2}});
 /* Initializing motors, sensors, controller */
 
@@ -61,6 +62,7 @@ std::atomic<int> Robot::intake_count = 0;
 std::atomic<int> Robot::shooting_count = 0;
 std::atomic<int> Robot::storing_count = 0;
 std::atomic<int> Robot::BallsStoreAverage;
+std::atomic<int> Robot::BallsShootAverage;
 
 std::atomic<bool> Robot::intaking = false;
 std::atomic<int> Robot::outtake_delay = 0;
@@ -367,6 +369,7 @@ void Robot::record_thread(void *ptr){
 void Robot::balls_checking(void *ptr) {
     const int length_ = 200;
     std::deque<double> BallsStore;
+    std::deque<double> BallsShoot;
 
     while (true) {
         BallsStore.push_back(LSI.get_value());
@@ -377,6 +380,14 @@ void Robot::balls_checking(void *ptr) {
             BallsStoreAverage = sum/length_;
             delay(100);
         }
+        BallsShoot.push_back(LSS.get_value());
+        if(BallsShoot.size() == length_) {
+            BallsShoot.pop_front();
+            int sum = 0;
+            for(int i = 0; i<BallsShoot.size(); i++) sum += BallsShoot[i];
+            BallsShootAverage = sum/length_;
+            delay(100);
+        }
         delay(5);
     }
 }
@@ -385,16 +396,18 @@ void Robot::sensing(void *ptr) {
     bool shoot_toggle;
     bool store_toggle;
     bool record_toggle;
+    int num_activated = 0;
 
     start_task("CHECKING", Robot::balls_checking);
 
     while (true) {
 
-        bool shoot_ball =  USF.get_value() < 150;;
+        
+        bool shoot_ball = BallsShootAverage-LSS.get_value() > 200;
         if(shoot_ball && !shoot_toggle) {
             shooting_count++;
             shoot_toggle = true;
-        } else if (!shoot_ball && shoot_toggle) shoot_toggle = false;
+        } else if (BallsShootAverage-LSS.get_value() < 50 && shoot_toggle) shoot_toggle = false;
 
 
         bool store_ball = BallsStoreAverage-LSI.get_value() > 200;
@@ -456,73 +469,24 @@ void Robot::balls_intake_toggle(int outtake_delay_, int outtake_opening_delay_, 
 
 void Robot::shoot(void *ptr) {
 
-    R2 = 127;
 
     shooting_end = false;
+
     int last_shooting_count = (int) shooting_count;
 
-    int prev_shooting_diff=0;
-    bool shooting_change;
-    R1=-127;
-    delay(40);
-    R1=0;
+    bool shoot_ball = BallsShootAverage-LSS.get_value() > 200;
 
-    double R1_coefficient = 0;
-    double R2_coefficient = 1;
-    int delay_length= 250;
+    if (shoot_ball) shooting_count++;
+
+    R2 = 127;
+    delay((shoot_var > 1) ? 100 : 0);
+    R1 = 127;
 
     while((shooting_count-last_shooting_count < shoot_var)) {
-
-
-        int R1P = R1_coefficient*127;
-        int R2P = R2_coefficient*127;
-
-
-
-        R1 = R1P;
-        R2 = R2P;
-        delay(delay_length);
-
-        //Rollers/Intake Coefficients
-        R1_coefficient = .25;
-        R2_coefficient = 1;
-        delay_length = 5;
-
-        //Sees the difference between teh shotting_count and lass_shotting_count
-        int cur_shooting_diff = shooting_count-last_shooting_count;
-
-        lcd::print(7, "shooting: %d", cur_shooting_diff);
-
-        /*
-         * Uses the same toggle type logic that we use for the macros
-         * Compares current shooting difference with previous shooting difference to see if it changes
-         * if it has changed, then it will toggle
-         */
-        if(shooting_change) {
-            if(cur_shooting_diff == 1) {
-                delay_length=50;
-                R1_coefficient = .25;
-            }
-            else if (cur_shooting_diff == 2) {
-                delay(200);
-                delay_length = 100;
-                R1_coefficient = .25;
-                R2_coefficient = 0.2;
-            }
-            shooting_change=false;
-        }
-
-        else if (!shooting_change && prev_shooting_diff!=cur_shooting_diff) {
-            shooting_change=true;
-            prev_shooting_diff=cur_shooting_diff;
-        }
-
-
-        //Sets intake values/updates prev_shooting_diff/
+        delay(1);
     }
-
+    delay (200);
     R1 = 0;
-    delay(200);
     R2 = 0;
     lcd::print(6, "DONE");
     shooting_end=true;
@@ -551,26 +515,6 @@ void Robot::shoot_store(int shoot, int store) {
     shooting_end = true;
     store_end = true;
 
-    // last_store_count = intake_count;
-    // last_shooting_count = shooting_count;
-    // R1=-127;
-    // R2=127;
-    // delay(100);
-    // R1=0;
-
-    // if (intake_count - last_store_count < store) {
-    //     IL_ = IR_ = 127;
-    //     delay(150);
-    // }
-    // R2 = 127;
-    // R1 = 127 * 0.73;
-
-    // while(shooting_count - last_shooting_count < shoot){
-    //     delay(5);
-    // }
-
-    // R1 = R2
-
     if(shoot_var != 0) Robot::start_task("SHOOT", Robot::shoot);
     if(store_var != 0) Robot::start_task("STORE", Robot::store);
 
@@ -586,11 +530,9 @@ void Robot::shoot_store(int shoot, int store) {
 
 void Robot::driverStore1(void *ptr) {
     shoot_store(3, 1);
-//    intake({0, 0, 0, 0});
 }
 void Robot::driverStore2(void *ptr) {
     shoot_store(3, 2);
-//    intake({0, 0, 0, 0});
 }
 
 /**
@@ -620,12 +562,6 @@ void Robot::drive(void *ptr) {
     bool activate = false;
     int test_shoot_store_toggle = false;
 
-//    bool store1_toggle;
-//    int store1_count = 1;
-//    int store1_change;
-//
-//    bool store2_toggle;
-
     Robot::intake({0, 0, 0, -90});
     delay(100);
     Robot::intake({0, 0, 0, 0});
@@ -654,30 +590,6 @@ void Robot::drive(void *ptr) {
         //Storing/shooting
         bool store1 = master.get_digital(DIGITAL_B);
         bool store2 = master.get_digital(DIGITAL_Y);
-
-
-
-
-
-//            if(store1_activate && store1_toggle) Robot::start_task("STORE1", Robot::driverStore1);
-//            else if (!store1_activate && store1_toggle) {
-//                Robot::kill_task("STORE1");
-//                intake({0, 0, 0, 0});
-//            }
-//
-//            Robot::kill_task("STORE1");
-//            intake({0, 0, 0, 0});
-//            store1_toggle=false;
-
-//        if (store2 && store2_toggle==false) {
-//            Robot::start_task("STORE2", Robot::driverStore2);
-//            store2_toggle=true;
-//        } else if (!store2 && store2_toggle==true) {
-//            Robot::kill_task("STORE2");
-//            intake({0, 0, 0, 0});
-//            store2_toggle=false;
-//        }
-//
 
         if ((ejector || intakes_indexer) && !ejector_state) {
             ejector_state = true;
@@ -756,33 +668,15 @@ void Robot::drive(void *ptr) {
             R1_ = 127 * 0.73;
         }
 
-//        if (store1 && store1_toggle==false) {
-//            store1_count++;
-//            store1_toggle=true;
-//        } else if (!store1) store1_toggle=false;
-//        bool store1_activate = store1_count%2 == 0;
-//
-//        if(store1_activate && store1_toggle) Robot::start_task("STORE1", Robot::driverStore1);
-//        else if (!store1_activate && store1_toggle) {
-//            Robot::kill_task("STORE1");
-//            intake({0, 0, 0, 0});
-//            lcd::print(5, "sussadness");
-//
-//        }
-
-//        lcd::print(6, "act: %d count: %d tgl: %d", store1_activate, store1_count, store1_toggle);
-
         bool past_beginning = (IL_ + IR_ + R1_ + R2_) != 0;
 
         if (past_beginning) activate = true;
         if (activate_intakes && activate) intake({IL_, IR_, R1_, R2_});
 
-
-
-
 		delay(5);
 		
 	}
+
 	lcd::print(1, "%d", 0);
 }
 

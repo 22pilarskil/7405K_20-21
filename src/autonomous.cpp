@@ -18,10 +18,12 @@ void autonomous() {
     //intake format: index 0,1 is the intakes, index 2 is the indexer, index 3 is the fly
     //every tower after 3 is inconsistent
 //    Robot::start_task("SAVEPOINTS", Robot::save_point);
-    skills_auton();
+    match_auton();
 }
 
 void match_auton() {
+    delay(3000);
+    Robot::shoot_store(2, 0);
 //    Robot::move_to({990, -860, 0});
 //    Robot::move_to({3000, -2000, 90});
     // //Tower 1

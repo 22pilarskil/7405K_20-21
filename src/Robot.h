@@ -26,6 +26,7 @@ public:
 	static Imu IMU;
     static ADIUltrasonic USF;
     static ADIAnalogIn LSI;
+    static ADIAnalogIn LSS;
     static ADIDigitalIn LMR;
     /* Initializing motors, sensors, controller */
 
