@@ -502,7 +502,7 @@ void Robot::store(void *ptr) {
         IR = 127;
         delay(5);
     }
-    delay(100);
+    delay(400);
     R1 = 0;
     IL = IR = 0;
     store_end = true;
