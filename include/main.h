@@ -64,7 +64,8 @@ extern "C" {
 
 //autonomous
 void autonomous(void);
-void match_auton(void);
+void match_auton1(void);
+void match_auton2(void);
 void skills_auton(void);
 void threaded_auton(void *ptr);
 

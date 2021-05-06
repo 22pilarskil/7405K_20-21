@@ -233,7 +233,7 @@ void Robot::move_to(std::vector<double> pose, bool tower, bool pure_pursuit)
         double phi = TO_RAD(IMU.get_rotation());
         double power = power_PD.get_value(y_error * std::cos(phi) + x_error * std::sin(phi));
         double strafe = strafe_PD.get_value(x_error * std::cos(phi) - y_error * std::sin(phi));
-        double turn = turn_PD.get_value(imu_error) * 1.5;
+        double turn = turn_PD.get_value(imu_error) * 2.5;
         mecanum(power, strafe, turn);
         /* Using our PD objects we use the error on each of our degrees of freedom (axial, lateral, and turning movement)
         to obtain speeds to input into Robot::mecanum. We perform a rotation matrix calculation to translate our y and x
@@ -502,8 +502,6 @@ void Robot::store(void *ptr) {
         IR = 127;
         delay(5);
     }
-    delay(400);
-    R1 = 0;
     IL = IR = 0;
     store_end = true;
 }
@@ -520,11 +518,11 @@ void Robot::shoot_store(int shoot, int store) {
 
     while (!(shooting_end && store_end)) delay(5);
 
-    Robot::kill_task("SHOOT");
-    Robot::kill_task("STORE");
+    if(shoot_var != 0) Robot::kill_task("SHOOT");
+    if(store_var != 0) Robot::kill_task("STORE");
 
     R1 = 0;
-    lcd::print(5, "HI");
+    lcd::print(5, "HI %d", (int)(shoot_var));
     return;
 }
 
@@ -637,10 +635,10 @@ void Robot::drive(void *ptr) {
             IL_ = IR_ = R1_ = 127;
         }
 
-        if (outtake) IL_ = IR_ = -127 * .6;
+        if (outtake) IL_ = IR_ = -127;
 
         if (eject) {
-            R2_ = -127;
+            R2_ = -50;
             R1_ = .5 * 127;
         }
 
@@ -673,13 +671,12 @@ void Robot::drive(void *ptr) {
         if (past_beginning) activate = true;
         if (activate_intakes && activate) intake({IL_, IR_, R1_, R2_});
 
-		delay(5);
-		
-	}
+        delay(5);
+        
+    }
 
-	lcd::print(1, "%d", 0);
+    lcd::print(1, "%d", 0);
 }
-
 void Robot::drive_tune(void *ptr) {
     while (true) {
         bool progress_button = master.get_digital(DIGITAL_A);

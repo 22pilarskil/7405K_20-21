@@ -18,10 +18,10 @@ void autonomous() {
     //intake format: index 0,1 is the intakes, index 2 is the indexer, index 3 is the fly
     //every tower after 3 is inconsistent
 //    Robot::start_task("SAVEPOINTS", Robot::save_point);
-    match_auton();
+    match_auton2();
 }
 
-void match_auton() {
+void match_auton1() {
 
     //Tower 1
     Robot::intake({0, 0, 0, 127});
@@ -56,37 +56,18 @@ void match_auton() {
 //    Robot::move_to({-2780, -520, 226});
     Robot::move_to({-2980, -370, 225});
     Robot::shoot_store(1, 0);
+}
 
-    //    Robot::move_to({3000, -2000, 90});
-    // //Tower 1
-    // Robot::intake({0, 0, 0, -127});
-    // delay(500);
-    // Robot::intake({0, 0, 0, 0});
-    // Robot::move_to({730, -415, -41});
-    // Robot::shoot_store(0, 1);
-    // Robot::move_to({960, -220, -41});
-    // Robot::shoot_store(1, 0);
-    // Robot::intake({0, 0, 127, 0});
+void match_auton2(){
+    Robot::move_to({-80, -530, 48});
+    Robot::intake({127, 127, 127, 0});
+    Robot::move_to({1030, -880, -42});
+    Robot::shoot_store(1, 1);
+    Robot::move_to({1680, -242, -42});
+    Robot::shoot_store(0, 1);
 
-    // //Tower 2
-    // Robot::move_to({700, -500, -41});
-    // Robot::intake({0, 0, 0, 0});
 
-    // Robot::balls_intake_toggle(1000, 0); 
-    // Robot::start_task("OUTTAKE0", Robot::balls_intake);
-    // Robot::move_to({-1380, -490, -87});
-    // Robot::move_to({-1380, -410, -87});
-    // Robot::shoot_store(1, 0);
-    
-    // //Tower 3
-    // Robot::move_to({-1370, -540, -87});
-    // Robot::balls_intake_toggle(1000, 0); 
-    // Robot::start_task("OUTTAKE1", Robot::balls_intake);
-    // Robot::move_to({-3400, -480, -129});
-    // Robot::shoot_store(0, 1);
-    // Robot::intake({0, 0, 127, 0});
-    // Robot::move_to({-3710, -170, -129});
-    // Robot::shoot_store(1, 0);
+    Robot::move_to({870, -2090, 88});
 }
 
 
