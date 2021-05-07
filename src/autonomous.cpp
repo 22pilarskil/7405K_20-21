@@ -18,44 +18,48 @@ void autonomous() {
     //intake format: index 0,1 is the intakes, index 2 is the indexer, index 3 is the fly
     //every tower after 3 is inconsistent
 //    Robot::start_task("SAVEPOINTS", Robot::save_point);
-    match_auton2();
+    match_auton1();
 }
 
 void match_auton1() {
 
     //Tower 1
-    Robot::intake({0, 0, 0, 127});
-    delay(300);
-    Robot::intake({0, 0, 0, 0});
+//    Robot::intake({0, 0, 0, 127});
+//    delay(300);
+//    Robot::intake({0, 0, 0, 0});
+    Robot::shoot_store(1,1);
+    Robot::move_to({300, 0, 0});
 
-    Robot::move_to({1525, -470, -45});
-    Robot::shoot_store(0, 1);
-    delay(500);
-    Robot::move_to({1760, -250, -45});
-    Robot::shoot_store(1, 0);
-    delay(700);
-
-    //Tower 2
-    Robot::move_to({1540, -500, -45});
-    Robot::move_to({920, -1845, 88});
-
-    Robot::shoot_store(0, 1);
-    Robot::move_to({930, -2145, 88});
-
-    Robot::move_to({-15, -2220, 105});
-    Robot::move_to({140, -1900, 136});
-    Robot::move_to({-170, -2190, 131});
-    Robot::shoot_store(1, 0);
-    delay(700);
-
-    //Tower 3
-    Robot::move_to({60, -1880, 137});
-
-    Robot::move_to({-2530, -820, 226});
-    Robot::shoot_store(0, 1);
-//    Robot::move_to({-2780, -520, 226});
-    Robot::move_to({-2980, -370, 225});
-    Robot::shoot_store(1, 0);
+//    Robot::move_to({1525, -470, -45}, false, false, 300);
+    //
+//    Robot::move_to({1525, -470, -45}, false, false, 300);
+//    Robot::shoot_store(0, 1);
+//    delay(500);
+//    Robot::move_to({1760, -250, -45});
+//    Robot::shoot_store(1, 0);
+//    delay(700);
+//
+//    //Tower 2
+//    Robot::move_to({1540, -500, -45});
+//    Robot::move_to({920, -1845, 88});
+//
+//    Robot::shoot_store(0, 1);
+//    Robot::move_to({930, -2145, 88});
+//
+//    Robot::move_to({-15, -2220, 105});
+//    Robot::move_to({140, -1900, 136});
+//    Robot::move_to({-170, -2190, 131});
+//    Robot::shoot_store(1, 0);
+//    delay(700);
+//
+//    //Tower 3
+//    Robot::move_to({60, -1880, 137});
+//
+//    Robot::move_to({-2530, -820, 226});
+//    Robot::shoot_store(0, 1);
+////    Robot::move_to({-2780, -520, 226});
+//    Robot::move_to({-2980, -370, 225});
+//    Robot::shoot_store(1, 0);
 }
 
 void match_auton2(){

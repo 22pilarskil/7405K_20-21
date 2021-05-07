@@ -192,7 +192,7 @@ void Robot::fps(void *ptr) {
  * @param pure_pursuit: A boolean (true or false) that tells us whether or not we are calling this function in the context
  	of Robot::move_to_pure_pursuit
  */
-void Robot::move_to(std::vector<double> pose, bool tower, bool pure_pursuit)
+void Robot::move_to(std::vector<double> pose, bool tower, bool pure_pursuit, int flipout_timer)
 {
     double new_y = pose[0];
     double new_x = pose[1];
@@ -245,7 +245,7 @@ void Robot::move_to(std::vector<double> pose, bool tower, bool pure_pursuit)
         x_error = -(new_x - x);
         /* Recalculating our error by subtracting components of our current position vector from target position vector */
 
-
+        if(flipout_timer != 0 && time-flipout_timer > 0) intake({127, 127, 0, 0});
         if (pure_pursuit) return;
         delay(5);
         time += 5;
@@ -488,7 +488,7 @@ void Robot::shoot(void *ptr) {
     delay (200);
     R1 = 0;
     R2 = 0;
-    lcd::print(6, "DONE");
+    lcd::print(6, "shoot DONE");
     shooting_end=true;
 }
 
@@ -503,6 +503,7 @@ void Robot::store(void *ptr) {
         delay(5);
     }
     IL = IR = 0;
+    lcd::print(7, "store DONE");
     store_end = true;
 }
 
