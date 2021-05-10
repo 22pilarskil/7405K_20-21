@@ -52,6 +52,7 @@ int Robot::radius = 300;
 int counter = 0;
 int shoot_var = 0;
 int store_var = 0;
+int counter_global = 0;
 std::atomic<bool> shooting_end;
 std::atomic<bool> store_end;
 bool Robot::time_end = false;
@@ -178,21 +179,7 @@ void Robot::fps(void *ptr) {
 }
 
 
-/**
- * @desc: Interfaces with PD classes as well as Robot::x and Robot::y (updated using odometry in Robot::fps) to accurately 
- 	move to an input position.
- * @param pose: A vector of length three in the format {Y, X, heading} that contains information about the target end state
- 	of the robot that we wish to achieve through Robot::move_to
- * @param margin: A vector of length three in the format {Y_margin, X_margin, heading_margin} that allows us to control how 
- 	accurate our movements should be by acting as coefficients for tolerances, or how close our robot actually needs to be 
- 	to the target in order for Robot::move_to to be complete (Higher margins = less accurate but faster convergence)
- 	within 2 degrees of our target heading, but we can multiply 
- * @param speeds: A vector of length three in the format {Y_speed, X_speed, heading_speed} that allows us to control how
- 	fast our movements should be by acting as coefficients for speeds outputted by our PD objects. 
- * @param pure_pursuit: A boolean (true or false) that tells us whether or not we are calling this function in the context
- 	of Robot::move_to_pure_pursuit
- */
-void Robot::move_to(std::vector<double> pose, bool tower, bool pure_pursuit, int flipout_timer)
+void Robot::move_to(std::vector<double> pose, double stop_threshold, bool pure_pursuit, int flipout_timer, std::vector<double> speeds) 
 {
     double new_y = pose[0];
     double new_x = pose[1];
@@ -225,15 +212,16 @@ void Robot::move_to(std::vector<double> pose, bool tower, bool pure_pursuit, int
         double sum = 0;
         for (int i = 0; i < motion.size(); i++) sum += motion[i];
         double motion_average = sum / 10;
-        if (motion_average < .1 && time > 100) break;
+        lcd::print(7, "%d %f", int(motion_average < stop_threshold), motion_average);
+        if (motion_average < stop_threshold && time > 100) break;
 
         last_x = x;
         last_y = y;
 
         double phi = TO_RAD(IMU.get_rotation());
-        double power = power_PD.get_value(y_error * std::cos(phi) + x_error * std::sin(phi));
-        double strafe = strafe_PD.get_value(x_error * std::cos(phi) - y_error * std::sin(phi));
-        double turn = turn_PD.get_value(imu_error) * 2.5;
+        double power = power_PD.get_value(y_error * std::cos(phi) + x_error * std::sin(phi)) * speeds[0];
+        double strafe = strafe_PD.get_value(x_error * std::cos(phi) - y_error * std::sin(phi)) * speeds[1];
+        double turn = turn_PD.get_value(imu_error) * speeds[2];
         mecanum(power, strafe, turn);
         /* Using our PD objects we use the error on each of our degrees of freedom (axial, lateral, and turning movement)
         to obtain speeds to input into Robot::mecanum. We perform a rotation matrix calculation to translate our y and x
@@ -249,27 +237,15 @@ void Robot::move_to(std::vector<double> pose, bool tower, bool pure_pursuit, int
         if (pure_pursuit) return;
         delay(5);
         time += 5;
-    }
-    if (tower){
-        std::deque<double> motion2;
-        while (true){
-            FL = 127;
-            FR = 127;
-            BL = 127;
-            BR = 127;
-            if ((int)motion2.size() == 10) motion2.pop_front();
-            motion2.push_back(abs(last_x - x) + abs(last_y - y));
-            double sum = 0;
-            for (int i = 0; i < motion2.size(); i++) sum += motion2[i];
-            double motion_average = sum / 10;
-            if (motion_average < .1 && time > 100) break;
-        }
+
+
     }
     reset_PD();
-    lcd::print(6, "DONE");
+    lcd::print(6, "DONE %d", counter_global);
+    counter_global ++;
     brake("stop");
-	//lcd::print(6, "DONE");
-	brake("stop");
+    //lcd::print(6, "DONE");
+    brake("stop");
 }
 
 /**
@@ -300,18 +276,17 @@ void Robot::move_to_pure_pursuit(std::vector<std::vector<double>> points, std::v
 			/* Obtain pathing information through functions from PurePursuit.cpp */
 
 			std::vector<double> pose {target[0], target[1], heading};
-			move_to(pose, false, true);
+			move_to(pose, 0, true, 0, {2, 2, 2});
 			cur = {(float)y, (float)x};
 			delay(5);
 		}
 	}
-	move_to(final_point);
+	move_to(final_point, 3);
 	brake("stop");
 	reset_PD();
 	//lcd::print(6, "DONE");
+
 }
-
-
 /**
  * @desc Takes in information about where balls are as well as how many there are to shoot them in quick succession
  * @param ball_id: 1 to shoot from top stored position only, 0 to shoot a ball from bottom store, -1 to shoot from both
@@ -480,12 +455,12 @@ void Robot::shoot(void *ptr) {
 
     R2 = 127;
     delay((shoot_var > 1) ? 100 : 0);
-    R1 = 127;
+    if(shoot_var != 1) R1 = 127;
 
     while((shooting_count-last_shooting_count < shoot_var)) {
         delay(1);
     }
-    delay (200);
+    delay (400);
     R1 = 0;
     R2 = 0;
     lcd::print(6, "shoot DONE");
@@ -495,7 +470,6 @@ void Robot::shoot(void *ptr) {
 void Robot::store(void *ptr) {
     store_end = false;
     int last_intake_count = (int) intake_count;
-    store_end = false;
     while(intake_count-last_intake_count < store_var) {
         if(shooting_end) R1=.5*127;
         IL = 127;
@@ -516,6 +490,8 @@ void Robot::shoot_store(int shoot, int store) {
 
     if(shoot_var != 0) Robot::start_task("SHOOT", Robot::shoot);
     if(store_var != 0) Robot::start_task("STORE", Robot::store);
+
+    delay(10);
 
     while (!(shooting_end && store_end)) delay(5);
 
@@ -821,7 +797,7 @@ void Robot::time_run(void *ptr) {
     int time = 0;
     while(true) {
         if (!Robot::time_end) time += 5;
-        lcd::print(2, "Timer %d", time);
+        lcd::print(7, "Timer %d", time);
         delay(5);
     }
 }

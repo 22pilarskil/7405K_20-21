@@ -83,7 +83,7 @@ public:
 	/* Threading functions */
 
 	static void fps(void *ptr);
-	static void move_to(std::vector<double> pose, bool pure_pursuit = false, bool tower = false, int flipout_timer = 0);
+	static void move_to(std::vector<double> pose, double stop_threshold = .1, bool pure_pursuit = false, int flipout_timer = 0, std::vector<double> speeds = {1, 1, 1});
 	static void move_to_pure_pursuit(std::vector<std::vector<double>> points, std::vector<double> final_point, std::vector<double> speeds = {1, 1, 1});
 	/* Autonomous movement and positioning functions */
 
