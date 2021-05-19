@@ -21,14 +21,14 @@ Motor Robot::BR(18, true);
 Motor Robot::IL(12, true);
 Motor Robot::IR(19);
 Motor Robot::R1(13, true);
-Motor Robot::R2(17, true);
+Motor Robot::R2(9, true);
 ADIEncoder Robot::LE(5, 6);
 ADIEncoder Robot::RE(3, 4);
 ADIEncoder Robot::BE(7, 8);
 Imu Robot::IMU(2);
 ADIUltrasonic Robot::USF({{1, 5, 6}});
-ADIAnalogIn Robot::LSI({{1, 8}});
-ADIAnalogIn Robot::LSS({{1, 7}});
+ADIAnalogIn Robot::LSI(2);
+ADIAnalogIn Robot::LSS(1);
 ADIDigitalIn Robot::LMR({{1, 2}});
 /* Initializing motors, sensors, controller */
 
@@ -562,6 +562,7 @@ void Robot::drive(void *ptr) {
         bool indexer_fly = master.get_digital(DIGITAL_R2);
         bool front_eject = master.get_digital(DIGITAL_A);
         bool indexer_only = master.get_digital(DIGITAL_X);
+        bool slow_fly = master.get_digital(DIGITAL_B);
 
         //Bring Down
         bool shoot_down = master.get_digital(DIGITAL_Y);
@@ -595,7 +596,9 @@ void Robot::drive(void *ptr) {
             IL_ = IR_ = R1_ = 127;
         }
 
-        if (outtake) IL_ = IR_ = -127;
+        if (outtake) IL_ = IR_ = -127 * .5;
+
+        if (slow_fly) R2_=127*0.4;
 
         if (eject) {
             R2_ = -127;

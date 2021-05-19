@@ -50,7 +50,7 @@ void match_auton1() {
     Robot::move_to({445, -1600, 78});
     Robot::intake({0, 0, 0, 0});
 
-    Robot::move_to({180, -2290, 15}, .1, false, 0, {1, 3, 1}); //tower point
+    Robot::move_to({190, -2135, 18}, .1, false, 0, {1, 3, 1}); //tower point
 
     Robot::shoot_store(1, 0);
     Robot::intake({0, 0, 35, 0});
@@ -61,24 +61,24 @@ void match_auton1() {
     // Robot::intake({0, 0, 0, 0});
     Robot::move_to({-2465, -1490, 198}, 0.1, false, 0, {1, 1, 2});
     Robot::shoot_store(1, 0);
-    delay(100);
-    Robot::intake({-127, -127, 0, 0});
-    Robot::move_to({-1830, -1650, 198});
-    Robot::intake({0, 0, 0, 0});
+    // delay(100);
+    // Robot::intake({-127, -127, 0, 0});
+    // Robot::move_to({-1830, -1650, 198});
+    // Robot::intake({0, 0, 0, 0});
     Robot::end_timer();
 }
 
-void match_auton2(){
-    Robot::move_to({-80, -530, 48});
-    Robot::intake({127, 127, 127, 0});
-    Robot::move_to({1030, -880, -42});
-    Robot::shoot_store(1, 1);
-    Robot::move_to({1680, -242, -42});
-    Robot::shoot_store(0, 1);
+// void match_auton2(){
+//     Robot::move_to({-80, -530, 48});
+//     Robot::intake({127, 127, 127, 0});
+//     Robot::move_to({1030, -880, -42});
+//     Robot::shoot_store(1, 1);
+//     Robot::move_to({1680, -242, -42});
+//     Robot::shoot_store(0, 1);
 
 
-    Robot::move_to({870, -2090, 88});
-}
+//     Robot::move_to({870, -2090, 88});
+// }
 
 
 void skills_auton() {
