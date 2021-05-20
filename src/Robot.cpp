@@ -492,8 +492,15 @@ void Robot::shoot_store(int shoot, int store) {
     if(store_var != 0) Robot::start_task("STORE", Robot::store);
 
     delay(10);
-
-    while (!(shooting_end && store_end)) delay(5);
+    int timer = 0;
+    while (!(shooting_end && store_end)) {
+        if (timer > 1500) {
+            shooting_end = store_end = false;
+            break;
+        }
+        timer+=5;
+        delay(5);
+    }
 
     if(shoot_var != 0) Robot::kill_task("SHOOT");
     if(store_var != 0) Robot::kill_task("STORE");
