@@ -52,7 +52,10 @@ void match_auton1() {
 
     Robot::move_to({190, -2135, 18}, .1, false, 0, {1, 3, 1}); //tower point
 
-    Robot::shoot_store(1, 0);
+    Robot::intake({0, 0, 127, 127});
+    delay(2000);
+    Robot::intake({0, 0, 0, 0});
+    
     Robot::intake({0, 0, 35, 0});
 
     // Robot::move_to({-1830, -1650, 198});

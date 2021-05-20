@@ -596,7 +596,7 @@ void Robot::drive(void *ptr) {
             IL_ = IR_ = R1_ = 127;
         }
 
-        if (outtake) IL_ = IR_ = -127 * .5;
+        if (outtake) IL_ = IR_ = -127;
 
         if (slow_fly) R2_=127*0.4;
 
