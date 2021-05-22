@@ -15,27 +15,59 @@ void autonomous() {
     Robot::start_task("DISPLAY", Robot::display);
     Robot::start_task("SENSING", Robot::sensing);
     Robot::start_task("RECORD", Robot::record_thread);
+    Robot::start_task("TIMING", Robot::time_run);
     //intake format: index 0,1 is the intakes, index 2 is the indexer, index 3 is the fly
     //every tower after 3 is inconsistent
 //    Robot::start_task("SAVEPOINTS", Robot::save_point);
-    match_auton1();
+    red_auton();
 }
 
-void match_auton1() {
-    Robot::start_task("TIMING", Robot::time_run);
+void blue_auton() {
+
+
+
 
     //Tower 1
     Robot::intake({127, 127, 127, 0});
     Robot::move_to({1610, 630, 14}, .1, false, 0, {3, 1.5, 1}); //push ball into tower one
-    //Robot::intake({-127, -127, 0, 0});
-    //Robot::move_to_pure_pursuit({{0,0}, {800, -200.1}, {1030, -300}, {1400, 300}}, {1630, 580, -75});
 
-    // Robot::move_to({1440, 60, -71});
+    Robot::intake({127, 127, 127, 0});
 
-    // Robot::intake({-127, -127, 0, 0});
-    // Robot::move_to({1615, 580, -71});
-    // Robot::move_to({1250, -390, -71});
-    //Robot::move_to({1438, 295, -70}); //backout
+    Robot::move_to({1740, -1320, 61}, .1, false, 0, {.8, 1, 4}); //line ball
+    Robot::intake({0, 0, 0, 0});
+
+    Robot::move_to({970, -1790, 78}); //tower ball push
+    Robot::move_to({415, -1310, 78}, .1, false, 0, {2, 1, 1});
+
+    Robot::intake({127, 127, 50, 0});
+    Robot::move_to({445, -1600, 78});
+    Robot::intake({0, 0, 0, 0});
+
+    Robot::move_to({200, -2190, 22}, .1, false, 0, {1, 3, 1}); //tower point
+
+    Robot::shoot_store(2, 0);
+    
+
+    Robot::move_to({-990, -2290, 63});
+    Robot::intake({127, 127, 30, 0});
+    Robot::move_to({-870, -2630, 63});
+    Robot::intake({0, 0, 50, 0});
+    
+    // Robot::move_to({-740, -2460, 84}, .1, false, 0, {0.5, 3, 5});
+
+
+    Robot::move_to({-2380, -1400, 195}, 0.1, false, 0, {0.8, 2, 4});
+    Robot::shoot_store(1, 0);
+
+    Robot::end_timer();
+}
+
+
+void red_auton() {
+
+    //Tower 1
+    Robot::intake({127, 127, 127, 0});
+    Robot::move_to({1580, 650, 24}, .1, false, 0, {3, 1.5, 1}); //push ball into tower one
 
     Robot::intake({127, 127, 127, 0});
 
@@ -50,38 +82,22 @@ void match_auton1() {
     Robot::move_to({445, -1600, 78});
     Robot::intake({0, 0, 0, 0});
 
-    Robot::move_to({190, -2135, 18}, .1, false, 0, {1, 3, 1}); //tower point
+    Robot::move_to({210, -2150, 21}, .1, false, 0, {1, 3, 1}); //tower point
 
-    Robot::intake({0, 0, 127, 127});
-    delay(2000);
+    // Robot::shoot_store(1, 0);
+    Robot::intake({0, 0, 0, -127});
+    delay(100);
+    Robot::intake({0, 0, 0, 127});
+    delay(1900);
     Robot::intake({0, 0, 0, 0});
-    
+
     Robot::intake({0, 0, 35, 0});
 
-    // Robot::move_to({-1830, -1650, 198});
-    // Robot::intake({-127, -127, 0, 0});
-    // Robot::move_to({-2320, -1530, 198});
-    // Robot::intake({0, 0, 0, 0});
-    Robot::move_to({-2465, -1490, 198}, 0.1, false, 0, {1, 1, 2});
+
+    Robot::move_to({-2410, -1480, 196}, 0.1, false, 0, {1, 1, 2});
     Robot::shoot_store(1, 0);
-    // delay(100);
-    // Robot::intake({-127, -127, 0, 0});
-    // Robot::move_to({-1830, -1650, 198});
-    // Robot::intake({0, 0, 0, 0});
-    Robot::end_timer();
 }
 
-// void match_auton2(){
-//     Robot::move_to({-80, -530, 48});
-//     Robot::intake({127, 127, 127, 0});
-//     Robot::move_to({1030, -880, -42});
-//     Robot::shoot_store(1, 1);
-//     Robot::move_to({1680, -242, -42});
-//     Robot::shoot_store(0, 1);
-
-
-//     Robot::move_to({870, -2090, 88});
-// }
 
 
 void skills_auton() {

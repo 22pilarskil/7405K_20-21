@@ -545,10 +545,6 @@ void Robot::drive(void *ptr) {
     int test_shoot_store_toggle = false;
 
 
-    Robot::intake({0, 0, 0, -90});
-    delay(100);
-    Robot::intake({0, 0, 0, 0});
-
     while (true) {
         time += 1;
         int power = master.get_analog(ANALOG_LEFT_Y);
@@ -561,6 +557,7 @@ void Robot::drive(void *ptr) {
 
         //Intakes/Outtakes
         bool outtake = master.get_digital(DIGITAL_L2);
+        bool intakes_ = master.get_digital(DIGITAL_UP);
         bool intakes_indexer = master.get_digital(DIGITAL_R1);
 
         //Indexer/Flywheel
@@ -604,6 +601,7 @@ void Robot::drive(void *ptr) {
         }
 
         if (outtake) IL_ = IR_ = -127;
+        if (intakes_) IL_ = IR_ = 127;
 
         if (slow_fly) R2_=127*0.4;
 
@@ -613,6 +611,7 @@ void Robot::drive(void *ptr) {
         }
 
         if(shoot_down) {
+            R1_=-127*0.2;
             R2_=-127*0.2;
         }
 
